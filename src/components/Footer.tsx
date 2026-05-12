@@ -138,7 +138,7 @@ export function Footer({ onViewChange }: FooterProps) {
             <p className="text-gray-400 text-sm">
               ©️ 2025 Brandscaling. Building decision intelligence and collaboration mastery for entrepreneurs.
             </p>
-            <div className="flex gap-6">
+            <div className="flex flex-wrap justify-center gap-6">
               <button
                 onClick={() => onViewChange('privacy-policy')}
                 className="text-gray-400 hover:text-white transition-colors text-sm"
@@ -151,6 +151,12 @@ export function Footer({ onViewChange }: FooterProps) {
               >
                 Terms of Service
               </button>
+              <a
+                href="/delete-account/"
+                className="text-gray-400 hover:text-white transition-colors text-sm"
+              >
+                Delete account
+              </a>
             </div>
           </div>
         </div>

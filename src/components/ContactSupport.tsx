@@ -183,6 +183,15 @@ export function ContactSupport({ onViewChange }: ContactSupportProps) {
                     View Terms of Service
                   </button>
                 </p>
+                <p>
+                  <span className="text-gray-600">Account deletion: </span>
+                  <a
+                    href="/delete-account/"
+                    className="text-blue-600 hover:underline"
+                  >
+                    Delete your app account (web)
+                  </a>
+                </p>
               </div>
             </div>
           </div>

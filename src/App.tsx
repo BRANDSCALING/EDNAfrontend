@@ -28,6 +28,7 @@ import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { PrivacyPolicy } from './components/PrivacyPolicy';
 import { TermsOfService } from './components/TermsOfService';
 import { ContactSupport } from './components/ContactSupport';
+import { DeleteAccountPage } from './components/DeleteAccountPage';
 import { clearAgentToken } from './utils/agentToken';
 import { User, FileText, MessageSquare, BookOpen } from 'lucide-react';
 
@@ -172,6 +173,19 @@ export default function App() {
         <ContactSupport onViewChange={(view) => {
           window.location.href = view === 'home' ? '/' : `/${view}`;
         }} />
+      </div>
+    );
+  }
+
+  // Account deletion (Google Play web link) — public, no login
+  if (pathname === '/delete-account' || pathname === '/delete-account/') {
+    return (
+      <div className="min-h-screen bg-white">
+        <DeleteAccountPage
+          onViewChange={(view) => {
+            window.location.href = view === 'home' ? '/' : `/${view}`;
+          }}
+        />
       </div>
     );
   }
