@@ -195,7 +195,9 @@ export function Home({ onViewChange }: HomeProps) {
         </div>
       </section>
 
+      {/* TEMP HIDDEN 2026-05-26 — revert per user request: remove the {false && ( wrapper and the matching )} below */}
       {/* Choose Your Growth Path - Pricing */}
+      {false && (
       <section className="section-padding-bs bg-gray-50">
         <div className="container-bs-desktop">
           <div className="text-center mb-[var(--bs-spacing-section-heading)]">
@@ -310,6 +312,8 @@ export function Home({ onViewChange }: HomeProps) {
           </div>
         </div>
       </section>
+      )}
+      {/* END TEMP HIDDEN 2026-05-26 */}
 
       {/* If You've Felt This, You're Home */}
       <section className="section-padding-bs bg-white">
