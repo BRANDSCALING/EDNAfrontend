@@ -136,6 +136,6 @@ communicated in-app or via email.
 
 14. Contact Us
 For privacy questions or data protection requests, contact:
-Brand Scaling Ltd. 35 Wycome Road, Birmingham UK
+Brand Scaling Ltd. 11 Old Bond Street, Mayfair, London W1S 4PN, UK
 
 Email:info@brandscaling.co.uk Website: brandscaling.co.uk/contact

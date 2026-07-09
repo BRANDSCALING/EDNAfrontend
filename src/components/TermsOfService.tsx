@@ -313,8 +313,8 @@ export function TermsOfService({ onViewChange }: TermsOfServiceProps) {
         <TermsSection title="26. Contact Information">
           <p>
             <strong>Brand Scaling Ltd.</strong><br />
-            35 Wycome Road<br />
-            Birmingham, UK
+            11 Old Bond Street<br />
+            Mayfair, London W1S 4PN, UK
           </p>
           <p className="mt-4">
             <strong>Email:</strong>{' '}

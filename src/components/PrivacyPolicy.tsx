@@ -304,7 +304,7 @@ export function PrivacyPolicy({ onViewChange }: PrivacyPolicyProps) {
           <p>For privacy questions, data protection requests, or to exercise your rights, please contact:</p>
           <p className="mt-4">
             <strong>Brand Scaling Ltd.</strong><br />
-            35 Wycome Road, Birmingham, UK
+            11 Old Bond Street, Mayfair, London W1S 4PN, UK
           </p>
           <p className="mt-4">
             <strong>Email:</strong>{' '}
