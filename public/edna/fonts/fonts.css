@@ -1,0 +1,2 @@
+/* Brandscaling fonts: self-hosted (BS-BRAND-001 5.2: do not load from Google's servers). Inter variable TTF from OS/Brand Guidelines/Fonts. */
+@font-face { font-family: 'Inter'; src: url('Inter[opsz,wght].ttf') format('truetype'); font-weight: 100 900; font-style: normal; font-display: swap; }

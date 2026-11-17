@@ -1,21 +1,13 @@
+/**
+ * AuthScreens — sign in / register / confirm / reset, against AWS Cognito (the same user pool
+ * as the iOS app; see utils/auth/cognito.ts).
+ *
+ * 17 Nov 2026 (Phase 5): presentation rebuilt per BS-BRAND-001 and Mockup 04 (Login Screen).
+ * Cognito flows are code-based: sign-up emails a 6-digit code ('confirm-code'), and password
+ * reset is code + new password in-page ('reset-code').
+ */
 import { useState } from 'react';
-import { Button } from './ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Alert, AlertDescription } from './ui/alert';
-import { 
-  Mail, 
-  Lock, 
-  Eye, 
-  EyeOff, 
-  User, 
-  ArrowRight, 
-  CheckCircle, 
-  AlertCircle,
-  ArrowLeft
-} from 'lucide-react';
-import { authHelpers } from '../utils/supabase/client';
+import { authHelpers } from '../utils/auth/cognito';
 
 interface AuthScreensProps {
   onAuthenticate: (user: { email: string; name: string }) => void;
@@ -23,140 +15,87 @@ interface AuthScreensProps {
   initialMode?: 'login' | 'register' | 'forgot-password' | 'reset-success';
 }
 
-type AuthMode = 'login' | 'register' | 'forgot-password' | 'reset-success';
+type AuthMode = 'login' | 'register' | 'confirm-code' | 'forgot-password' | 'reset-code' | 'reset-success';
 
 export function AuthScreens({ onAuthenticate, onCancel, initialMode = 'login' }: AuthScreensProps) {
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    confirmPassword: '',
-    firstName: '',
-    lastName: ''
+    email: '', password: '', confirmPassword: '', firstName: '', lastName: '', code: ''
   });
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    setError(''); // Clear error when user starts typing
+  const set = (field: string, value: string) => {
+    setFormData((p) => ({ ...p, [field]: value }));
+    setError(''); setNotice('');
   };
 
-  const validateForm = () => {
+  const validate = () => {
     if (!formData.email || !formData.email.includes('@')) {
-      setError('Please enter a valid email address');
-      return false;
+      setError('Please enter a valid email address'); return false;
     }
-    
     if (mode === 'register') {
-      if (!formData.firstName || !formData.lastName) {
-        setError('Please enter your full name');
-        return false;
-      }
-      if (formData.password.length < 8) {
-        setError('Password must be at least 8 characters long');
-        return false;
-      }
-      if (formData.password !== formData.confirmPassword) {
-        setError('Passwords do not match');
-        return false;
-      }
+      if (!formData.firstName || !formData.lastName) { setError('Please enter your full name'); return false; }
+      if (formData.password.length < 8) { setError('Password must be at least 8 characters long'); return false; }
+      if (formData.password !== formData.confirmPassword) { setError('Passwords do not match'); return false; }
     } else if (mode === 'login') {
-      if (!formData.password) {
-        setError('Please enter your password');
-        return false;
-      }
+      if (!formData.password) { setError('Please enter your password'); return false; }
+    } else if (mode === 'confirm-code') {
+      if (!formData.code || formData.code.trim().length < 6) { setError('Please enter the 6-digit code from your email'); return false; }
+    } else if (mode === 'reset-code') {
+      if (!formData.code || formData.code.trim().length < 6) { setError('Please enter the 6-digit code from your email'); return false; }
+      if (formData.password.length < 8) { setError('Password must be at least 8 characters long'); return false; }
+      if (formData.password !== formData.confirmPassword) { setError('Passwords do not match'); return false; }
     }
-    
     return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!validateForm()) return;
-    
-    setIsLoading(true);
-    setError('');
-    
+    if (!validate()) return;
+    setIsLoading(true); setError('');
     try {
       if (mode === 'login') {
-        // Real Supabase login
         const { data, error } = await authHelpers.signIn(formData.email, formData.password);
-        
-        if (error) {
-          setError(error.message || 'Invalid email or password');
-          setIsLoading(false);
-          return;
-        }
-        
-        if (data.user) {
-          onAuthenticate({
-            email: data.user.email || '',
-            name: data.user.user_metadata?.name || 'User'
-          });
-        }
+        if (error) { setError(error.message || 'Invalid email or password'); setIsLoading(false); return; }
+        if (data.user) onAuthenticate({ email: data.user.email || '', name: data.user.user_metadata?.name || 'User' });
       } else if (mode === 'register') {
-        // Real Supabase registration
         const fullName = `${formData.firstName} ${formData.lastName}`;
-        const { data, error } = await authHelpers.signUp(
-          formData.email, 
-          formData.password,
-          fullName
-        );
-        
+        const { data, error } = await authHelpers.signUp(formData.email, formData.password, fullName);
         if (error) {
-          // Check if it's a duplicate email error
-          const errorCode = (error as any).error || '';
-          const errorMsg = error.message || 'Registration failed';
-          
-          // Detect duplicate email errors from various sources
-          if (errorCode === 'EMAIL_ALREADY_EXISTS' || 
-              errorMsg.toLowerCase().includes('already') || 
-              errorMsg.toLowerCase().includes('registered') ||
-              errorMsg.toLowerCase().includes('duplicate') ||
-              errorMsg.toLowerCase().includes('exists')) {
+          const name = (error as any).name || (error as any).code || '';
+          const msg = error.message || 'Registration failed';
+          if (name === 'UsernameExistsException' || msg.toLowerCase().includes('already') || msg.toLowerCase().includes('exists')) {
             setError('This email is already registered. Please sign in instead.');
-            // Auto-switch to login after 2.5 seconds
-            setTimeout(() => {
-              setMode('login');
-              setError('');
-            }, 2500);
-          } else {
-            setError(errorMsg);
-          }
-          setIsLoading(false);
-          return;
+            setTimeout(() => { setMode('login'); setError(''); }, 2500);
+          } else setError(msg);
+          setIsLoading(false); return;
         }
-        
-        if (data.user) {
-          // Check if email confirmation is required
-          if (data.user.identities && data.user.identities.length === 0) {
-            setError('Please check your email to confirm your account before signing in.');
-            setMode('login');
-            setIsLoading(false);
-            return;
-          }
-          
-          onAuthenticate({
-            email: data.user.email || '',
-            name: fullName
-          });
+        if (data.needsConfirmation) setMode('confirm-code');
+        else if (data.user) {
+          const { data: si, error: siErr } = await authHelpers.signIn(formData.email, formData.password);
+          if (siErr || !si.user) { setError(siErr?.message || 'Account created — please sign in.'); setMode('login'); }
+          else onAuthenticate({ email: si.user.email, name: si.user.user_metadata?.name || fullName });
         }
+      } else if (mode === 'confirm-code') {
+        const { error } = await authHelpers.confirmSignUp(formData.email, formData.code);
+        if (error) { setError(error.message || 'That code was not accepted. Check it and try again.'); setIsLoading(false); return; }
+        const fullName = `${formData.firstName} ${formData.lastName}`.trim();
+        const { data: si, error: siErr } = await authHelpers.signIn(formData.email, formData.password);
+        if (siErr || !si.user) { setError(siErr?.message || 'Account confirmed — please sign in.'); setMode('login'); }
+        else onAuthenticate({ email: si.user.email, name: si.user.user_metadata?.name || fullName || 'User' });
       } else if (mode === 'forgot-password') {
-        // Send password reset email via Supabase
         const { error } = await authHelpers.resetPassword(formData.email);
-        
-        if (error) {
-          setError(error.message || 'Failed to send reset email');
-          setIsLoading(false);
-          return;
-        }
-        
+        if (error) { setError(error.message || 'Failed to send the reset code'); setIsLoading(false); return; }
+        setFormData((p) => ({ ...p, password: '', confirmPassword: '', code: '' }));
+        setMode('reset-code');
+      } else if (mode === 'reset-code') {
+        const { error } = await authHelpers.confirmResetPassword(formData.email, formData.code, formData.password);
+        if (error) { setError(error.message || 'Could not reset the password. Check the code and try again.'); setIsLoading(false); return; }
         setMode('reset-success');
       }
-      
       setIsLoading(false);
     } catch (err: any) {
       console.error('Auth error:', err);
@@ -165,846 +104,184 @@ export function AuthScreens({ onAuthenticate, onCancel, initialMode = 'login' }:
     }
   };
 
-  const renderLoginForm = () => (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
-        <div className="relative">
-          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <Input
-            id="email"
-            type="email"
-            placeholder="Enter your email"
-            value={formData.email}
-            onChange={(e) => handleInputChange('email', e.target.value)}
-            className="pl-10"
-            required
-          />
-        </div>
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
-        <div className="relative">
-          <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <Input
-            id="password"
-            type={showPassword ? 'text' : 'password'}
-            placeholder="Enter your password"
-            value={formData.password}
-            onChange={(e) => handleInputChange('password', e.target.value)}
-            className="pl-10 pr-10"
-            required
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-          >
-            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-          </button>
-        </div>
-      </div>
-      
-      <div className="flex items-center justify-between">
-        <button
-          type="button"
-          onClick={() => setMode('forgot-password')}
-          className="text-sm text-purple-600 hover:text-purple-700"
-        >
-          Forgot password?
-        </button>
-      </div>
-      
-      {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-      
-      <Button 
-        type="submit" 
-        className="w-full bg-gradient-to-r from-purple-600 to-orange-500 text-white"
-        disabled={isLoading}
-      >
-        {isLoading ? 'Signing in...' : 'Sign In'}
-        <ArrowRight className="w-4 h-4 ml-2" />
-      </Button>
-      
-      <div className="text-center">
-        <span className="text-sm text-gray-600">Don't have an account? </span>
-        <button
-          type="button"
-          onClick={() => setMode('register')}
-          className="text-sm text-purple-600 hover:text-purple-700"
-        >
-          Sign up
-        </button>
-      </div>
-    </form>
-  );
+  const resend = async () => {
+    setError(''); setNotice('');
+    const { error } = await authHelpers.resendConfirmationCode(formData.email);
+    if (error) setError(error.message || 'Could not resend the code');
+    else setNotice('A new code has been sent.');
+  };
 
-  const renderRegisterForm = () => (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="firstName">First Name</Label>
-          <div className="relative">
-            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              id="firstName"
-              placeholder="First name"
-              value={formData.firstName}
-              onChange={(e) => handleInputChange('firstName', e.target.value)}
-              className="pl-10"
-              required
-            />
-          </div>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="lastName">Last Name</Label>
-          <Input
-            id="lastName"
-            placeholder="Last name"
-            value={formData.lastName}
-            onChange={(e) => handleInputChange('lastName', e.target.value)}
-            required
-          />
-        </div>
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
-        <div className="relative">
-          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <Input
-            id="email"
-            type="email"
-            placeholder="Enter your email"
-            value={formData.email}
-            onChange={(e) => handleInputChange('email', e.target.value)}
-            className="pl-10"
-            required
-          />
-        </div>
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
-        <div className="relative">
-          <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <Input
-            id="password"
-            type={showPassword ? 'text' : 'password'}
-            placeholder="Create a password"
-            value={formData.password}
-            onChange={(e) => handleInputChange('password', e.target.value)}
-            className="pl-10 pr-10"
-            required
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-          >
-            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-          </button>
-        </div>
-        <p className="text-xs text-gray-500">Must be at least 8 characters</p>
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="confirmPassword">Confirm Password</Label>
-        <div className="relative">
-          <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <Input
-            id="confirmPassword"
-            type="password"
-            placeholder="Confirm your password"
-            value={formData.confirmPassword}
-            onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-            className="pl-10"
-            required
-          />
-        </div>
-      </div>
-      
-      {error && (
-        <Alert 
-          variant={error.includes('already registered') ? 'default' : 'destructive'} 
-          className={error.includes('already registered') ? 'border-blue-500 bg-blue-50 text-blue-900' : ''}
-        >
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            {error}
-            {error.includes('already registered') && (
-              <div className="mt-3 flex items-center gap-2">
-                <span className="text-sm">Redirecting to sign in...</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMode('login');
-                    setError('');
-                  }}
-                  className="text-sm text-purple-600 hover:text-purple-700 underline"
-                >
-                  Go now →
-                </button>
-              </div>
-            )}
-          </AlertDescription>
-        </Alert>
-      )}
-      
-      <Button 
-        type="submit" 
-        className="w-full bg-gradient-to-r from-purple-600 to-orange-500 text-white"
-        disabled={isLoading}
-      >
-        {isLoading ? 'Creating account...' : 'Create Account'}
-        <ArrowRight className="w-4 h-4 ml-2" />
-      </Button>
-      
-      <div className="text-center">
-        <span className="text-sm text-gray-600">Already have an account? </span>
-        <button
-          type="button"
-          onClick={() => setMode('login')}
-          className="text-sm text-purple-600 hover:text-purple-700"
-        >
-          Sign in
-        </button>
-      </div>
-    </form>
-  );
+  const title =
+    mode === 'login' ? 'Sign in to your account'
+    : mode === 'register' ? 'Create your account'
+    : mode === 'confirm-code' ? 'Confirm your email'
+    : mode === 'forgot-password' ? 'Reset your password'
+    : mode === 'reset-code' ? 'Enter your reset code'
+    : 'Password changed';
 
-  const renderForgotPasswordForm = () => (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
-        <div className="relative">
-          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <Input
-            id="email"
-            type="email"
-            placeholder="Enter your email"
-            value={formData.email}
-            onChange={(e) => handleInputChange('email', e.target.value)}
-            className="pl-10"
-            required
-          />
-        </div>
-        <p className="text-sm text-gray-500">
-          We'll send you a link to reset your password
-        </p>
-      </div>
-      
-      {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-      
-      <Button 
-        type="submit" 
-        className="w-full bg-gradient-to-r from-purple-600 to-orange-500 text-white"
-        disabled={isLoading}
-      >
-        {isLoading ? 'Sending...' : 'Send Reset Link'}
-        <ArrowRight className="w-4 h-4 ml-2" />
-      </Button>
-      
-      <div className="text-center">
-        <button
-          type="button"
-          onClick={() => setMode('login')}
-          className="text-sm text-purple-600 hover:text-purple-700 flex items-center justify-center space-x-1"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back to login</span>
-        </button>
-      </div>
-    </form>
-  );
-
-  const renderResetSuccess = () => (
-    <div className="text-center space-y-4">
-      <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-        <CheckCircle className="w-8 h-8 text-green-600" />
-      </div>
-      <div>
-        <h3 className="text-lg mb-2">Check your email</h3>
-        <p className="text-gray-600 text-sm">
-          We've sent a password reset link to {formData.email}
-        </p>
-      </div>
-      <Button 
-        onClick={() => setMode('login')}
-        variant="outline"
-        className="w-full"
-      >
-        <ArrowLeft className="w-4 h-4 mr-2" />
-        Back to login
-      </Button>
+  const emailField = (
+    <div className="bs-field">
+      <label htmlFor="bs-email">Email</label>
+      <input id="bs-email" className="bs-input" type="email" placeholder="you@company.com"
+        value={formData.email} onChange={(e) => set('email', e.target.value)} required />
     </div>
   );
 
-  const getTitle = () => {
-    switch (mode) {
-      case 'login': return 'Welcome Back';
-      case 'register': return 'Create Account';
-      case 'forgot-password': return 'Reset Password';
-      case 'reset-success': return 'Email Sent';
-      default: return 'Sign In';
-    }
-  };
+  const passwordField = (label: string, placeholder: string) => (
+    <div className="bs-field">
+      <label htmlFor="bs-password">{label}</label>
+      <input id="bs-password" className="bs-input" type={showPassword ? 'text' : 'password'}
+        placeholder={placeholder} value={formData.password}
+        onChange={(e) => set('password', e.target.value)} required />
+      <div className="bs-auth-small">
+        <button type="button" className="bs-link-btn" onClick={() => setShowPassword(!showPassword)}>
+          {showPassword ? 'Hide password' : 'Show password'}
+        </button>
+      </div>
+    </div>
+  );
 
-  const getDescription = () => {
-    switch (mode) {
-      case 'login': return 'Sign in to access your personalized learning dashboard';
-      case 'register': return 'Join thousands of entrepreneurs scaling their businesses';
-      case 'forgot-password': return 'Enter your email to receive a password reset link';
-      case 'reset-success': return '';
-      default: return '';
-    }
-  };
+  const confirmPasswordField = (label: string) => (
+    <div className="bs-field">
+      <label htmlFor="bs-confirm">{label}</label>
+      <input id="bs-confirm" className="bs-input" type="password" placeholder="Repeat the password"
+        value={formData.confirmPassword} onChange={(e) => set('confirmPassword', e.target.value)} required />
+    </div>
+  );
+
+  const codeField = (
+    <div className="bs-field">
+      <label htmlFor="bs-code">6-digit code</label>
+      <input id="bs-code" className="bs-input" inputMode="numeric" placeholder="123456"
+        value={formData.code} onChange={(e) => set('code', e.target.value)} required />
+      <p className="bs-auth-small">We've emailed a 6-digit code to {formData.email}</p>
+    </div>
+  );
+
+  const alerts = (
+    <>
+      {error && <div className="bs-auth-error">{error}</div>}
+      {notice && <div className="bs-auth-note">{notice}</div>}
+    </>
+  );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-orange-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        <Card className="shadow-lg">
-          <CardHeader className="text-center space-y-2">
-            <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
-              <User className="w-8 h-8 text-white" />
-            </div>
-            <CardTitle className="text-2xl">{getTitle()}</CardTitle>
-            {getDescription() && (
-              <CardDescription className="text-base">
-                {getDescription()}
-              </CardDescription>
-            )}
-          </CardHeader>
-          
-          <CardContent className="space-y-6">
-            {mode === 'login' && renderLoginForm()}
-            {mode === 'register' && renderRegisterForm()}
-            {mode === 'forgot-password' && renderForgotPasswordForm()}
-            {mode === 'reset-success' && renderResetSuccess()}
+    <div className="bs-auth-bg">
+      <div className="bs-auth-card">
+        <img src="/edna/img/logo.png" alt="Brandscaling" className="bs-auth-logo" />
+        <h1 className="bs-auth-title">{title}</h1>
 
-            <div className="text-center">
-              <button
-                onClick={onCancel}
-                className="text-sm text-gray-500 hover:text-gray-700"
-              >
-                ← Back to homepage
-              </button>
+        {mode === 'login' && (
+          <form onSubmit={handleSubmit}>
+            {emailField}
+            {passwordField('Password', 'Your password')}
+            <div className="bs-auth-row">
+              <span />
+              <button type="button" className="bs-link-btn" onClick={() => setMode('forgot-password')}>Forgot password?</button>
             </div>
-          </CardContent>
-        </Card>
+            {alerts}
+            <button type="submit" className="bs-btn bs-btn-action bs-btn-block" disabled={isLoading}>
+              {isLoading ? 'Signing in…' : 'Sign in'}
+            </button>
+            <hr className="bs-auth-divider" />
+            <p className="bs-auth-foot">
+              New here?{' '}
+              <button type="button" className="bs-link-btn" onClick={() => setMode('register')}>
+                Take the free E-DNA assessment
+              </button>
+            </p>
+          </form>
+        )}
+
+        {mode === 'register' && (
+          <form onSubmit={handleSubmit}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              <div className="bs-field">
+                <label htmlFor="bs-first">First name</label>
+                <input id="bs-first" className="bs-input" placeholder="First name"
+                  value={formData.firstName} onChange={(e) => set('firstName', e.target.value)} required />
+              </div>
+              <div className="bs-field">
+                <label htmlFor="bs-last">Last name</label>
+                <input id="bs-last" className="bs-input" placeholder="Last name"
+                  value={formData.lastName} onChange={(e) => set('lastName', e.target.value)} required />
+              </div>
+            </div>
+            {emailField}
+            {passwordField('Password', 'At least 8 characters')}
+            {confirmPasswordField('Confirm password')}
+            {alerts}
+            <button type="submit" className="bs-btn bs-btn-action bs-btn-block" disabled={isLoading}>
+              {isLoading ? 'Creating account…' : 'Create account'}
+            </button>
+            <hr className="bs-auth-divider" />
+            <p className="bs-auth-foot">
+              Already have an account?{' '}
+              <button type="button" className="bs-link-btn" onClick={() => setMode('login')}>Sign in</button>
+            </p>
+          </form>
+        )}
+
+        {mode === 'confirm-code' && (
+          <form onSubmit={handleSubmit}>
+            {codeField}
+            {alerts}
+            <button type="submit" className="bs-btn bs-btn-action bs-btn-block" disabled={isLoading}>
+              {isLoading ? 'Confirming…' : 'Confirm email'}
+            </button>
+            <hr className="bs-auth-divider" />
+            <p className="bs-auth-foot">
+              Nothing arrived?{' '}
+              <button type="button" className="bs-link-btn" onClick={resend}>Resend the code</button>
+            </p>
+          </form>
+        )}
+
+        {mode === 'forgot-password' && (
+          <form onSubmit={handleSubmit}>
+            {emailField}
+            <p className="bs-auth-small" style={{ marginBottom: 16 }}>We'll email you a 6-digit code to reset your password.</p>
+            {alerts}
+            <button type="submit" className="bs-btn bs-btn-action bs-btn-block" disabled={isLoading}>
+              {isLoading ? 'Sending…' : 'Send reset code'}
+            </button>
+            <hr className="bs-auth-divider" />
+            <p className="bs-auth-foot">
+              <button type="button" className="bs-link-btn" onClick={() => setMode('login')}>← Back to sign in</button>
+            </p>
+          </form>
+        )}
+
+        {mode === 'reset-code' && (
+          <form onSubmit={handleSubmit}>
+            {codeField}
+            {passwordField('New password', 'At least 8 characters')}
+            {confirmPasswordField('Confirm new password')}
+            {alerts}
+            <button type="submit" className="bs-btn bs-btn-action bs-btn-block" disabled={isLoading}>
+              {isLoading ? 'Resetting…' : 'Reset password'}
+            </button>
+            <hr className="bs-auth-divider" />
+            <p className="bs-auth-foot">
+              <button type="button" className="bs-link-btn" onClick={() => setMode('login')}>← Back to sign in</button>
+            </p>
+          </form>
+        )}
+
+        {mode === 'reset-success' && (
+          <div>
+            <p className="bs-auth-foot" style={{ marginBottom: 20 }}>
+              Your password has been reset. You can now sign in with your new password.
+            </p>
+            <button className="bs-btn bs-btn-action bs-btn-block" onClick={() => setMode('login')}>Back to sign in</button>
+          </div>
+        )}
+
+        <p className="bs-auth-foot" style={{ marginTop: 22 }}>
+          <button type="button" className="bs-link-btn" onClick={onCancel}>← Back to the homepage</button>
+        </p>
       </div>
+      <p className="bs-auth-tag">Decision Intelligence &amp; Infinite Scaling Mastery</p>
     </div>
   );
 }
-
-// import { useState } from 'react';
-// import { Button } from './ui/button';
-// import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-// import { Input } from './ui/input';
-// import { Label } from './ui/label';
-// import { Alert, AlertDescription } from './ui/alert';
-// import { 
-//   Mail, 
-//   Lock, 
-//   Eye, 
-//   EyeOff, 
-//   User, 
-//   ArrowRight, 
-//   CheckCircle, 
-//   AlertCircle,
-//   ArrowLeft
-// } from 'lucide-react';
-// import { authHelpers } from '../utils/supabase/client';
-
-// interface AuthScreensProps {
-//   onAuthenticate: (user: { email: string; name: string }) => void;
-//   onCancel: () => void;
-// }
-
-// type AuthMode = 'login' | 'register' | 'forgot-password' | 'reset-success';
-
-// export function AuthScreens({ onAuthenticate, onCancel }: AuthScreensProps) {
-//   const [mode, setMode] = useState<AuthMode>('login');
-//   const [showPassword, setShowPassword] = useState(false);
-//   const [isLoading, setIsLoading] = useState(false);
-//   const [error, setError] = useState('');
-//   const [formData, setFormData] = useState({
-//     email: '',
-//     password: '',
-//     confirmPassword: '',
-//     firstName: '',
-//     lastName: ''
-//   });
-
-//   const handleInputChange = (field: string, value: string) => {
-//     setFormData(prev => ({ ...prev, [field]: value }));
-//     setError(''); // Clear error when user starts typing
-//   };
-
-//   const validateForm = () => {
-//     if (!formData.email || !formData.email.includes('@')) {
-//       setError('Please enter a valid email address');
-//       return false;
-//     }
-    
-//     if (mode === 'register') {
-//       if (!formData.firstName || !formData.lastName) {
-//         setError('Please enter your full name');
-//         return false;
-//       }
-//       if (formData.password.length < 8) {
-//         setError('Password must be at least 8 characters long');
-//         return false;
-//       }
-//       if (formData.password !== formData.confirmPassword) {
-//         setError('Passwords do not match');
-//         return false;
-//       }
-//     } else if (mode === 'login') {
-//       if (!formData.password) {
-//         setError('Please enter your password');
-//         return false;
-//       }
-//     }
-    
-//     return true;
-//   };
-
-//   const handleSubmit = async (e: React.FormEvent) => {
-//     e.preventDefault();
-    
-//     if (!validateForm()) return;
-    
-//     setIsLoading(true);
-//     setError('');
-    
-//     try {
-//       if (mode === 'login') {
-//         // Real Supabase login
-//         const { data, error } = await authHelpers.signIn(formData.email, formData.password);
-        
-//         if (error) {
-//           setError(error.message || 'Invalid email or password');
-//           setIsLoading(false);
-//           return;
-//         }
-        
-//         if (data.user) {
-//           onAuthenticate({
-//             email: data.user.email || '',
-//             name: data.user.user_metadata?.name || 'User'
-//           });
-//         }
-//       } else if (mode === 'register') {
-//         // Real Supabase registration
-//         const fullName = `${formData.firstName} ${formData.lastName}`;
-//         const { data, error } = await authHelpers.signUp(
-//           formData.email, 
-//           formData.password,
-//           fullName
-//         );
-        
-//         if (error) {
-//           // Check if it's a duplicate email error
-//           const errorCode = (error as any).error || '';
-//           const errorMsg = error.message || 'Registration failed';
-          
-//           // Detect duplicate email errors from various sources
-//           if (errorCode === 'EMAIL_ALREADY_EXISTS' || 
-//               errorMsg.toLowerCase().includes('already') || 
-//               errorMsg.toLowerCase().includes('registered') ||
-//               errorMsg.toLowerCase().includes('duplicate') ||
-//               errorMsg.toLowerCase().includes('exists')) {
-//             setError('This email is already registered. Please sign in instead.');
-//             // Auto-switch to login after 2.5 seconds
-//             setTimeout(() => {
-//               setMode('login');
-//               setError('');
-//             }, 2500);
-//           } else {
-//             setError(errorMsg);
-//           }
-//           setIsLoading(false);
-//           return;
-//         }
-        
-//         if (data.user) {
-//           // Check if email confirmation is required
-//           if (data.user.identities && data.user.identities.length === 0) {
-//             setError('Please check your email to confirm your account before signing in.');
-//             setMode('login');
-//             setIsLoading(false);
-//             return;
-//           }
-          
-//           onAuthenticate({
-//             email: data.user.email || '',
-//             name: fullName
-//           });
-//         }
-//       } else if (mode === 'forgot-password') {
-//         // For now, show success (real password reset would need email configuration)
-//         setMode('reset-success');
-//       }
-      
-//       setIsLoading(false);
-//     } catch (err: any) {
-//       console.error('Auth error:', err);
-//       setError(err.message || 'An unexpected error occurred');
-//       setIsLoading(false);
-//     }
-//   };
-
-//   const renderLoginForm = () => (
-//     <form onSubmit={handleSubmit} className="space-y-4">
-//       <div className="space-y-2">
-//         <Label htmlFor="email">Email</Label>
-//         <div className="relative">
-//           <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-//           <Input
-//             id="email"
-//             type="email"
-//             placeholder="Enter your email"
-//             value={formData.email}
-//             onChange={(e) => handleInputChange('email', e.target.value)}
-//             className="pl-10"
-//             required
-//           />
-//         </div>
-//       </div>
-      
-//       <div className="space-y-2">
-//         <Label htmlFor="password">Password</Label>
-//         <div className="relative">
-//           <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-//           <Input
-//             id="password"
-//             type={showPassword ? 'text' : 'password'}
-//             placeholder="Enter your password"
-//             value={formData.password}
-//             onChange={(e) => handleInputChange('password', e.target.value)}
-//             className="pl-10 pr-10"
-//             required
-//           />
-//           <button
-//             type="button"
-//             onClick={() => setShowPassword(!showPassword)}
-//             className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-//           >
-//             {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-//           </button>
-//         </div>
-//       </div>
-      
-//       <div className="flex items-center justify-between">
-//         <button
-//           type="button"
-//           onClick={() => setMode('forgot-password')}
-//           className="text-sm text-purple-600 hover:text-purple-700"
-//         >
-//           Forgot password?
-//         </button>
-//       </div>
-      
-//       {error && (
-//         <Alert variant="destructive">
-//           <AlertCircle className="h-4 w-4" />
-//           <AlertDescription>{error}</AlertDescription>
-//         </Alert>
-//       )}
-      
-//       <Button 
-//         type="submit" 
-//         className="w-full bg-gradient-to-r from-purple-600 to-orange-500 text-white"
-//         disabled={isLoading}
-//       >
-//         {isLoading ? 'Signing in...' : 'Sign In'}
-//         <ArrowRight className="w-4 h-4 ml-2" />
-//       </Button>
-      
-//       <div className="text-center">
-//         <span className="text-sm text-gray-600">Don't have an account? </span>
-//         <button
-//           type="button"
-//           onClick={() => setMode('register')}
-//           className="text-sm text-purple-600 hover:text-purple-700"
-//         >
-//           Sign up
-//         </button>
-//       </div>
-//     </form>
-//   );
-
-//   const renderRegisterForm = () => (
-//     <form onSubmit={handleSubmit} className="space-y-4">
-//       <div className="grid grid-cols-2 gap-4">
-//         <div className="space-y-2">
-//           <Label htmlFor="firstName">First Name</Label>
-//           <div className="relative">
-//             <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-//             <Input
-//               id="firstName"
-//               placeholder="First name"
-//               value={formData.firstName}
-//               onChange={(e) => handleInputChange('firstName', e.target.value)}
-//               className="pl-10"
-//               required
-//             />
-//           </div>
-//         </div>
-//         <div className="space-y-2">
-//           <Label htmlFor="lastName">Last Name</Label>
-//           <Input
-//             id="lastName"
-//             placeholder="Last name"
-//             value={formData.lastName}
-//             onChange={(e) => handleInputChange('lastName', e.target.value)}
-//             required
-//           />
-//         </div>
-//       </div>
-      
-//       <div className="space-y-2">
-//         <Label htmlFor="email">Email</Label>
-//         <div className="relative">
-//           <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-//           <Input
-//             id="email"
-//             type="email"
-//             placeholder="Enter your email"
-//             value={formData.email}
-//             onChange={(e) => handleInputChange('email', e.target.value)}
-//             className="pl-10"
-//             required
-//           />
-//         </div>
-//       </div>
-      
-//       <div className="space-y-2">
-//         <Label htmlFor="password">Password</Label>
-//         <div className="relative">
-//           <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-//           <Input
-//             id="password"
-//             type={showPassword ? 'text' : 'password'}
-//             placeholder="Create a password"
-//             value={formData.password}
-//             onChange={(e) => handleInputChange('password', e.target.value)}
-//             className="pl-10 pr-10"
-//             required
-//           />
-//           <button
-//             type="button"
-//             onClick={() => setShowPassword(!showPassword)}
-//             className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-//           >
-//             {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-//           </button>
-//         </div>
-//         <p className="text-xs text-gray-500">Must be at least 8 characters</p>
-//       </div>
-      
-//       <div className="space-y-2">
-//         <Label htmlFor="confirmPassword">Confirm Password</Label>
-//         <div className="relative">
-//           <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-//           <Input
-//             id="confirmPassword"
-//             type="password"
-//             placeholder="Confirm your password"
-//             value={formData.confirmPassword}
-//             onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-//             className="pl-10"
-//             required
-//           />
-//         </div>
-//       </div>
-      
-//       {error && (
-//         <Alert 
-//           variant={error.includes('already registered') ? 'default' : 'destructive'} 
-//           className={error.includes('already registered') ? 'border-blue-500 bg-blue-50 text-blue-900' : ''}
-//         >
-//           <AlertCircle className="h-4 w-4" />
-//           <AlertDescription>
-//             {error}
-//             {error.includes('already registered') && (
-//               <div className="mt-3 flex items-center gap-2">
-//                 <span className="text-sm">Redirecting to sign in...</span>
-//                 <button
-//                   type="button"
-//                   onClick={() => {
-//                     setMode('login');
-//                     setError('');
-//                   }}
-//                   className="text-sm text-purple-600 hover:text-purple-700 underline"
-//                 >
-//                   Go now →
-//                 </button>
-//               </div>
-//             )}
-//           </AlertDescription>
-//         </Alert>
-//       )}
-      
-//       <Button 
-//         type="submit" 
-//         className="w-full bg-gradient-to-r from-purple-600 to-orange-500 text-white"
-//         disabled={isLoading}
-//       >
-//         {isLoading ? 'Creating account...' : 'Create Account'}
-//         <ArrowRight className="w-4 h-4 ml-2" />
-//       </Button>
-      
-//       <div className="text-center">
-//         <span className="text-sm text-gray-600">Already have an account? </span>
-//         <button
-//           type="button"
-//           onClick={() => setMode('login')}
-//           className="text-sm text-purple-600 hover:text-purple-700"
-//         >
-//           Sign in
-//         </button>
-//       </div>
-//     </form>
-//   );
-
-//   const renderForgotPasswordForm = () => (
-//     <form onSubmit={handleSubmit} className="space-y-4">
-//       <div className="space-y-2">
-//         <Label htmlFor="email">Email</Label>
-//         <div className="relative">
-//           <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-//           <Input
-//             id="email"
-//             type="email"
-//             placeholder="Enter your email"
-//             value={formData.email}
-//             onChange={(e) => handleInputChange('email', e.target.value)}
-//             className="pl-10"
-//             required
-//           />
-//         </div>
-//         <p className="text-sm text-gray-500">
-//           We'll send you a link to reset your password
-//         </p>
-//       </div>
-      
-//       {error && (
-//         <Alert variant="destructive">
-//           <AlertCircle className="h-4 w-4" />
-//           <AlertDescription>{error}</AlertDescription>
-//         </Alert>
-//       )}
-      
-//       <Button 
-//         type="submit" 
-//         className="w-full bg-gradient-to-r from-purple-600 to-orange-500 text-white"
-//         disabled={isLoading}
-//       >
-//         {isLoading ? 'Sending...' : 'Send Reset Link'}
-//         <ArrowRight className="w-4 h-4 ml-2" />
-//       </Button>
-      
-//       <div className="text-center">
-//         <button
-//           type="button"
-//           onClick={() => setMode('login')}
-//           className="text-sm text-purple-600 hover:text-purple-700 flex items-center justify-center space-x-1"
-//         >
-//           <ArrowLeft className="w-4 h-4" />
-//           <span>Back to login</span>
-//         </button>
-//       </div>
-//     </form>
-//   );
-
-//   const renderResetSuccess = () => (
-//     <div className="text-center space-y-4">
-//       <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-//         <CheckCircle className="w-8 h-8 text-green-600" />
-//       </div>
-//       <div>
-//         <h3 className="text-lg mb-2">Check your email</h3>
-//         <p className="text-gray-600 text-sm">
-//           We've sent a password reset link to {formData.email}
-//         </p>
-//       </div>
-//       <Button 
-//         onClick={() => setMode('login')}
-//         variant="outline"
-//         className="w-full"
-//       >
-//         <ArrowLeft className="w-4 h-4 mr-2" />
-//         Back to login
-//       </Button>
-//     </div>
-//   );
-
-//   const getTitle = () => {
-//     switch (mode) {
-//       case 'login': return 'Welcome Back';
-//       case 'register': return 'Create Account';
-//       case 'forgot-password': return 'Reset Password';
-//       case 'reset-success': return 'Email Sent';
-//       default: return 'Sign In';
-//     }
-//   };
-
-//   const getDescription = () => {
-//     switch (mode) {
-//       case 'login': return 'Sign in to access your personalized learning dashboard';
-//       case 'register': return 'Join thousands of entrepreneurs scaling their businesses';
-//       case 'forgot-password': return 'Enter your email to receive a password reset link';
-//       case 'reset-success': return '';
-//       default: return '';
-//     }
-//   };
-
-//   return (
-//     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-orange-50 flex items-center justify-center px-4">
-//       <div className="w-full max-w-md">
-//         <Card className="shadow-lg">
-//           <CardHeader className="text-center space-y-2">
-//             <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
-//               <User className="w-8 h-8 text-white" />
-//             </div>
-//             <CardTitle className="text-2xl">{getTitle()}</CardTitle>
-//             {getDescription() && (
-//               <CardDescription className="text-base">
-//                 {getDescription()}
-//               </CardDescription>
-//             )}
-//           </CardHeader>
-          
-//           <CardContent className="space-y-6">
-//             {mode === 'login' && renderLoginForm()}
-//             {mode === 'register' && renderRegisterForm()}
-//             {mode === 'forgot-password' && renderForgotPasswordForm()}
-//             {mode === 'reset-success' && renderResetSuccess()}
-
-//             <div className="text-center">
-//               <button
-//                 onClick={onCancel}
-//                 className="text-sm text-gray-500 hover:text-gray-700"
-//               >
-//                 ← Back to homepage
-//               </button>
-//             </div>
-//           </CardContent>
-//         </Card>
-//       </div>
-//     </div>
-//   );
-// }

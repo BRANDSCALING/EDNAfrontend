@@ -2,6 +2,10 @@
   import App from "./App.tsx";
   import "./index.css";
   import "./styles/print.css";
+  // Phase 5 redesign (BS-BRAND-001): colour register, interface tokens, site components.
+  import "./styles/brandscaling-colours.css";
+  import "./styles/brandscaling-tokens.css";
+  import "./styles/brand.css";
 
 // Error boundary for development
 window.addEventListener('error', (event) => {

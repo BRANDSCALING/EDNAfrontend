@@ -3,7 +3,17 @@ import { Navigation } from './components/Navigation';
 import { Home } from './components/Home';
 import { About } from './components/About';
 import { Courses } from './components/Courses';
-import { NewEDNAQuiz } from './components/NewEDNAQuiz';
+// NewEDNAQuiz retired 17 Nov 2026 — the assessment is Fariza's approved web-app at /edna/.
+
+/** Full-page redirect into the redesigned E-DNA assessment. */
+function EdnaRedirect() {
+  useEffect(() => { window.location.href = '/edna/index.html'; }, []);
+  return (
+    <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280' }}>
+      Opening your E-DNA assessment…
+    </div>
+  );
+}
 import { EDNAResults } from './lib/scoring';
 import { QuizResults } from './components/QuizResults';
 import { EDNAResultsPage } from './components/EDNAResultsPage';
@@ -15,13 +25,17 @@ import { PersonalizedAIChat } from './components/PersonalizedAIChat';
 import { AIMentorHub } from './components/AIMentorHub';
 import { ProfileInsights } from './components/ProfileInsights';
 import { OnboardingFlow } from './components/OnboardingFlow';
+import { BrandHome } from './components/brand/BrandHome';
+import { BrandNav } from './components/brand/BrandNav';
+import { BrandDashboard } from './components/brand/BrandDashboard';
 import { AuthScreens } from './components/AuthScreens';
 import { EmailVerificationPage } from './components/EmailVerificationPage';
 import { CompleteResultsPage } from './components/CompleteResultsPage';
 import { PDFResultsPage } from './components/PDFResultsPage';
 import { QuizCooldownMessage } from './components/QuizCooldownMessage';
 import { SignupPage } from './components/SignupPage';
-import { authHelpers } from './utils/supabase/client';
+// 17 Nov 2026: auth moved from Supabase to AWS Cognito (same user pool as the iOS app).
+import { authHelpers } from './utils/auth/cognito';
 import { checkBackendStatus } from './utils/supabase/backend-status';
 import { BACKEND_URL, GHL_CHECKOUT_URL } from './config';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
@@ -264,7 +278,12 @@ export default function App() {
 
     // Check backend status (non-blocking, just for logging)
     checkBackendStatus();
-    
+
+    // The assessment page redirects here with ?signin=1 when there is no session.
+    if (new URLSearchParams(window.location.search).get('signin') === '1') {
+      setShowAuth(true);
+    }
+
     checkSession();
 
     // Listen for auth changes
@@ -291,7 +310,30 @@ export default function App() {
           id: session.user.id,
         });
         setIsAuthenticated(true);
-        
+
+        // The E-DNA assessment page sent the user here to sign in — send them straight back.
+        if (new URLSearchParams(window.location.search).get('from') === 'edna') {
+          window.location.href = '/edna/index.html';
+          return;
+        }
+
+        // Mirror the Cognito user into the shared users table (same call the iOS app makes),
+        // so quiz results and workbooks key off the same row on web and iOS.
+        if (event === 'SIGNED_IN') {
+          fetch(`${BACKEND_URL}/api/user/sync-profile`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({
+              userId: session.user.id,
+              email: session.user.email,
+              name: session.user.user_metadata?.name || 'User',
+            }),
+          }).catch((e) => console.log('⚠️ sync-profile failed (non-blocking):', e));
+        }
+
         // Check if user just signed up - show onboarding first
         const justSignedUp = localStorage.getItem('justSignedUp') === 'true';
         if (justSignedUp) {
@@ -302,15 +344,9 @@ export default function App() {
           setShowOnboarding(true);
           // Don't load quiz results for new signups - they need to take the quiz first
           return; // Exit early
-        } else {
-          // If user is authenticated and on home page, redirect to dashboard
-          setCurrentView((prevView) => {
-            if (prevView === 'home') {
-              return 'dashboard';
-            }
-            return prevView;
-          });
         }
+        // Phase 5: a signed-in user on 'home' now sees the redesigned overview (BrandDashboard),
+        // so the old home→dashboard redirect is gone.
 
         // Check localStorage first for immediate results (before async backend call)
         if (session.user.email) {
@@ -440,10 +476,8 @@ export default function App() {
           }
         }
         
-        // If user is authenticated and on home page, redirect to dashboard
-        if (currentView === 'home') {
-          setCurrentView('dashboard');
-        }
+        // Phase 5: a signed-in user on 'home' now sees the redesigned overview (BrandDashboard),
+        // so the old home→dashboard redirect is gone.
 
         // Then try to load from backend (will update if newer data exists)
         if (session.user.email) {
@@ -1053,17 +1087,13 @@ export default function App() {
     );
   }
 
+  // 17 Nov 2026: the old 5-step onboarding walkthrough is retired. It is not part of Fariza's
+  // approved E-DNA package — her assessment opens with its own welcome screen — so every path
+  // that used to show OnboardingFlow now goes straight to the assessment. (Flagged to Fariza:
+  // if a site walkthrough is wanted, it gets designed under BS-BRAND-001, not revived from here.)
   if (showOnboarding) {
-    return (
-      <OnboardingFlow 
-        onComplete={() => {
-          // Mark onboarding as completed so it doesn't show again
-          localStorage.setItem('edna-onboarding-completed', 'true');
-          setShowOnboarding(false);
-          setCurrentView('quiz');
-        }}
-      />
-    );
+    localStorage.setItem('edna-onboarding-completed', 'true');
+    return <EdnaRedirect />;
   }
 
   if (showAuth) {
@@ -1104,9 +1134,67 @@ export default function App() {
     );
   }
 
+  // Phase 5 (BS-BRAND-001): the signed-out home is the redesigned landing page with its own
+  // navigation (Mockup 01), so the old global Navigation is skipped for it.
+  if (currentView === 'home' && !isAuthenticated) {
+    return (
+      <BrandHome
+        onViewChange={handleViewChange}
+        onSignIn={() => { setAuthMode('login'); setShowAuth(true); }}
+      />
+    );
+  }
+
+  // Phase 5: About and (public) Courses share the brand shell — BrandNav on top, restyled
+  // content below — instead of the old global Navigation. Signed-in members reach Courses
+  // through the dashboard sidebar, which is handled further down.
+  if (currentView === 'about' || (currentView === 'courses' && !isAuthenticated)) {
+    return (
+      <div className="bs-page" style={{ background: 'linear-gradient(180deg, #FAF8FC 0%, #F6F3F9 100%)' }}>
+        <BrandNav
+          onViewChange={handleViewChange}
+          onSignIn={() => { setAuthMode('login'); setShowAuth(true); }}
+          isAuthenticated={isAuthenticated}
+        />
+        <main className="bs-pub-main">
+          {currentView === 'about'
+            ? <About onViewChange={handleViewChange} />
+            : <Courses onViewChange={handleViewChange} isAuthenticated={isAuthenticated} />}
+        </main>
+      </div>
+    );
+  }
+
+  // Phase 5 (Mockup 02): every signed-in member screen lives in the redesigned shell with its
+  // own sidebar — overview on 'home', and workbooks / AI mentors / recordings / courses hosted
+  // inside it on 'dashboard'. The old EDNA Profile page is retired: the sidebar's "My E-DNA
+  // profile" opens the new /edna report.
+  if ((currentView === 'home' || currentView === 'dashboard' || currentView === 'courses') && isAuthenticated) {
+    const memberView =
+      currentView === 'home' ? 'overview'
+      : currentView === 'courses' ? 'courses'
+      : (['workbooks', 'chat', 'zoom-recordings', 'courses'].includes(activeDashboardView)
+          ? (activeDashboardView as 'workbooks' | 'chat' | 'zoom-recordings' | 'courses')
+          : 'overview');
+    return (
+      <BrandDashboard
+        userName={user?.name || 'Member'}
+        view={memberView}
+        onOpenMemberView={(view) => {
+          if (view === 'overview') { setCurrentView('home'); return; }
+          if (view === 'profile') { window.location.href = '/edna/index.html'; return; }
+          setCurrentView('dashboard');
+          setActiveDashboardView(view);
+        }}
+        onViewChange={handleViewChange}
+        onLogout={handleLogout}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white">
-      <Navigation 
+      <Navigation
         currentView={currentView}
         onViewChange={handleViewChange}
         isAuthenticated={isAuthenticated}
@@ -1134,94 +1222,16 @@ export default function App() {
         }}
       />
       
-      {currentView === 'home' && !isAuthenticated && <Home onViewChange={handleViewChange} />}
+      {/* signed-out home is handled above by BrandHome (Phase 5 redesign) */}
       
-      {/* If authenticated user is on home, show dashboard instead */}
-      {currentView === 'home' && isAuthenticated && (
-        <CompleteResultsPage 
-          results={quizResults || null}
-          userEmail={user?.email || ''}
-          onViewChange={handleViewChange}
-          quizCompletedAt={quizCompletedAt}
-          activeDashboardView={activeDashboardView}
-          onDashboardViewChange={setActiveDashboardView}
-          isMobileMenuOpen={isMobileMenuOpen}
-        />
-      )}
+      {/* signed-in home is handled above by BrandDashboard (Phase 5 redesign) */}
       
-      {currentView === 'about' && <About onViewChange={handleViewChange} />}
+      {/* 'about' and 'courses' are handled above in the brand shell (Phase 5); nothing renders here. */}
       
-      {currentView === 'courses' && (
-        <Courses
-          onViewChange={handleViewChange}
-          isAuthenticated={isAuthenticated}
-        />
-      )}
-      
-      {currentView === 'quiz' &&
-        (() => {
-          const checkDate =
-            quizCompletedAt ||
-            (() => {
-          const saved = localStorage.getItem('quizCompletedAt');
-          return saved ? new Date(saved) : null;
-        })();
-        
-          const hasCompletedQuiz =
-            quizResults ||
-                                  localStorage.getItem('pendingQuizResults') ||
-            (user?.email &&
-              localStorage.getItem(`quizResults_${user.email}`));
-        
-        if (hasCompletedQuiz && checkDate) {
-            const daysSinceCompletion =
-              (new Date().getTime() - checkDate.getTime()) /
-              (1000 * 60 * 60 * 24);
-          if (daysSinceCompletion < 7) {
-            if (!quizCompletedAt && checkDate) {
-              setQuizCompletedAt(checkDate);
-            }
-            if (!quizResults && user?.email) {
-                const savedResults =
-                  localStorage.getItem(`quizResults_${user.email}`) ||
-                                   localStorage.getItem('pendingQuizResults');
-              if (savedResults) {
-                try {
-                  const results = JSON.parse(savedResults);
-                  if (results && results.core_type) {
-                    setQuizResults(results);
-                      console.log(
-                        '✅ Restored quiz results from localStorage for cooldown display',
-                      );
-                  }
-                } catch (e) {
-                  console.error('Failed to parse saved results:', e);
-                }
-              }
-            }
-            return (
-              <QuizCooldownMessage 
-                completedAt={checkDate}
-                onViewDashboard={() => setCurrentView('dashboard')}
-              />
-            );
-          } else {
-            if (quizCompletedAt) {
-              setQuizCompletedAt(null);
-              localStorage.removeItem('quizCompletedAt');
-            }
-          }
-        }
-        return (
-          <NewEDNAQuiz 
-              onComplete={(results) => {
-                handleQuizComplete(results).catch(console.error);
-              }}
-            onBackToHome={() => setCurrentView('home')}
-            userEmail={user?.email || null}
-          />
-        );
-      })()}
+      {/* 17 Nov 2026: the quiz view now opens the redesigned E-DNA assessment (Fariza's approved
+          web-app, served at /edna/ with its own save/restore + 28-day retake handled server-side).
+          The old NewEDNAQuiz and the 7-day client cooldown are retired with it. */}
+      {currentView === 'quiz' && <EdnaRedirect />}
       
       {currentView === 'results' && quizResults && (
         <EDNAResultsPage 
@@ -1231,17 +1241,10 @@ export default function App() {
         />
       )}
       
-      {currentView === 'dashboard' && isAuthenticated && (
-        <CompleteResultsPage 
-          results={quizResults || null}
-          userEmail={user?.email || ''}
-          onViewChange={handleViewChange}
-          quizCompletedAt={quizCompletedAt}
-          activeDashboardView={activeDashboardView}
-          onDashboardViewChange={setActiveDashboardView}
-          isMobileMenuOpen={isMobileMenuOpen}
-        />
-      )}
+      {/* Phase 5: the E-DNA profile/report now lives at /edna (the redesigned report); the old
+          in-SPA report page is retired with the old data (decisions D3/D4). Other member views
+          (workbooks, chat, recordings) still render through CompleteResultsPage. */}
+      {/* 'dashboard' is handled above by BrandDashboard (Phase 5); nothing renders here. */}
       
       {currentView === 'chat' && isAuthenticated && (
         <AIMentorHub onViewChange={handleViewChange} isInDashboard={false} />

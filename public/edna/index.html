@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>E-DNA Assessment</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/report.css">
+<link rel="stylesheet" href="css/detailed.css">
+<style>
+/* Site fix (17 Nov 2026): the logo asset is cropped to its edges, so the 6px corner rounding
+   from app.css clips the wordmark's first and last letters at this render size. */
+header img { border-radius: 0; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <img src="img/logo.png" alt="Brandscaling logo">
+    <div class="crumb" id="crumb">E-DNA assessment</div><!-- preview jump bar removed for production (BS-DI-006 §11) -->
+  </header>
+  <div class="progress" aria-hidden="true"><span id="bar"></span></div>
+  <div id="screen"></div>
+</div>
+
+<script src="js/01-assessment.js"></script>
+<script src="js/02-report.js"></script>
+<script src="js/03-detailed.js"></script>
+<script src="js/05-site.js"></script><!-- production bridge: auth, save/restore, preview-control removal -->
+<script src="js/04-app.js"></script>
+</body>
+</html>

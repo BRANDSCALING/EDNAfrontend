@@ -5,6 +5,10 @@
 
   export default defineConfig({
     plugins: [react()],
+    // amazon-cognito-identity-js expects Node's `global`; map it to the browser's globalThis.
+    define: {
+      global: 'globalThis',
+    },
     resolve: {
       extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
       alias: {

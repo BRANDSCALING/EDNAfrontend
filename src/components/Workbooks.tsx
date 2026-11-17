@@ -1,69 +1,60 @@
 /**
- * Workbooks Component
- * Modern UI for displaying workbooks/resources
+ * Workbooks — restyled 17 Nov 2026 to the BS-BRAND-001 design language (bs-* classes in
+ * styles/brand.css). It renders INSIDE a .bs-card in BrandDashboard, so it outputs content only:
+ * no page background or max-width wrapper of its own. Download logic unchanged.
  */
 
-import React from 'react';
 import { FileText, Download, BookOpen } from 'lucide-react';
 
 interface WorkbooksProps {
   onViewChange?: (view: string) => void;
-  coreType?: 'architect' | 'alchemist' | 'blurred';
+  coreType?: 'architect' | 'alchemist' | 'blurred' | 'mixed';
 }
 
-export function Workbooks({ onViewChange, coreType = 'architect' }: WorkbooksProps) {
-  console.log('Workbooks component rendering with coreType:', coreType);
-  
-  // Map core type to workbook data
+export function Workbooks({ coreType = 'architect' }: WorkbooksProps) {
+  // The dashboard passes 'mixed' (the v2 record's wording); the historical key here is 'blurred'.
+  const key = coreType === 'mixed' ? 'blurred' : coreType;
+
   const allWorkbooks = {
     architect: {
-      id: 1,
       title: 'E-DNA Decision Mastery for Architect',
       category: 'Architect',
       icon: FileText,
-      color: 'purple',
+      energy: false,
       filePath: '/assets/EDNA_WORKBOOK_ARCHITECT101.docx',
-      fileName: 'EDNA_Decision_Mastery_Architect.docx'
+      fileName: 'EDNA_Decision_Mastery_Architect.docx',
     },
     alchemist: {
-      id: 2,
       title: 'E-DNA Decision Mastery for Alchemist',
       category: 'Alchemist',
       icon: BookOpen,
-      color: 'orange',
+      energy: true,
       filePath: '/assets/ALCHEMISTWORKBOOK.docx',
-      fileName: 'EDNA_Decision_Mastery_Alchemist.docx'
+      fileName: 'EDNA_Decision_Mastery_Alchemist.docx',
     },
     blurred: {
-      id: 3,
       title: 'E-DNA Decision Mastery for Mixed',
       category: 'Mixed',
       icon: FileText,
-      color: 'purple',
+      energy: false,
       filePath: '/assets/E-DNA_DECISION_mastery_WORKBOOK mixed111.docx',
-      fileName: 'EDNA_Decision_Mastery_Mixed.docx'
-    }
-  };
+      fileName: 'EDNA_Decision_Mastery_Mixed.docx',
+    },
+  } as const;
 
-  // Get the workbook for the user's core type
-  const workbook = allWorkbooks[coreType];
+  const workbook = allWorkbooks[key] || allWorkbooks.architect;
+  const Icon = workbook.icon;
 
-  // Handle download
   const handleDownload = async () => {
     try {
-      // Fetch the file
       const response = await fetch(workbook.filePath);
       const blob = await response.blob();
-      
-      // Create download link
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.download = workbook.fileName;
       document.body.appendChild(link);
       link.click();
-      
-      // Cleanup
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (error) {
@@ -73,68 +64,33 @@ export function Workbooks({ onViewChange, coreType = 'architect' }: WorkbooksPro
   };
 
   return (
-    <div className="w-full h-full bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
-        {/* Header */}
-        <div className="mb-12">
-          <h1 className="text-4xl font-bold mb-4" style={{
-            backgroundImage: 'linear-gradient(to right, #42047d, #f6782f)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text'
-          }}>
-            Workbooks & Resources
-          </h1>
-          <p className="text-lg text-gray-600 max-w-3xl">
-            Downloadable templates, frameworks, and guides to accelerate your entrepreneurial journey.
-          </p>
-        </div>
+    <div>
+      <div className="bs-card-head">
+        <h2>Workbooks &amp; resources</h2>
+        <span className={`bs-pill ${workbook.energy ? 'bs-pill-energy' : 'bs-pill-done'}`}>
+          {workbook.category}
+        </span>
+      </div>
+      <p className="bs-empty-copy">
+        Your workbook is matched to your E-DNA: templates, frameworks and guides for how you
+        naturally make decisions.
+      </p>
 
-        {/* Single Workbook Display */}
-        <div className="max-w-md mx-auto">
-          {(() => {
-            const Icon = workbook.icon;
-            const isPurple = workbook.color === 'purple';
-            
-            return (
-              <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-200">
-                <div className={`w-12 h-12 rounded-lg flex items-center justify-center mb-4 ${
-                  isPurple ? 'bg-purple-100' : 'bg-orange-100'
-                }`}>
-                  <Icon className={`w-6 h-6 ${
-                    isPurple ? 'text-purple-600' : 'text-orange-600'
-                  }`} />
-                </div>
-                <div className="mb-2">
-                  <span className={`text-xs font-semibold px-2 py-1 rounded ${
-                    isPurple 
-                      ? 'bg-purple-50 text-purple-700' 
-                      : 'bg-orange-50 text-orange-700'
-                  }`}>
-                    {workbook.category}
-                  </span>
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                  {workbook.title}
-                </h3>
-                <button
-                  onClick={handleDownload}
-                  className={`w-full py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${
-                    isPurple
-                      ? 'bg-purple-600 text-white hover:bg-purple-700'
-                      : 'bg-orange-500 text-white hover:bg-orange-600'
-                  }`}
-                  style={{ borderRadius: '5%' }}
-                >
-                  <Download className="w-4 h-4" />
-                  Download
-                </button>
-              </div>
-            );
-          })()}
+      <div className="bs-wb">
+        <span className={`bs-wb-icon ${workbook.energy ? 'bs-wb-icon-energy' : ''}`} aria-hidden="true">
+          <Icon size={22} />
+        </span>
+        <div className="bs-wb-body">
+          <h3>{workbook.title}</h3>
+          <p>Word document · downloads to your device</p>
         </div>
+        <button
+          className={`bs-btn ${workbook.energy ? 'bs-btn-energy' : 'bs-btn-action'}`}
+          onClick={handleDownload}
+        >
+          <Download size={16} /> Download
+        </button>
       </div>
     </div>
   );
 }
-

@@ -1,0 +1,58 @@
+/* Brandscaling design tokens: interface colour roles, spacing, glass and motion.
+   Source: BS-BRAND-001 Section 19. Applies to Brandscaling and Brandscaling AI.
+   Every colour is from the 88-colour register (brandscaling-colours.css). */
+:root {
+  /* Colour roles — light mode (Section 15) */
+  --bs-canvas: #FFFFFF;
+  --bs-surface-soft: #F8F4EF;
+  --bs-text: #0B0B0B;
+  --bs-text-secondary: #454545;
+  --bs-action: #42047D;
+  --bs-action-hover: #6F409C;
+  --bs-action-pressed: #2E0358;
+  --bs-action-label: #FFFFFF;
+  --bs-energy: #F6782F;
+  --bs-energy-label: #0B0B0B;
+  --bs-link: #841477;
+  --bs-link-visited: #6F409C;
+  --bs-focus: #C72170;
+  --bs-border: #777777;
+  --bs-line: #E5E5E5;
+  --bs-success: #42047D;
+  --bs-info: #8B174E;
+  --bs-warning: #78500C;
+  --bs-error: #A52D33;
+
+  /* Spacing and shape (9.2) */
+  --bs-space-1: 8px;  --bs-space-2: 16px; --bs-space-3: 24px;
+  --bs-space-4: 32px; --bs-space-5: 48px; --bs-space-6: 64px; --bs-space-7: 96px;
+  --bs-radius-control: 8px;
+  --bs-radius-card: 16px;
+  --bs-radius-hero: 24px;
+
+  /* Glass (14.2) */
+  --bs-glass-fill: rgba(255, 255, 255, 0.72);
+  --bs-glass-blur: 14px;
+  --bs-glass-border: rgba(255, 255, 255, 0.5);
+  --bs-glass-shadow: 8px 8px 24px rgba(11, 11, 11, 0.08), -4px -4px 12px rgba(255, 255, 255, 0.6);
+
+  /* Motion (14.7) */
+  --bs-motion-duration: 250ms;
+  --bs-motion-ease: cubic-bezier(0.2, 0, 0, 1);
+}
+
+[data-theme="dark"] {
+  --bs-canvas: #0B0B0B;
+  --bs-surface-soft: #171717;
+  --bs-text: #FFFFFF;
+  --bs-text-secondary: #C5C5C5;
+  --bs-action: #9B7ABA;
+  --bs-action-label: #0B0B0B;
+  --bs-link: #BE82B7;
+  --bs-success: #B9A2CF;
+  --bs-info: #E189B3;
+  --bs-warning: #FFAA1A;
+  --bs-error: #F16E75;
+  --bs-glass-fill: rgba(11, 11, 11, 0.78);
+  --bs-glass-border: rgba(255, 255, 255, 0.12);
+}

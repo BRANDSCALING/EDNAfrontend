@@ -1,6 +1,7 @@
 /**
- * AI Mentor Hub Component
- * Selection between Architect and Alchemist AI Mentors
+ * AI Mentor Hub — restyled 17 Nov 2026 to the BS-BRAND-001 design language (bs-* classes).
+ * Copy and the two disabled "Coming Soon" buttons are unchanged product facts; only
+ * presentation changed. Renders inside a .bs-card in BrandDashboard, so content only.
  */
 
 import { CheckCircle, Target, Lightbulb } from 'lucide-react';
@@ -10,89 +11,77 @@ interface AIMentorHubProps {
   isInDashboard?: boolean;
 }
 
-export function AIMentorHub({ onViewChange, isInDashboard = false }: AIMentorHubProps) {
-  // Default: mentor selection screen
+interface Mentor {
+  title: string;
+  traits: string;
+  icon: typeof Target;
+  energy: boolean;
+  points: string[];
+}
+
+export function AIMentorHub(_props: AIMentorHubProps) {
+  const mentors: Mentor[] = [
+    {
+      title: 'Collaboration Mastery',
+      traits: 'Logical • Data • Strategic',
+      icon: Target,
+      energy: false,
+      points: [
+        'Systematises processes & structures',
+        'Builds repeatable, scalable systems',
+        'Prioritises data-driven decisions',
+      ],
+    },
+    {
+      title: 'Decision Intelligence',
+      traits: 'Creative • Energetic • Experimental',
+      icon: Lightbulb,
+      energy: true,
+      points: [
+        'Thrives on ideation, creativity and innovation',
+        'Trusts intuition and adaptability',
+        'Crafts vision—often rally agreements',
+      ],
+    },
+  ];
+
   return (
-    <div className="w-full bg-gray-50">
-      <section className="section-padding-bs">
-        <div className="container-bs-desktop">
-          <div className="text-center mb-[var(--bs-spacing-section-heading)]">
-            <h1 className="typo-h1-bs mb-4">Meet Your AI Business Advisors</h1>
-            <p className="typo-body-bs text-gray-600 max-w-3xl mx-auto">
-              Choose the AI mentor that matches your entrepreneurial DNA. Start with the Architect for systems and structure,
-              or the Alchemist for creative experimentation and rapid ideation.
-            </p>
-          </div>
+    <div>
+      <h1 className="bs-view-title">Meet Your AI Business Advisors</h1>
+      <p className="bs-view-sub">
+        Choose the AI mentor that matches your entrepreneurial DNA. Start with the Architect for
+        systems and structure, or the Alchemist for creative experimentation and rapid ideation.
+      </p>
 
-          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            {/* Architect card */}
-            <div className="program-flow-card border-l-4 border-purple-600 bg-white">
-              <div className="flex items-start gap-4 mb-6">
-                <div className="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
-                  <Target className="w-6 h-6 text-purple-700" />
-                </div>
+      <div className="bs-mentors">
+        {mentors.map((m) => {
+          const Icon = m.icon;
+          return (
+            <div key={m.title} className={`bs-mentor ${m.energy ? 'bs-mentor-energy' : ''}`}>
+              <div className="bs-mentor-head">
+                <span className={`bs-wb-icon ${m.energy ? 'bs-wb-icon-energy' : ''}`} aria-hidden="true">
+                  <Icon size={22} />
+                </span>
                 <div>
-                  <h3 className="typo-h3-bs mb-1">Collaboration Mastery</h3>
-                  <p className="typo-caption-bs text-gray-600">Logical • Data • Strategic</p>
+                  <h3>{m.title}</h3>
+                  <p>{m.traits}</p>
                 </div>
               </div>
-              <ul className="space-y-3 mb-6">
-                <li className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
-                  <span className="typo-body-bs text-gray-700">Systematises processes &amp; structures</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
-                  <span className="typo-body-bs text-gray-700">Builds repeatable, scalable systems</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
-                  <span className="typo-body-bs text-gray-700">Prioritises data-driven decisions</span>
-                </li>
+              <ul className="bs-ticks">
+                {m.points.map((p) => (
+                  <li key={p}>
+                    <CheckCircle size={17} aria-hidden="true" />
+                    <span>{p}</span>
+                  </li>
+                ))}
               </ul>
-              <button
-                disabled
-                className="mt-6 w-full py-3 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed font-medium text-center"
-              >
+              <button className="bs-btn bs-btn-block bs-btn-disabled" disabled>
                 Coming Soon
               </button>
             </div>
-
-            {/* Alchemist card */}
-            <div className="program-flow-card border-l-4 border-orange-500 bg-white">
-              <div className="flex items-start gap-4 mb-6">
-                <div className="w-12 h-12 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0">
-                  <Lightbulb className="w-6 h-6 text-orange-700" />
-                </div>
-                <div>
-                  <h3 className="typo-h3-bs mb-1">Decision Intelligence</h3>
-                  <p className="typo-caption-bs text-gray-600">Creative • Energetic • Experimental</p>
-                </div>
-              </div>
-              <ul className="space-y-3 mb-6">
-                <li className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />
-                  <span className="typo-body-bs text-gray-700">Thrives on ideation, creativity and innovation</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />
-                  <span className="typo-body-bs text-gray-700">Trusts intuition and adaptability</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />
-                  <span className="typo-body-bs text-gray-700">Crafts vision—often rally agreements</span>
-                </li>
-              </ul>
-              <button
-                disabled
-                className="mt-6 w-full py-3 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed font-medium text-center"
-              >
-                Coming Soon
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
+          );
+        })}
+      </div>
     </div>
   );
 }

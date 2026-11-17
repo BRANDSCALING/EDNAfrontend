@@ -8,8 +8,8 @@ import {
   RefreshCw,
   Video,
 } from 'lucide-react';
-import { BACKEND_URL } from '../config';
-import { supabase } from '../utils/supabase/client';
+import { authHelpers } from '../utils/auth/cognito';
+import { EDNA_API_BASE } from '../utils/edna';
 import { toVimeoEmbed } from '../utils/vimeo';
 
 /**
@@ -96,11 +96,13 @@ function formatDate(iso: string | null): string | null {
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
+// 17 Nov 2026: recordings now come from the shared Brandscaling API with the Cognito session
+// (same /api/v1/zoom routes the iOS app uses); Supabase and the old backend are retired.
 async function zoomFetch<T>(path: string): Promise<T> {
-  const { data: { session } } = await supabase.auth.getSession();
+  const { session } = await authHelpers.getSession();
   const token = session?.access_token;
   if (!token) throw new Error('Please sign in to view recordings.');
-  const res = await fetch(`${BACKEND_URL}${path}`, {
+  const res = await fetch(`${EDNA_API_BASE}${path}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   const body = await res.json().catch(() => ({}));

@@ -1,0 +1,92 @@
+:root {
+  --bs-01-01: #42047D; /* Architect Indigo */
+  --bs-01-02: #2E0358; /* Architect Indigo Dark 1 */
+  --bs-01-03: #1F023B; /* Architect Indigo Dark 2 */
+  --bs-01-04: #6F409C; /* Architect Indigo Light 1 */
+  --bs-01-05: #9B7ABA; /* Architect Indigo Light 2 */
+  --bs-01-06: #B9A2CF; /* Architect Indigo Pastel 1 */
+  --bs-01-07: #D4C5E1; /* Architect Indigo Pastel 2 */
+  --bs-01-08: #E6DEEE; /* Architect Indigo Pastel 3 */
+  --bs-01-09: #360466; /* Architect Indigo Rich metallic */
+  --bs-01-10: #9370B5; /* Architect Indigo Soft metallic */
+  --bs-01-11: #643194; /* Architect Indigo Satin metallic */
+  --bs-02-01: #841477; /* Deep Plum */
+  --bs-02-02: #5C0E53; /* Deep Plum Dark 1 */
+  --bs-02-03: #3E0938; /* Deep Plum Dark 2 */
+  --bs-02-04: #A24C98; /* Deep Plum Light 1 */
+  --bs-02-05: #BE82B7; /* Deep Plum Light 2 */
+  --bs-02-06: #D1A8CD; /* Deep Plum Pastel 1 */
+  --bs-02-07: #E3C9E0; /* Deep Plum Pastel 2 */
+  --bs-02-08: #EFE0ED; /* Deep Plum Pastel 3 */
+  --bs-02-09: #6B1161; /* Deep Plum Rich metallic */
+  --bs-02-10: #B979B1; /* Deep Plum Soft metallic */
+  --bs-02-11: #9A3E8F; /* Deep Plum Satin metallic */
+  --bs-03-01: #C72170; /* Precision Pink */
+  --bs-03-02: #8B174E; /* Precision Pink Dark 1 */
+  --bs-03-03: #5E1035; /* Precision Pink Dark 2 */
+  --bs-03-04: #D45692; /* Precision Pink Light 1 */
+  --bs-03-05: #E189B3; /* Precision Pink Light 2 */
+  --bs-03-06: #EAADCA; /* Precision Pink Pastel 1 */
+  --bs-03-07: #F2CCDE; /* Precision Pink Pastel 2 */
+  --bs-03-08: #F8E2EC; /* Precision Pink Pastel 3 */
+  --bs-03-09: #A11B5C; /* Precision Pink Rich metallic */
+  --bs-03-10: #DF80AD; /* Precision Pink Soft metallic */
+  --bs-03-11: #D1498A; /* Precision Pink Satin metallic */
+  --bs-04-01: #EC4049; /* Founder Red */
+  --bs-04-02: #A52D33; /* Founder Red Dark 1 */
+  --bs-04-03: #6F1E22; /* Founder Red Dark 2 */
+  --bs-04-04: #F16E75; /* Founder Red Light 1 */
+  --bs-04-05: #F59A9F; /* Founder Red Light 2 */
+  --bs-04-06: #F8B8BC; /* Founder Red Pastel 1 */
+  --bs-04-07: #FBD3D5; /* Founder Red Pastel 2 */
+  --bs-04-08: #FDE6E7; /* Founder Red Pastel 3 */
+  --bs-04-09: #BE343C; /* Founder Red Rich metallic */
+  --bs-04-10: #F49297; /* Founder Red Soft metallic */
+  --bs-04-11: #EF626A; /* Founder Red Satin metallic */
+  --bs-05-01: #F6782F; /* Scale Orange */
+  --bs-05-02: #AC5421; /* Scale Orange Dark 1 */
+  --bs-05-03: #743816; /* Scale Orange Dark 2 */
+  --bs-05-04: #F89861; /* Scale Orange Light 1 */
+  --bs-05-05: #FAB791; /* Scale Orange Light 2 */
+  --bs-05-06: #FCCDB2; /* Scale Orange Pastel 1 */
+  --bs-05-07: #FDE0CF; /* Scale Orange Pastel 2 */
+  --bs-05-08: #FEEDE4; /* Scale Orange Pastel 3 */
+  --bs-05-09: #C66128; /* Scale Orange Rich metallic */
+  --bs-05-10: #FAB288; /* Scale Orange Soft metallic */
+  --bs-05-11: #F89054; /* Scale Orange Satin metallic */
+  --bs-06-01: #FFAA1A; /* Amber Orange */
+  --bs-06-02: #B27712; /* Amber Orange Dark 1 */
+  --bs-06-03: #78500C; /* Amber Orange Dark 2 */
+  --bs-06-04: #FFBE51; /* Amber Orange Light 1 */
+  --bs-06-05: #FFD286; /* Amber Orange Light 2 */
+  --bs-06-06: #FFE0AA; /* Amber Orange Pastel 1 */
+  --bs-06-07: #FFEBCA; /* Amber Orange Pastel 2 */
+  --bs-06-08: #FFF4E1; /* Amber Orange Pastel 3 */
+  --bs-06-09: #CE8917; /* Amber Orange Rich metallic */
+  --bs-06-10: #FFCF7C; /* Amber Orange Soft metallic */
+  --bs-06-11: #FFB943; /* Amber Orange Satin metallic */
+  --bs-07-01: #0B0B0B; /* Strategic Black */
+  --bs-07-02: #050505; /* Strategic Black Dark 1 */
+  --bs-07-03: #171717; /* Strategic Black Dark 2 */
+  --bs-07-04: #454545; /* Strategic Black Light 1 */
+  --bs-07-05: #777777; /* Strategic Black Light 2 */
+  --bs-07-06: #A0A0A0; /* Strategic Black Pastel 1 */
+  --bs-07-07: #C5C5C5; /* Strategic Black Pastel 2 */
+  --bs-07-08: #E5E5E5; /* Strategic Black Pastel 3 */
+  --bs-07-09: #424247; /* Strategic Black Rich metallic */
+  --bs-07-10: #B7B8BD; /* Silver */
+  --bs-07-11: #818187; /* Strategic Black Satin metallic */
+  --bs-08-01: #FFFFFF; /* Pure White */
+  --bs-08-02: #E6E3DF; /* Pure White Dark 1 */
+  --bs-08-03: #D1CDC8; /* Pure White Dark 2 */
+  --bs-08-04: #FAF8F4; /* Pure White Light 1 */
+  --bs-08-05: #FFFDF9; /* Pure White Light 2 */
+  --bs-08-06: #F8F6F1; /* Pure White Pastel 1 */
+  --bs-08-07: #F4EDE3; /* Pure White Pastel 2 */
+  --bs-08-08: #F1E0CD; /* Pure White Pastel 3 */
+  --bs-08-09: #D7C6B6; /* Pure White Rich metallic */
+  --bs-08-10: #F8F4EF; /* Pearl */
+  --bs-08-11: #E8E0D7; /* Pure White Satin metallic */
+  --bs-pearl: #F8F4EF;
+  --bs-silver: #B7B8BD;
+}
