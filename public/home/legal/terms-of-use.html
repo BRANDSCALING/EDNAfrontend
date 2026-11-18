@@ -370,6 +370,10 @@ footer a:hover{color:var(--link);text-decoration:underline}
   .foot-grid>div:first-child{grid-column:1 / -1}
   footer h3{font-size:16px}
 }
+/* integration fix 18 Nov 2026: keep the header buttons on one line beside the theme toggle */
+.nav-end{flex-wrap:nowrap}
+.nav-end .btn{white-space:nowrap}
+#theme-toggle{padding:10px 12px;font-size:18px;line-height:1}
 </style>
 <style>
 .doc{max-width:860px;margin:0 auto;padding:48px 20px 72px}
@@ -397,6 +401,7 @@ footer a:hover{color:var(--link);text-decoration:underline}
     <nav class="nav-links" id="navlinks" aria-label="Main">
       <a href="../#why">Why businesses stall</a>
       <a href="../#decide">How you decide</a>
+      <a href="/decision-intelligence">E-DNA</a>
       <a href="../#layers">The six layers</a>
       <a href="../#membership">Membership</a>
       <a href="../#about">About</a>
