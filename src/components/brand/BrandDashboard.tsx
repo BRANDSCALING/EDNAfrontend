@@ -12,9 +12,10 @@ import { fetchEdnaState, type EdnaState } from '../../utils/edna';
 import { BrandWorkbooks } from './BrandWorkbooks';
 import { AIMentorHub } from '../AIMentorHub';
 import { ZoomRecordings } from '../ZoomRecordings';
-import { Courses } from '../Courses';
+// The old Courses/pricing page is retired (Fariza, 18 Nov 2026: "the old pricing is
+// redundant… it's all new"); membership lives on the homepage until her tier pages land.
 
-export type MemberView = 'overview' | 'workbooks' | 'chat' | 'zoom-recordings' | 'courses';
+export type MemberView = 'overview' | 'workbooks' | 'chat' | 'zoom-recordings';
 
 interface BrandDashboardProps {
   userName: string;
@@ -51,7 +52,6 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
         <button className={view === 'chat' ? 'on' : ''} onClick={() => onOpenMemberView('chat')}>💬 AI mentors</button>
         <button className={view === 'workbooks' ? 'on' : ''} onClick={() => onOpenMemberView('workbooks')}>📓 Workbooks</button>
         <button className={view === 'zoom-recordings' ? 'on' : ''} onClick={() => onOpenMemberView('zoom-recordings')}>▶ Recordings</button>
-        <button className={view === 'courses' ? 'on' : ''} onClick={() => onOpenMemberView('courses')}>🎓 Courses</button>
         <button onClick={onLogout}>↩ Log out</button>
         <div className="bs-side-foot">Decision Intelligence &amp; Infinite Scaling Mastery</div>
       </aside>
@@ -87,12 +87,6 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
       {view === 'zoom-recordings' && (
         <main className="bs-main">
           <div className="bs-card"><ZoomRecordings /></div>
-        </main>
-      )}
-
-      {view === 'courses' && (
-        <main className="bs-main">
-          <div className="bs-card"><Courses onViewChange={onViewChange} isAuthenticated={true} /></div>
         </main>
       )}
 

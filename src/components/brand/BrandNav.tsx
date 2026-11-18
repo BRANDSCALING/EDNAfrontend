@@ -17,9 +17,9 @@ export function BrandNav({ onViewChange, onSignIn, isAuthenticated = false }: Br
       <img src="/edna/img/logo.png" alt="Brandscaling" className="bs-nav-logo" />
       <div className="bs-nav-links">
         <button onClick={() => onViewChange('about')}>Decision Intelligence</button>
-        <button onClick={() => onViewChange('courses')}>Infinite Scaling Tower</button>
+        <button onClick={() => { window.location.href = '/home/#layers'; }}>Infinite Scaling Tower</button>
         <button onClick={() => onViewChange('chat')}>AI mentors</button>
-        <button onClick={() => onViewChange('courses')}>Membership</button>
+        <button onClick={() => { window.location.href = '/home/#membership'; }}>Membership</button>
         <button onClick={() => onViewChange('about')}>About</button>
       </div>
       {isAuthenticated ? (

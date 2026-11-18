@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Navigation } from './components/Navigation';
 import { Home } from './components/Home';
 import { About } from './components/About';
-import { Courses } from './components/Courses';
+// Courses (the old pricing page) retired 18 Nov 2026 — membership lives on the homepage.
 // NewEDNAQuiz retired 17 Nov 2026 — the assessment is Fariza's approved web-app at /edna/.
 
 /** Full-page redirect into the redesigned E-DNA assessment. */
@@ -281,8 +281,14 @@ export default function App() {
     checkBackendStatus();
 
     // The assessment page redirects here with ?signin=1 when there is no session.
-    if (new URLSearchParams(window.location.search).get('signin') === '1') {
-      setShowAuth(true);
+    // ?mode=register opens the create-account form: the assessment's end-of-test gate
+    // (Fariza, 18 Nov 2026: start without an account, create one to receive the report).
+    {
+      const q = new URLSearchParams(window.location.search);
+      if (q.get('signin') === '1') {
+        if (q.get('mode') === 'register') setAuthMode('register');
+        setShowAuth(true);
+      }
     }
 
     checkSession();
@@ -1146,7 +1152,12 @@ export default function App() {
   // Phase 5: About and (public) Courses share the brand shell — BrandNav on top, restyled
   // content below — instead of the old global Navigation. Signed-in members reach Courses
   // through the dashboard sidebar, which is handled further down.
-  if (currentView === 'about' || (currentView === 'courses' && !isAuthenticated)) {
+  if (currentView === 'courses' && !isAuthenticated) {
+    /* the old pricing page is retired (Fariza, 18 Nov 2026); membership is on the homepage */
+    window.location.replace(import.meta.env.DEV ? '/home/index.html#membership' : '/home/#membership');
+    return null;
+  }
+  if (currentView === 'about') {
     return (
       <div className="bs-page" style={{ background: 'linear-gradient(180deg, #FAF8FC 0%, #F6F3F9 100%)' }}>
         <BrandNav
@@ -1155,9 +1166,7 @@ export default function App() {
           isAuthenticated={isAuthenticated}
         />
         <main className="bs-pub-main">
-          {currentView === 'about'
-            ? <About onViewChange={handleViewChange} />
-            : <Courses onViewChange={handleViewChange} isAuthenticated={isAuthenticated} />}
+          <About onViewChange={handleViewChange} />
         </main>
       </div>
     );
@@ -1168,11 +1177,11 @@ export default function App() {
   // inside it on 'dashboard'. The old EDNA Profile page is retired: the sidebar's "My E-DNA
   // profile" opens the new /edna report.
   if ((currentView === 'home' || currentView === 'dashboard' || currentView === 'courses') && isAuthenticated) {
+    /* 'courses' (old pricing) is retired — old links land on the overview */
     const memberView =
-      currentView === 'home' ? 'overview'
-      : currentView === 'courses' ? 'courses'
-      : (['workbooks', 'chat', 'zoom-recordings', 'courses'].includes(activeDashboardView)
-          ? (activeDashboardView as 'workbooks' | 'chat' | 'zoom-recordings' | 'courses')
+      currentView === 'home' || currentView === 'courses' ? 'overview'
+      : (['workbooks', 'chat', 'zoom-recordings'].includes(activeDashboardView)
+          ? (activeDashboardView as 'workbooks' | 'chat' | 'zoom-recordings')
           : 'overview');
     return (
       <BrandDashboard

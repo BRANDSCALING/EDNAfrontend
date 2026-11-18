@@ -42,10 +42,24 @@
   }
 
   var sess = cognitoSession();
-  if (!sess) { location.replace('/?signin=1&from=edna'); return; }
+  /* Anonymous start (Fariza, 18 Nov 2026): no account is needed to TAKE the test — people go
+     straight to the questions, and the account is created at the end to receive the report.
+     Signed-out progress lives under the 'anon' key and is adopted by the account on return. */
+  var ANON = !sess;
 
-  var progressKey = 'edna.v2.progress.' + sess.sub;
-  var pendingKey = 'edna.v2.pendingSync.' + sess.sub;
+  var keyId = sess ? sess.sub : 'anon';
+  var progressKey = 'edna.v2.progress.' + keyId;
+  var pendingKey = 'edna.v2.pendingSync.' + keyId;
+  if (sess) {
+    /* Adopt a signed-out run: the person just created their account to receive the report. */
+    try {
+      var anonRaw = localStorage.getItem('edna.v2.progress.anon');
+      if (anonRaw && !localStorage.getItem(progressKey)) {
+        localStorage.setItem(progressKey, anonRaw);
+      }
+      if (anonRaw) localStorage.removeItem('edna.v2.progress.anon');
+    } catch (e) { /* storage unavailable */ }
+  }
   var completedInfo = null;   /* { savedAt, retakeAvailableAt } once known */
   var purchased = false;      /* fullResultPurchased from the backend */
   var submitted = false;
@@ -168,6 +182,7 @@
   }
 
   function fetchRemote() {
+    if (ANON) return Promise.resolve(null); /* nothing stored server-side without an account */
     return fetch(API + '/api/v1/quiz/results/' + encodeURIComponent(sess.sub.toUpperCase()), { headers: authHeaders() })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (j) {
@@ -188,6 +203,7 @@
   }
 
   function submit() {
+    if (ANON) return; /* saved locally; submitted after the account is created (the gate) */
     if (submitted) return;
     submitted = true;
     var payload = {
@@ -217,6 +233,7 @@
       });
   }
   function retryPending() {
+    if (ANON) return;
     try {
       var raw = localStorage.getItem(pendingKey); if (!raw) return;
       send(JSON.parse(raw));
@@ -323,10 +340,35 @@
     if (bb) bb.addEventListener('click', function () { at = screens.indexOf('report'); renderGuarded(); });
   }
 
+  /* The end-of-test account gate (Fariza, 18 Nov 2026): the test runs without an account;
+     the report needs one. Wording follows her instruction; flagged for her copy approval. */
+  function accountGate() {
+    var el = document.getElementById('screen');
+    document.getElementById('crumb').textContent = 'E-DNA · Your report';
+    el.innerHTML = '<div class="wrap" style="gap:24px">'
+      + '<section class="panel"><h1>Create an account to <span class="brand">receive your report</span></h1>'
+      + '<p><b>You have finished the E-DNA assessment.</b> Your answers are saved on this device. '
+      + 'Create a free account and your report is ready the moment you sign in — on the website and in the iOS app.</p>'
+      + '<div class="actions"><button type="button" id="gate-signin" class="back">Sign in</button>'
+      + '<button type="button" id="gate-create">Create my free account</button></div>'
+      + '</section></div>';
+    document.getElementById('gate-create').addEventListener('click', function () {
+      location.href = '/?signin=1&from=edna&mode=register';
+    });
+    document.getElementById('gate-signin').addEventListener('click', function () {
+      location.href = '/?signin=1&from=edna';
+    });
+  }
+
   var origRender = render;
   function renderGuarded() {
     deriveCore();
     var s = screens[at];
+    if (ANON && (s === 'report' || s === 'end' || s === 'detailed' || s === 'adapt')) {
+      snapshot(); /* keep the finished answers safe before leaving for sign-up */
+      accountGate();
+      return;
+    }
     if ((s === 'detailed' || s === 'adapt') && !purchased) {
       lockedScreen(s);
       snapshot();
