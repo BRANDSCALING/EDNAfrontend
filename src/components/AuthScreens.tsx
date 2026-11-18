@@ -105,7 +105,14 @@ export function AuthScreens({ onAuthenticate, onCancel, initialMode = 'login' }:
         }
       } else if (mode === 'confirm-code') {
         const { error } = await authHelpers.confirmSignUp(formData.email, formData.code);
-        if (error) { setError(error.message || 'That code was not accepted. Check it and try again.'); setIsLoading(false); return; }
+        if (error) {
+          /* "User cannot be confirmed. Current status is CONFIRMED" — the account is fine */
+          if (/already\s+confirmed|status is confirmed/i.test(error.message || '')) {
+            setNotice('Your account is already confirmed. Sign in below — or use "Forgot password?" if you do not remember your password.');
+            setMode('login'); setIsLoading(false); return;
+          }
+          setError(error.message || 'That code was not accepted. Check it and try again.'); setIsLoading(false); return;
+        }
         if (!formData.password) {
           /* reached from the forgot-password recovery: confirmed, but no password typed */
           setNotice('Your account is confirmed. Sign in — or use "Forgot password?" if you do not remember your password.');

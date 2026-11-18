@@ -308,6 +308,16 @@
     setTimeout(restore, 60000); /* fallback if afterprint never fires */
   }
 
+  function addDashboardButton(s) {
+    if (ANON || s !== 'end') return;
+    var row = document.querySelector('#screen .actions');
+    if (!row || row.querySelector('.bs-dash-btn')) return;
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'back bs-dash-btn'; b.textContent = 'Go to my dashboard';
+    b.addEventListener('click', function () { location.href = '/'; });
+    row.insertBefore(b, row.firstChild);
+  }
+
   function addPdfButton(s) {
     if (s !== 'report' && s !== 'detailed') return;
     var row = document.querySelector('#screen .actions');
@@ -331,6 +341,7 @@
       + '<p><a class="btn" href="' + CHECKOUT + '" target="_blank" rel="noopener">Get my detailed report (£99)</a></p>'
       + '<p class="small">Already purchased? It can take a minute to come through. <button type="button" id="edna-refresh" class="linkish">Check again</button></p>'
       + '<p class="small"><button type="button" id="edna-back" class="linkish">Back to my report</button></p>'
+      + '<p class="small"><button type="button" id="edna-dash" class="linkish">Go to my dashboard</button></p>'
       + '</section></div>';
     var rb = document.getElementById('edna-refresh');
     if (rb) rb.addEventListener('click', function () {
@@ -338,6 +349,8 @@
     });
     var bb = document.getElementById('edna-back');
     if (bb) bb.addEventListener('click', function () { at = screens.indexOf('report'); renderGuarded(); });
+    var db = document.getElementById('edna-dash');
+    if (db) db.addEventListener('click', function () { location.href = '/'; });
   }
 
   /* The end-of-test account gate (Fariza, 18 Nov 2026): the test runs without an account;
@@ -360,6 +373,19 @@
     });
   }
 
+  /* Submit whenever a COMPLETE set of real answers exists (18 Nov 2026): the person can
+     come back on any screen ("What comes next", the plan) and the result must still reach
+     the server. Previously only the finish/report screens submitted, so a completed run
+     restored elsewhere never saved. */
+  function submitIfComplete() {
+    if (ANON || submitted || completedInfo) return;
+    try {
+      var R = computeReport();
+      var allReal = R && R.example && Object.keys(R.example).every(function (k) { return !R.example[k]; });
+      if (allReal) submit();
+    } catch (e) { /* not complete yet */ }
+  }
+
   var origRender = render;
   function renderGuarded() {
     deriveCore();
@@ -377,14 +403,8 @@
     origRender();
     stripPreviewControls();
     addPdfButton(s);
-    if (s === 'finish' || s === 'report') {
-      /* reaching the finish/report screens with a full set of real answers = assessment complete */
-      try {
-        var R = computeReport();
-        var allReal = R && R.example && Object.keys(R.example).every(function (k) { return !R.example[k]; });
-        if (allReal && !completedInfo && !submitted) submit();
-      } catch (e) { /* not complete yet */ }
-    }
+    addDashboardButton(s);
+    if (s === 'finish' || s === 'report' || s === 'end') submitIfComplete();
     snapshot();
   }
   render = renderGuarded;
@@ -410,6 +430,7 @@
       restored = true;
       renderGuarded();
       if (!submitted) retryPending();
+      submitIfComplete();
     } else {
       restored = true;
       retryPending();
