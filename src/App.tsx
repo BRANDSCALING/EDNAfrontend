@@ -1180,8 +1180,8 @@ export default function App() {
     /* 'courses' (old pricing) is retired — old links land on the overview */
     const memberView =
       currentView === 'home' || currentView === 'courses' ? 'overview'
-      : (['workbooks', 'chat', 'zoom-recordings'].includes(activeDashboardView)
-          ? (activeDashboardView as 'workbooks' | 'chat' | 'zoom-recordings')
+      : (['profile', 'workbooks', 'chat', 'zoom-recordings'].includes(activeDashboardView)
+          ? (activeDashboardView as 'profile' | 'workbooks' | 'chat' | 'zoom-recordings')
           : 'overview');
     return (
       <BrandDashboard
@@ -1189,7 +1189,7 @@ export default function App() {
         view={memberView}
         onOpenMemberView={(view) => {
           if (view === 'overview') { setCurrentView('home'); return; }
-          if (view === 'profile') { window.location.href = '/edna/index.html'; return; }
+          /* 'profile' now opens INSIDE the shell (embedded report), like the other views */
           setCurrentView('dashboard');
           setActiveDashboardView(view);
         }}

@@ -41,6 +41,14 @@
     } catch (e) { return null; }
   }
 
+  /* Embedded in the dashboard's "My E-DNA profile" tab (18 Nov 2026): the shell provides
+     the chrome, so the page hides its own header and progress bar. Content is untouched. */
+  if (new URLSearchParams(window.location.search).get('embed') === '1') {
+    var est = document.createElement('style');
+    est.textContent = 'header{display:none!important}.progress{display:none!important}body{padding-top:8px}';
+    document.head.appendChild(est);
+  }
+
   var sess = cognitoSession();
   /* Anonymous start (Fariza, 18 Nov 2026): no account is needed to TAKE the test — people go
      straight to the questions, and the account is created at the end to receive the report.
@@ -429,8 +437,10 @@
       if (window.location.hash === '#plan' && screens[at] === 'report') at = screens.indexOf('adapt');
       restored = true;
       renderGuarded();
-      if (!submitted) retryPending();
-      submitIfComplete();
+      /* one send only: a queued payload retries; otherwise a complete run submits fresh */
+      var hasPending = false; try { hasPending = !!localStorage.getItem(pendingKey); } catch (e) {}
+      if (hasPending) { if (!submitted) retryPending(); submitted = true; }
+      else submitIfComplete();
     } else {
       restored = true;
       retryPending();

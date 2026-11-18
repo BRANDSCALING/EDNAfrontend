@@ -283,6 +283,12 @@
 .bs-wbk-cardfoot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 10px; }
 .bs-wbk-lockmsg { margin: 2px 0 0; font: 500 13.5px/1.5 'Inter', sans-serif; color: var(--bs-text-secondary); }
 
+.bs-edna-frame {
+  display: block; width: 100%; border: 0; background: #fff;
+  border-radius: var(--bs-radius-card); box-shadow: 0 2px 12px rgba(11,11,11,0.06);
+  height: calc(100vh - 90px); min-height: 520px;
+}
+
 .bs-wbk-plan {
   display: flex; align-items: center; gap: 14px; width: 100%; text-align: left;
   background: #FAF8FC; border: 1px solid var(--bs-line); border-radius: 14px;
