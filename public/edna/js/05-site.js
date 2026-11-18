@@ -43,7 +43,8 @@
 
   /* Embedded in the dashboard's "My E-DNA profile" tab (18 Nov 2026): the shell provides
      the chrome, so the page hides its own header and progress bar. Content is untouched. */
-  if (new URLSearchParams(window.location.search).get('embed') === '1') {
+  var EMBED = new URLSearchParams(window.location.search).get('embed') === '1';
+  if (EMBED) {
     var est = document.createElement('style');
     est.textContent = 'header{display:none!important}.progress{display:none!important}body{padding-top:8px}';
     document.head.appendChild(est);
@@ -317,7 +318,7 @@
   }
 
   function addDashboardButton(s) {
-    if (ANON || s !== 'end') return;
+    if (ANON || EMBED || s !== 'end') return;
     var row = document.querySelector('#screen .actions');
     if (!row || row.querySelector('.bs-dash-btn')) return;
     var b = document.createElement('button');
@@ -349,7 +350,7 @@
       + '<p><a class="btn" href="' + CHECKOUT + '" target="_blank" rel="noopener">Get my detailed report (£99)</a></p>'
       + '<p class="small">Already purchased? It can take a minute to come through. <button type="button" id="edna-refresh" class="linkish">Check again</button></p>'
       + '<p class="small"><button type="button" id="edna-back" class="linkish">Back to my report</button></p>'
-      + '<p class="small"><button type="button" id="edna-dash" class="linkish">Go to my dashboard</button></p>'
+      + (EMBED ? '' : '<p class="small"><button type="button" id="edna-dash" class="linkish">Go to my dashboard</button></p>')
       + '</section></div>';
     var rb = document.getElementById('edna-refresh');
     if (rb) rb.addEventListener('click', function () {
