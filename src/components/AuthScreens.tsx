@@ -52,6 +52,18 @@ export function AuthScreens({ onAuthenticate, onCancel, initialMode = 'login' }:
     return true;
   };
 
+  /* An UNCONFIRMED account is a Cognito dead-end (cannot sign in, cannot reset the password,
+   * cannot re-register). The way out is always the same: email a fresh confirmation code and
+   * finish the confirmation (18 Nov 2026 — hit by accounts left half-registered since April). */
+  const recoverUnconfirmed = async (noticeText: string) => {
+    const { error } = await authHelpers.resendConfirmationCode(formData.email);
+    if (error) return false;
+    setError('');
+    setNotice(noticeText);
+    setMode('confirm-code');
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
@@ -59,7 +71,15 @@ export function AuthScreens({ onAuthenticate, onCancel, initialMode = 'login' }:
     try {
       if (mode === 'login') {
         const { data, error } = await authHelpers.signIn(formData.email, formData.password);
-        if (error) { setError(error.message || 'Invalid email or password'); setIsLoading(false); return; }
+        if (error) {
+          const name = (error as any).name || (error as any).code || '';
+          if (name === 'UserNotConfirmedException' || (error.message || '').toLowerCase().includes('not confirmed')) {
+            if (await recoverUnconfirmed('Your account was never confirmed. We have emailed you a 6-digit code — enter it below to finish setting up.')) {
+              setIsLoading(false); return;
+            }
+          }
+          setError(error.message || 'Invalid email or password'); setIsLoading(false); return;
+        }
         if (data.user) onAuthenticate({ email: data.user.email || '', name: data.user.user_metadata?.name || 'User' });
       } else if (mode === 'register') {
         const fullName = `${formData.firstName} ${formData.lastName}`;
@@ -68,6 +88,10 @@ export function AuthScreens({ onAuthenticate, onCancel, initialMode = 'login' }:
           const name = (error as any).name || (error as any).code || '';
           const msg = error.message || 'Registration failed';
           if (name === 'UsernameExistsException' || msg.toLowerCase().includes('already') || msg.toLowerCase().includes('exists')) {
+            /* The account may be a half-finished registration: a resend succeeds only then. */
+            if (await recoverUnconfirmed('This email already started registration. We have emailed you a new 6-digit code — enter it below to finish.')) {
+              setIsLoading(false); return;
+            }
             setError('This email is already registered. Please sign in instead.');
             setTimeout(() => { setMode('login'); setError(''); }, 2500);
           } else setError(msg);
@@ -82,13 +106,30 @@ export function AuthScreens({ onAuthenticate, onCancel, initialMode = 'login' }:
       } else if (mode === 'confirm-code') {
         const { error } = await authHelpers.confirmSignUp(formData.email, formData.code);
         if (error) { setError(error.message || 'That code was not accepted. Check it and try again.'); setIsLoading(false); return; }
+        if (!formData.password) {
+          /* reached from the forgot-password recovery: confirmed, but no password typed */
+          setNotice('Your account is confirmed. Sign in — or use "Forgot password?" if you do not remember your password.');
+          setMode('login'); setIsLoading(false); return;
+        }
         const fullName = `${formData.firstName} ${formData.lastName}`.trim();
         const { data: si, error: siErr } = await authHelpers.signIn(formData.email, formData.password);
-        if (siErr || !si.user) { setError(siErr?.message || 'Account confirmed — please sign in.'); setMode('login'); }
+        if (siErr || !si.user) {
+          setNotice('Your account is confirmed. Sign in — or use "Forgot password?" if you do not remember your password.');
+          setMode('login');
+        }
         else onAuthenticate({ email: si.user.email, name: si.user.user_metadata?.name || fullName || 'User' });
       } else if (mode === 'forgot-password') {
         const { error } = await authHelpers.resetPassword(formData.email);
-        if (error) { setError(error.message || 'Failed to send the reset code'); setIsLoading(false); return; }
+        if (error) {
+          const msg = (error.message || '').toLowerCase();
+          if (msg.includes('verified email') || msg.includes('no registered')) {
+            /* unconfirmed account: confirm it first, then the reset works */
+            if (await recoverUnconfirmed('This account was never confirmed, so we need to confirm it first. Enter the 6-digit code we just emailed you; after that you can reset your password.')) {
+              setIsLoading(false); return;
+            }
+          }
+          setError(error.message || 'Failed to send the reset code'); setIsLoading(false); return;
+        }
         setFormData((p) => ({ ...p, password: '', confirmPassword: '', code: '' }));
         setMode('reset-code');
       } else if (mode === 'reset-code') {
