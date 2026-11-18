@@ -275,6 +275,17 @@ export function BrandWorkbooks({ onOpenMentors }: BrandWorkbooksProps) {
         Built from your E-DNA answers. Your progress saves as you type, and the iOS app shows
         the same workbooks with the same answers.
       </p>
+
+      {/* The E-DNA plan ('adapt' screen in the approved /edna app), same entry the iOS
+          Learning tab has. The /edna gate shows the £99 screen until purchased. */}
+      <button className="bs-wbk-plan" onClick={() => { window.location.href = '/edna/index.html#plan'; }}>
+        <span className="bs-wbk-icon" aria-hidden="true">🗺</span>
+        <span className="bs-wbk-plan-text">
+          <b>Your E-DNA plan</b>
+          <small>Comes with your detailed E-DNA report</small>
+        </span>
+        <span className="bs-wbk-plan-chev" aria-hidden="true">›</span>
+      </button>
       {error && <p className="bs-auth-error">{error}</p>}
       {!list && !error && <p className="bs-empty-copy">Loading…</p>}
       {list && ordered.length === 0 && (list.lockedWorkbooks || []).length === 0 && (

@@ -356,9 +356,15 @@
       completedInfo = { savedAt: remote.savedAt, retakeAvailableAt: remote.retakeAvailableAt };
       submitted = true; /* already stored server-side */
       at = screens.indexOf('report');
+      /* #plan (the dashboard's "Your E-DNA plan" card, 18 Nov 2026) opens the approved
+         'adapt' screen; renderGuarded shows the £99 gate until purchased, as on iOS. */
+      if (window.location.hash === '#plan') at = screens.indexOf('adapt');
       restored = true;
       renderGuarded();
     } else if (restoreLocal()) {
+      /* #plan works here too: a completed-but-locally-restored person still reaches the
+         plan screen (the £99 gate shows until the purchase flag is confirmed remotely). */
+      if (window.location.hash === '#plan' && screens[at] === 'report') at = screens.indexOf('adapt');
       restored = true;
       renderGuarded();
       if (!submitted) retryPending();
