@@ -1,0 +1,837 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Brandscaling | Decision Intelligence & Infinite Scaling Mastery</title>
+<meta name="description" content="Brandscaling is an AI-powered operating system for entrepreneurs: understand how you decide with the free E-DNA assessment, then build your business through six layers, from a profitable foundation to an ecosystem.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@700;800&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: the 3D tower is the hero object on a dark stage in both modes; canvas 60%, glass 30%, brand colour 10%. Three type sizes. Left-aligned. */
+:root{
+  --canvas:#FFFFFF; --surface:#F8F4EF; --text:#0B0B0B; --text-2:#454545;
+  --action:#42047D; --action-hover:#6F409C; --action-label:#FFFFFF;
+  --energy:#F6782F; --energy-label:#0B0B0B; --link:#841477; --focus:#C72170; --line:#E5E5E5; --border:#777777;
+  --logic-ink:#42047D; --feel-ink:#EC4049; --indigo:#42047D; --plum:#841477; --pink:#C72170; --red:#EC4049; --orange:#F6782F; --amber:#FFAA1A;
+  --stage:#0B0B0B; --stage-2:#171717; --stage-text:#FFFFFF; --stage-text-2:#C5C5C5;
+  --glass:rgba(255,255,255,.72); --glass-border:rgba(255,255,255,.5); --glass-edge:rgba(255,255,255,.6);
+  --glass-shadow:8px 8px 24px rgba(11,11,11,.08), -4px -4px 12px rgba(255,255,255,.6);
+  --glow:rgba(185,162,207,.16);
+  --metal-indigo:linear-gradient(135deg,#643194,#9370B5,#360466);
+  --metal-orange:linear-gradient(135deg,#F7955A,#FBB58A,#C4562A);
+  --display:'Sora',Inter,Arial,sans-serif; --body:'Inter',-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+  --s1:56px; --s2:28px; --s3:18px; --r-card:16px; --r-hero:24px; --r-ctl:8px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --canvas:#0B0B0B; --surface:#171717; --text:#FFFFFF; --text-2:#C5C5C5;
+  --action:#9B7ABA; --action-hover:#B9A2CF; --action-label:#0B0B0B; --link:#BE82B7; --line:#2A2A2A;
+  --glass:rgba(11,11,11,.78); --glass-border:rgba(255,255,255,.12); --glass-edge:rgba(255,255,255,.3);
+  --glass-shadow:8px 8px 24px rgba(11,11,11,.4); --glow:rgba(100,49,148,.22); --logic-ink:#9B7ABA; --feel-ink:#F16E75; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --canvas:#0B0B0B; --surface:#171717; --text:#FFFFFF; --text-2:#C5C5C5;
+  --action:#9B7ABA; --action-hover:#B9A2CF; --action-label:#0B0B0B; --link:#BE82B7; --line:#2A2A2A;
+  --glass:rgba(11,11,11,.78); --glass-border:rgba(255,255,255,.12); --glass-edge:rgba(255,255,255,.3);
+  --glass-shadow:8px 8px 24px rgba(11,11,11,.4); --glow:rgba(100,49,148,.22); --logic-ink:#9B7ABA; --feel-ink:#F16E75; color-scheme:dark }
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--canvas);color:var(--text);font-family:var(--body);font-size:var(--s3);line-height:1.5;font-variant-numeric:tabular-nums;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--canvas)}
+img{max-width:100%;display:block}
+a{color:var(--link)}
+h1,h2,h3{font-family:var(--display);font-weight:800;letter-spacing:-.01em;margin:0;text-wrap:balance}
+h1{font-size:var(--s1);line-height:1.08;color:var(--action)}
+h2{font-size:var(--s2);line-height:1.15;color:var(--action)}
+h3{font-size:var(--s3);line-height:1.3;font-family:var(--body);font-weight:700}
+p{margin:0}
+.wrap{max-width:1200px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.kicker{font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--red);line-height:1.3;font-size:16px;white-space:nowrap}
+@media (max-width:640px){.kicker{white-space:normal}}
+.btn-swap{position:relative;display:inline-grid}
+.btn-swap>span{grid-area:1/1;transition:opacity 250ms cubic-bezier(.2,0,0,1)}
+.btn-swap .alt{opacity:0}
+.btn-swap:hover .alt,.btn-swap:focus-visible .alt{opacity:1}
+.btn-swap:hover .main,.btn-swap:focus-visible .main{opacity:0}
+.muted{color:var(--text-2)}
+.lead{max-width:60ch}
+:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+
+.btn{display:inline-flex;align-items:center;gap:8px;padding:14px 18px;border-radius:var(--r-ctl);font-weight:700;text-decoration:none;border:2px solid transparent;cursor:pointer;font-family:var(--body);font-size:var(--s3);line-height:1.2;transition:transform 250ms cubic-bezier(.2,0,0,1),filter 250ms cubic-bezier(.2,0,0,1)}
+.btn:hover{transform:translateY(-1px);filter:brightness(1.06)}
+.btn-energy{background:var(--metal-orange);color:var(--energy-label);box-shadow:0 8px 24px rgba(246,120,47,.28)}
+.btn-primary{background:var(--metal-indigo);color:#FFFFFF}
+.btn-outline{background:transparent;color:var(--action);border-color:var(--action)}
+.btn-outline:hover{background:var(--surface)}
+.btn-ghost{background:transparent;color:var(--text);padding-left:12px;padding-right:12px}
+.btn-ghost:hover{background:var(--surface)}
+.btn-on-stage{background:transparent;color:#FFFFFF;border-color:rgba(255,255,255,.5)}
+
+/* Nav */
+.nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;padding-block:12px}
+.nav-bar{display:flex;align-items:center;gap:16px;padding:10px 16px;border-radius:var(--r-card);background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--glass-border);box-shadow:var(--glass-shadow);position:relative}
+.nav-bar::before{content:"";position:absolute;left:24px;right:24px;top:0;height:1px;background:linear-gradient(90deg,transparent,var(--glass-edge),transparent)}
+.logo-box{background:#FFFFFF;border-radius:8px;padding:6px 8px;display:inline-flex;flex:none}
+.logo-box img{height:42px;width:auto}
+.nav-links{display:flex;gap:2px;flex:1;flex-wrap:nowrap}
+.nav-links a{color:var(--text);text-decoration:none;font-weight:600;padding:10px 12px;border-radius:var(--r-ctl);white-space:nowrap}
+.nav-links a:hover{background:var(--surface)}
+.nav-end{display:flex;align-items:center;gap:8px;margin-left:auto}
+.select{appearance:none;-webkit-appearance:none;background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:var(--r-ctl);padding:10px 36px 10px 12px;font:inherit;font-weight:600;cursor:pointer;background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 12px) 50%;background-size:6px 6px;background-repeat:no-repeat}
+.menu-btn{display:none}
+@media (max-width:1180px){.nav-links{display:none;flex-direction:column;width:100%;order:3}.nav-bar{flex-wrap:wrap}.nav-bar.open .nav-links{display:flex}.menu-btn{display:inline-flex}.nav-end .hide-m{display:none}}
+
+/* Hero */
+.hero{padding-block:48px 72px;position:relative}
+.hero::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(55% 45% at 78% 40%,var(--glow),transparent 70%)}
+.hero-grid{display:grid;grid-template-columns:1.12fr .88fr;gap:36px;align-items:stretch;position:relative}
+.hero-copy{display:grid;gap:24px;align-content:space-between;padding-block:20px;animation:rise 300ms cubic-bezier(.2,0,0,1) both}
+.hero-ctas{display:flex;gap:10px;flex-wrap:wrap}
+.hero-ctas .btn{padding:14px 16px;white-space:nowrap}
+.proof{display:grid;grid-template-columns:1fr;gap:12px;color:var(--text);font-weight:500}
+.proof span{display:inline-flex;align-items:center;gap:8px}
+.proof i{width:12px;height:12px;border-radius:50%;display:inline-block;flex:none}
+
+/* The stage: a dark panel in both modes, holding the 3D tower */
+.stage{position:relative;background:radial-gradient(70% 55% at 50% 30%,#2A0D4A 0%,#130124 55%,#130124 100%);color:var(--stage-text);border-radius:var(--r-hero);padding:28px;box-shadow:var(--glass-shadow);border:1px solid rgba(255,255,255,.12);animation:rise 300ms 80ms cubic-bezier(.2,0,0,1) both;overflow:hidden}
+.stage::before{content:"";position:absolute;left:24px;right:24px;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent)}
+.stage img{width:min(100%,460px);margin:0 auto;border-radius:12px;mix-blend-mode:screen}
+.stage-labels{display:grid;gap:6px;margin-top:16px}
+.stage-labels .row{display:grid;grid-template-columns:12px 1fr auto;gap:12px;align-items:center;padding:6px 10px;border-radius:8px;background:rgba(255,255,255,.06)}
+.stage-labels .sw{width:12px;height:12px;border-radius:3px}
+.stage-labels .n{color:var(--stage-text-2)}
+.stage-labels .t{font-weight:600}
+@media (max-width:960px){.hero-grid{grid-template-columns:1fr}.hero{padding-block:32px 48px}h1{font-size:34px}}
+
+/* Sections */
+.section{padding-block:72px;border-top:1px solid var(--line)}
+.section-head{display:grid;gap:12px;max-width:64ch;margin-bottom:36px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+@media (max-width:960px){.grid-3{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:640px){.grid-2,.grid-3{grid-template-columns:1fr}}
+.card{background:var(--surface);border-radius:var(--r-card);padding:24px;display:grid;gap:10px;min-width:0;align-content:start;position:relative}
+.card.glass{background:var(--glass);border:1px solid var(--glass-border);box-shadow:var(--glass-shadow);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.card.glass::before{content:"";position:absolute;left:20px;right:20px;top:0;height:1px;background:linear-gradient(90deg,transparent,var(--glass-edge),transparent)}
+.card .num{font-family:var(--display);font-weight:800;font-size:var(--s2);line-height:1;color:var(--action)}
+
+/* Journey steps */
+.journey{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+@media (max-width:860px){.journey{grid-template-columns:1fr}}
+
+/* Layers */
+.layer-list{display:grid;gap:16px}
+.layer-card{display:grid;grid-template-columns:56px 1.1fr 1fr;gap:24px;align-items:start;padding:24px;border-radius:var(--r-card);background:var(--surface);border-left:6px solid var(--indigo);min-width:0}
+.layer-card .badge{width:56px;height:56px;border-radius:12px;display:grid;place-items:center;color:#fff;font-family:var(--display);font-weight:800;font-size:var(--s2)}
+.layer-card h3{font-family:var(--display);font-weight:800;font-size:var(--s2);line-height:1.15;color:var(--text)}
+.layer-card .what{display:grid;gap:8px}
+.layer-card .get{background:var(--canvas);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:6px;min-width:0}
+.layer-card .get .lbl{font-weight:700}
+.layer-card ul{margin:0;padding-left:18px;color:var(--text-2)}
+@media (max-width:860px){.layer-card{grid-template-columns:56px 1fr}.layer-card .get{grid-column:1 / -1}}
+.l6{border-left-color:var(--amber)} .l5{border-left-color:var(--orange)} .l4{border-left-color:var(--red)} .l3{border-left-color:var(--pink)} .l2{border-left-color:var(--plum)} .l1{border-left-color:var(--indigo)}
+.b6{background:linear-gradient(135deg,#FFC24D,#FFAA1A,#B87400)} .b5{background:linear-gradient(135deg,#F99655,#F6782F,#B04E18)} .b4{background:linear-gradient(135deg,#F4A1A5,#EC4049,#A52D33)} .b3{background:linear-gradient(135deg,#E189B3,#C72170,#8B174E)} .b2{background:linear-gradient(135deg,#BE82B7,#841477,#5B0E52)} .b1{background:var(--metal-indigo)}
+.sequence{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:24px;color:var(--text-2)}
+.sequence b{color:var(--text)}
+
+/* Decide section */
+.decide{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:start}
+@media (max-width:960px){.decide{grid-template-columns:1fr}}
+.whys{display:grid;grid-template-columns:130px 1.2fr 1fr;gap:10px}
+.wc{background:var(--surface);border-radius:12px;padding:16px 18px;display:grid;gap:4px;min-width:0;align-content:start}
+.wc.part{align-content:center}
+.wc .n{font-family:var(--display);font-weight:800;color:var(--action);font-size:var(--s2);line-height:1}
+.wc.whybox h3,.wc.whybox p{color:var(--feel-ink)}
+@media (max-width:760px){.whys{grid-template-columns:1fr}.wc.part{padding-bottom:4px}}
+.seqbox{border:2px solid var(--line);background:var(--canvas)}
+.seqbox.alch{border-color:var(--feel-ink)}
+.avatars{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+.avatar{padding:22px;gap:10px}
+.avatar h3{color:var(--action)}
+.avatar .q{color:var(--text)}
+.avatar .own{color:var(--feel-ink);font-weight:600}
+.avatar .after,.avatar .fit{font-size:16px;color:var(--text-2);display:grid;gap:2px}
+.avatar .after b,.avatar .fit b{color:var(--text);font-size:14px;letter-spacing:.04em;text-transform:uppercase}
+.avatar .fit{margin-top:auto;padding-top:8px;border-top:1px solid var(--line)}
+
+.avatars .avatar:last-child{grid-column:1/-1;grid-template-columns:1.3fr 1fr .9fr;column-gap:24px}
+.avatars .avatar:last-child h3{grid-column:1/-1}
+.avatars .avatar:last-child .q{grid-column:1;grid-row:2}
+.avatars .avatar:last-child .own{grid-column:1;grid-row:3}
+.avatars .avatar:last-child .after{grid-column:2;grid-row:2/4;align-content:start}
+.avatars .avatar:last-child .fit{grid-column:3;grid-row:2/4;margin-top:0;padding-top:0;border-top:0;align-content:start}
+@media (max-width:960px){.avatars .avatar:last-child{grid-template-columns:1fr}.avatars .avatar:last-child .q,.avatars .avatar:last-child .own,.avatars .avatar:last-child .after,.avatars .avatar:last-child .fit{grid-column:auto;grid-row:auto}.avatars .avatar:last-child .fit{padding-top:8px;border-top:1px solid var(--line)}}
+.tier{grid-template-rows:auto auto auto 1fr}
+.tier:has(.tier-btn){grid-template-rows:auto auto auto 1fr auto}
+.tier .tier-btn{justify-self:start;align-self:end;margin-top:8px}
+.tier li b{color:var(--text);font-weight:700}
+.h1-block{display:grid;gap:10px}
+.h1-sub{font-family:var(--display);font-weight:800;font-size:var(--s2);line-height:1.15;color:var(--action)}
+.only-menu{display:none}
+@media (max-width:1180px){.nav-links .only-menu{display:inline-flex;justify-content:center;margin-top:8px;border:2px solid var(--action);color:var(--action);align-self:stretch}}
+@media (max-width:1180px){.menu-btn{order:2;padding:9px;min-width:44px;justify-content:center}.nav-end{order:1}.nav-bar{gap:10px}}
+@media (max-width:640px){.nav-bar{padding:8px 10px;gap:8px}.logo-box img{height:34px}.nav-end .btn{padding:10px 12px;font-size:15px}.nav-end .select{padding:9px 28px 9px 10px;font-size:14px;background-position:calc(100% - 14px) 50%,calc(100% - 9px) 50%}}
+@media (max-width:1180px){.nav-links .cur-wrap{display:flex !important;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;margin:0;border:0 !important;font-weight:600;color:var(--text-2)}.site-uk .cur-wrap{display:none}}
+.bridge{margin:0}
+.bridge h3{font-size:var(--s2)}
+.bridge .cta-row{margin-top:8px}
+@media (max-width:960px){.avatars{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:640px){.avatars{grid-template-columns:1fr}}
+/* Proof: mentee and partner businesses, awards, quote slots */
+.logos{display:grid;gap:12px;margin-bottom:28px;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
+.marquee{overflow:hidden;width:100%}
+.mtrack{display:flex;gap:12px;width:max-content}
+.mtrack .logo-tile{width:190px;flex:0 0 190px}
+.to-left .mtrack{animation:mleft 36s linear infinite}
+.to-right .mtrack{animation:mright 36s linear infinite}
+@keyframes mleft{from{transform:translateX(0)}to{transform:translateX(calc(-50% - 6px))}}
+@keyframes mright{from{transform:translateX(calc(-50% - 6px))}to{transform:translateX(0)}}
+.logos:hover .mtrack{animation-play-state:paused}
+@media (prefers-reduced-motion:reduce){.mtrack{animation:none !important}.logos{-webkit-mask-image:none;mask-image:none}.marquee{overflow-x:auto}}
+@media (max-width:640px){.mtrack .logo-tile{width:150px;flex-basis:150px}}
+.awdrop{padding:0}
+.awdrop summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 24px;font-size:18px;min-height:56px}
+.awdrop summary::-webkit-details-marker{display:none}
+.awdrop .chev{flex:0 0 auto;color:var(--action);transition:transform 250ms cubic-bezier(.2,0,0,1)}
+.awdrop[open] .chev{transform:rotate(180deg)}
+.awrow.first{flex:1;padding:0;border-top:0;font-weight:400}
+.awdrop .awlist .awrow:first-child{border-top:1px solid var(--line)}
+.awdrop .awlist{padding:0 24px 8px}
+.logo-tile{height:76px;border-radius:12px;background:#FFFFFF;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;padding:12px 16px;min-width:0}
+.logo-tile.dark{background:#0B0B0B;border-color:#2A2A2A}
+.logo-tile.faces{background:#391DFE;border-color:#391DFE}
+.logo-tile img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain}
+.proof-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-bottom:20px}
+.award{margin:0;padding:0;overflow:hidden;gap:0}
+.award img{display:block;width:100%;aspect-ratio:1/1;object-fit:cover;object-position:top}
+.award figcaption{padding:14px 18px 18px;display:grid;gap:4px}
+.award figcaption b{font-weight:700;color:var(--text)}
+.award figcaption span{color:var(--text-2);font-size:15px}
+.awlist{display:grid;gap:0;padding:8px 24px}
+.awrow{display:grid;grid-template-columns:72px 1fr;gap:16px;align-items:baseline;padding:12px 0;border-top:1px solid var(--line)}
+.awrow:first-child{border-top:0}
+.awrow .yr{font-family:var(--display);font-weight:800;color:var(--action)}
+.awrow .who{color:var(--text-2);font-size:16px;text-align:right}
+.quotes{margin-top:20px;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
+.qtrack{gap:20px;animation-duration:60s}
+.qtrack .tcard{width:380px;flex:0 0 380px}
+.quotes:hover .mtrack{animation-play-state:paused}
+@keyframes qleft{from{transform:translateX(0)}to{transform:translateX(calc(-50% - 10px))}}
+.quotes.to-left .mtrack{animation-name:qleft}
+@media (max-width:640px){.qtrack .tcard{width:300px;flex-basis:300px}}
+.tcard{display:block;width:100%;height:auto;aspect-ratio:1/1;border-radius:var(--r-card);background:#FFFFFF}
+@media (max-width:960px){.proof-grid{grid-template-columns:1fr 1fr}}
+@media (max-width:640px){.proof-grid{grid-template-columns:1fr}.awrow{grid-template-columns:60px 1fr}.awrow .who{grid-column:2;text-align:left}}
+ .seqbox.arch{border-color:var(--logic-ink)}
+.loopfig{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-weight:700;font-size:16px}
+.loopfig .box{padding:7px 11px;border-radius:8px;color:#FFFFFF;line-height:1.2}
+.loopfig .box.logic{background:#42047D} .loopfig .box.feel{background:#EC4049}
+.loopfig .arr{color:var(--text-2);font-weight:400}
+.loopfig .rep{display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border:2px dashed var(--border);border-radius:8px}
+.loopfig .rep .w{font-weight:700} .loopfig .rep .w.logic{color:var(--logic-ink)} .loopfig .rep .w.feel{color:var(--feel-ink)}
+.loopfig .rep svg .l{stroke:var(--logic-ink)} .loopfig .rep svg .f{stroke:var(--feel-ink)}
+.loopfig .rep svg{width:28px;height:20px;display:block}
+.loopcap{display:grid;grid-template-columns:auto auto 1fr auto;gap:8px 14px;color:var(--text-2);margin-top:6px;font-size:16px}
+@media (max-width:640px){.loopcap{grid-template-columns:1fr}}
+.story{margin-bottom:24px;max-width:none;gap:12px}
+.story p{max-width:none}
+.story h3{font-family:var(--display);font-weight:800;font-size:var(--s2);color:var(--action)}
+.mentors{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.mentor.card{grid-template-columns:220px 1fr;align-items:center}
+@media (max-width:640px){.mentor.card{grid-template-columns:1fr}}
+@media (max-width:520px){.mentors{grid-template-columns:1fr}}
+.mentor{display:grid;gap:16px}
+.mentor img{width:100%;max-width:220px;aspect-ratio:1;object-fit:cover;border-radius:var(--r-card);background:#fff}
+.parts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.parts span{background:var(--canvas);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--text-2);min-width:0}
+.parts span b{display:block;color:var(--text)}
+@media (max-width:640px){.parts{grid-template-columns:1fr 1fr}}
+
+/* Avatars */
+
+
+
+
+
+
+.tag{display:inline-block;padding:4px 10px;border-radius:999px;background:var(--canvas);border:1px solid var(--line);font-weight:600}
+
+/* Membership */
+.tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media (max-width:960px){.tiers{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:640px){.tiers{grid-template-columns:1fr}}
+.tier{background:var(--surface);border-radius:var(--r-card);padding:22px;display:grid;gap:8px;min-width:0;border:1px solid transparent;align-content:start}
+.tier.lead-tier{border-color:var(--action)}
+.tier .price{font-family:var(--display);font-weight:800;font-size:var(--s2);line-height:1.15}
+.tier .meta{color:var(--text-2)}
+.tier ul{margin:4px 0 0;padding-left:18px;color:var(--text-2)}
+.tier ul li{margin:2px 0}
+.tax-note{color:var(--text-2);margin-top:16px}
+.cta-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:28px}
+
+/* People */
+.people{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media (max-width:760px){.people{grid-template-columns:1fr}}
+.person{display:grid;grid-template-columns:140px 1fr;gap:20px;background:var(--surface);border-radius:var(--r-card);padding:22px;align-items:start}
+.person img{width:140px;height:170px;object-fit:cover;border-radius:12px}
+@media (max-width:480px){.person{grid-template-columns:1fr}}
+
+/* Final + footer */
+.final{padding-block:72px}
+.final .stage{animation:none;display:grid;gap:20px;padding:40px}
+.final .stage h2{color:#FFFFFF}
+.final .stage p{color:var(--stage-text-2)}
+footer{border-top:1px solid var(--line);padding-block:48px 32px;color:var(--text-2)}
+.foot-grid{display:grid;grid-template-columns:1.4fr repeat(4,1fr);gap:28px}
+@media (max-width:960px){.foot-grid{grid-template-columns:1fr 1fr}}
+@media (max-width:520px){.foot-grid{grid-template-columns:1fr}}
+footer h3{color:var(--text);margin-bottom:8px}
+footer ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+footer a{color:var(--text-2);text-decoration:none}
+footer a:hover{color:var(--link);text-decoration:underline}
+.legal{margin-top:36px;padding-top:20px;border-top:1px solid var(--line);display:grid;gap:8px}
+.site-uk .only-uae{display:none !important}
+.site-uae .only-uk{display:none !important}
+
+.preview{position:fixed;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:30;background:var(--canvas);border:1px solid var(--border);border-radius:var(--r-card);padding:10px 12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;box-shadow:var(--glass-shadow)}
+.preview .lbl{font-weight:700}
+.preview .seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:3px}
+.preview button{font:inherit;font-weight:600;border:0;background:transparent;color:var(--text);padding:6px 12px;border-radius:999px;cursor:pointer}
+.preview button.on{background:var(--action);color:var(--action-label)}
+
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}html{scroll-behavior:auto}}
+/* Mobile optimisation (≤640px only; desktop untouched) */
+@media (max-width:640px){
+  :root{--s2:24px;--s3:16px}
+  body{font-size:16px}
+  .section{padding-block:40px}
+  .section-head{margin-bottom:20px;gap:8px}
+  .hero{padding-block:24px 32px}
+  .hero-copy{gap:16px;padding-block:0}
+  h1{font-size:32px}
+  .h1-sub{font-size:22px}
+  .stage{padding:16px}
+  .stage-labels{display:none}
+  .card,.tier,.avatar{padding:18px}
+  /* swipe rows */
+  .hs{display:flex !important;grid-template-columns:none !important;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;padding:4px 2px 12px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+  .hs>*{flex:0 0 84%;scroll-snap-align:start;min-width:0}
+  .journey,.seqboxes,.proof-grid,.tiers,.avatars,.layer-list{display:flex;grid-template-columns:none;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;padding:4px 2px 12px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+  .journey>*,.seqboxes>*,.proof-grid>*,.tiers>*,.avatars>*,.layer-list>*{flex:0 0 84%;scroll-snap-align:start;min-width:0}
+  .avatars .avatar:last-child{display:grid;grid-template-columns:1fr}
+  .avatars .avatar:last-child .q,.avatars .avatar:last-child .own,.avatars .avatar:last-child .after,.avatars .avatar:last-child .fit{grid-column:auto;grid-row:auto}
+  .tiers{margin-bottom:4px}
+  .tier{display:grid}
+  .layer-card{grid-template-columns:1fr;gap:12px;padding:18px}
+  .layer-card .get{grid-column:auto}
+  .layer-card .n,.layer-card .num{font-size:22px}
+  .award img{aspect-ratio:4/3}
+  /* the seven parts: one column per part, swipe sideways */
+  .whys{display:grid;grid-auto-flow:column;grid-template-rows:auto auto auto;grid-auto-columns:78%;grid-template-columns:none;overflow-x:auto;scroll-snap-type:x mandatory;gap:8px 12px;padding:4px 2px 12px;scrollbar-width:thin}
+  .whys>*{scroll-snap-align:start}
+  .wc.part{padding-bottom:12px}
+  .mentors{gap:12px}
+  .mentor.card img{max-width:180px;margin:0 auto}
+  .story{gap:8px}
+  .story h3{font-size:22px}
+  .bridge h3{font-size:22px}
+  .quotes .tcard{width:280px;flex-basis:280px}
+  .mtrack .logo-tile{width:140px;flex-basis:140px;height:64px}
+  .cta-row{margin-top:16px}
+  .swipe-hint{display:block;font-size:14px;color:var(--text-2);margin:-4px 0 12px}
+}
+
+
+/* Mobile optimisation, pass 2 */
+.more-btn{display:none}
+.story .more{display:contents}
+@media (max-width:640px){
+  .hero-copy{gap:14px}
+  .hero-copy .proof{gap:6px;font-size:15px}
+  .stage{display:grid;justify-items:center;padding:12px}
+  .stage img{max-height:340px;width:auto;max-width:100%;object-fit:contain}
+  .story .more{display:none}
+  .story.open .more{display:contents}
+  .more-btn{display:inline-flex;align-items:center;gap:6px;background:transparent;border:0;padding:0;font:inherit;font-weight:700;color:var(--action);cursor:pointer;justify-self:start}
+  .more-btn::after{content:"";width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);margin-left:4px;margin-top:-4px}
+  .story.open .more-btn::after{transform:rotate(-135deg);margin-top:4px}
+  .layer-card .get ul{display:none}
+  .layer-card .get.open ul{display:block}
+  .layer-card .get .lbl{display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+  .layer-card .get .lbl::after{content:"";width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);margin-top:-4px}
+  .layer-card .get.open .lbl::after{transform:rotate(-135deg);margin-top:4px}
+  .mentors,#layers .grid-2,.people{display:flex;grid-template-columns:none;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;padding:4px 2px 12px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+  .mentors>*,#layers .grid-2>*,.people>*{flex:0 0 84%;scroll-snap-align:start;min-width:0}
+  .mentor.card{display:grid;grid-template-columns:1fr}
+  .mentor.card img{max-width:150px}
+  .person{grid-template-columns:1fr;gap:12px;padding:18px}
+  .person img{width:110px;height:130px}
+  .final{padding-block:40px}
+  .foot-grid{grid-template-columns:1fr 1fr;gap:18px}
+  .foot-grid>div:first-child{grid-column:1 / -1}
+  footer h3{font-size:16px}
+}
+</style>
+</head>
+<body>
+
+<div id="site" class="site-uk">
+
+<header class="nav wrap">
+  <div class="nav-bar" id="navbar">
+    <a class="logo-box" href="#top" aria-label="Brandscaling home">
+      <img class="only-uk" src="assets/logo-bs.png" alt="Brandscaling">
+      <img class="only-uae" src="assets/logo-bsai.png" alt="Brandscaling AI">
+    </a>
+    <button class="btn btn-ghost menu-btn" id="menu" aria-expanded="false" aria-controls="navlinks" aria-label="Menu"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
+    <nav class="nav-links" id="navlinks" aria-label="Main">
+      <a href="#why">Why businesses stall</a>
+      <a href="#decide">How you decide</a>
+      <a href="#layers">The six layers</a>
+      <a href="#membership">Membership</a>
+      <a href="#about">About</a>
+      <a class="only-menu btn btn-ghost" href="/?signin=1">Sign in</a>
+    </nav>
+    <div class="nav-end">
+      <select class="select only-uae" id="currency" aria-label="Currency">
+        <option value="GBP">GBP £</option><option value="AED">AED</option><option value="USD">USD $</option><option value="EUR">EUR €</option>
+      </select>
+      <button class="btn btn-ghost" id="theme-toggle" aria-label="Switch between light and dark mode">☾</button>
+      <a class="btn btn-ghost hide-m" href="/?signin=1">Sign in</a>
+      <a class="btn btn-energy" href="/edna/index.html">Take the Test</a>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <p class="kicker">Decision Intelligence &amp; Infinite Scaling Mastery</p>
+      <div class="h1-block"><h1>Scale in the right order.</h1><p class="h1-sub">Decide better first. Build better next.</p></div>
+      <p class="lead muted">Most businesses are built by trial and error, by people who have never been taught how to make better decisions or build a business that scales. Brandscaling is an AI-powered operating system that fixes both: it teaches you how to strengthen your decision intelligence, then builds your business through six layers, from a profitable foundation to an ecosystem that grows without your constant involvement.</p>
+      <div class="hero-ctas">
+        <a class="btn btn-energy" href="/edna/index.html" title="Take the Test">Decision Intelligence Test</a>
+        <a class="btn btn-outline" href="#layers">The Infinite Scaling Methodology</a>
+      </div>
+      <div class="proof">
+        <span><i style="background:#777777"></i>Decision Intelligence: improve your decision making</span>
+        <span><i style="background:var(--indigo)"></i>Two AI mentors guiding you along the way</span>
+        <span><i style="background:var(--plum)"></i>Frameworks and workbooks written for how you learn and execute</span>
+        <span><i style="background:var(--pink)"></i>AI engines that set up and run your business</span>
+        <span><i style="background:var(--red)"></i>A Collaboration Club to help you scale fast</span>
+        <span><i style="background:var(--orange)"></i>In-person Mastermind with successful businesses</span>
+        <span><i style="background:var(--amber)"></i>£100,000,000 boardroom and 3-day retreats</span>
+      </div>
+    </div>
+    <div class="stage">
+      <img src="assets/tower-dark.jpg" alt="The Infinite Scaling Tower: six stepped blocks with the infinity symbol above. From the foundation up: Profit Maximisation Blueprint, AI Infrastructure, Asset Builder, Multiple Exits, Platform Thinking, Ecosystem.">
+      <div class="stage-labels" aria-label="The six layers, top to bottom">
+        <div class="row"><span class="sw" style="background:var(--amber)"></span><span class="t">Ecosystem</span><span class="n">Layer 6</span></div>
+        <div class="row"><span class="sw" style="background:var(--orange)"></span><span class="t">Platform Thinking</span><span class="n">Layer 5</span></div>
+        <div class="row"><span class="sw" style="background:var(--red)"></span><span class="t">Multiple Exits</span><span class="n">Layer 4</span></div>
+        <div class="row"><span class="sw" style="background:var(--pink)"></span><span class="t">Asset Builder</span><span class="n">Layer 3</span></div>
+        <div class="row"><span class="sw" style="background:var(--plum)"></span><span class="t">AI Infrastructure</span><span class="n">Layer 2</span></div>
+        <div class="row"><span class="sw" style="background:var(--indigo)"></span><span class="t">Profit Maximisation Blueprint</span><span class="n">Layer 1</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="why">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="kicker">Why businesses stall</p>
+      <h2>Two problems, usually mistaken for one.</h2>
+      <p class="muted">When growth stops, the advice is always more tactics. The real causes sit underneath: the people running the business, and the order it was built in.</p>
+    </div>
+    <div class="journey">
+      <div class="card glass">
+        <span class="num">1</span>
+        <h3>The people problem</h3>
+        <p class="muted">Partners look at the same numbers and want different things. Instructions do not land with the team. One person carries every decision alone. None of this is about ability. It is about how each person makes a decision, which almost nobody has been shown.</p>
+      </div>
+      <div class="card glass">
+        <span class="num">2</span>
+        <h3>The systems problem</h3>
+        <p class="muted">Tools chosen one at a time. Processes that live in one person's head. Products launched before the price and the customer were right. Growth that depends on the owner being in the room.</p>
+      </div>
+      <div class="card glass">
+        <span class="num">3</span>
+        <h3>The order problem</h3>
+        <p class="muted">Scaling before the foundation is profitable, or building assets before the systems that run them, breaks businesses that were working. There is a sequence. Brandscaling builds in it.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="decide">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="kicker">Where it starts</p>
+      <h2>Before you work on your business, understand how you decide.</h2>
+      <p class="muted">Every decision you make uses both logic and feeling. What differs from person to person is where a decision starts, the sequence in between and what finally settles it. We call that your dominant decision-making sequence. Once you know yours, your partner’s and your team’s, the arguments that felt personal turn out to be two sequences reading the same facts differently. Clashes get resolved, everyone’s decision making improves, and the business runs with less friction.</p>
+    </div>
+    <div class="grid-2 seqboxes">
+      <div class="card seqbox alch"><h3 style="color:var(--feel-ink)">Alchemist decision intelligence sequence</h3><div class="loopfig"><span class="box feel">Feeling</span><span class="arr">→</span><span class="box logic">Logic</span><span class="arr">→</span><span class="rep"><span class="w feel">Feeling</span><svg viewBox="0 0 34 22" aria-hidden="true"><path d="M3 7h22" class="f" stroke-width="2.5" fill="none"/><path d="M22 2l6 5-6 5" class="f" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M31 15H9" class="l" stroke-width="2.5" fill="none"/><path d="M12 10l-6 5 6 5" class="l" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="w logic">Logic</span></span><span class="arr">→</span><span class="box feel">Feeling</span></div><div class="loopcap"><span>Begins with</span><span>Checked by</span><span>Can repeat any number of times</span><span>Finally settled by</span></div><p class="muted">A decision begins with how it feels, is checked against the facts, as many times as it takes, and is settled when it feels right.</p></div>
+      <div class="card seqbox arch"><h3 style="color:var(--logic-ink)">Architect decision intelligence sequence</h3><div class="loopfig"><span class="box logic">Logic</span><span class="arr">→</span><span class="box feel">Feeling</span><span class="arr">→</span><span class="rep"><span class="w logic">Logic</span><svg viewBox="0 0 34 22" aria-hidden="true"><path d="M3 7h22" class="l" stroke-width="2.5" fill="none"/><path d="M22 2l6 5-6 5" class="l" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M31 15H9" class="f" stroke-width="2.5" fill="none"/><path d="M12 10l-6 5 6 5" class="f" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="w feel">Feeling</span></span><span class="arr">→</span><span class="box logic">Logic</span></div><div class="loopcap"><span>Begins with</span><span>Checked by</span><span>Can repeat any number of times</span><span>Finally settled by</span></div><p class="muted">A decision begins with the facts, is checked against how it feels, as many times as it takes, and is settled when it adds up.</p></div>
+    </div>
+    <div style="margin-top:20px">
+        <div class="card" id="start">
+          <h3 style="font-family:var(--display);font-size:var(--s2);font-weight:800;color:var(--action)">The E-DNA Assessment</h3>
+          <p class="muted">E-DNA (Entrepreneurial Decision Network Analysis) was created to identify your decision intelligence sequence, in yourself and in the people you work with, and to show it to you in a detailed report. Then you strengthen it, practise it and make it stable with guided workbooks written for your sequence.</p>
+          <p class="muted">The assessment and your basic report are free. Take the test today.</p>
+          <div class="hero-ctas"><a class="btn btn-energy" href="/?signin=1">Take your free test now</a><span class="muted" style="align-self:center">About 30 minutes.</span></div>
+        </div>
+    </div>
+    <div class="section-head" style="margin-top:48px;margin-bottom:24px">
+      <h2>Why take the E-DNA Assessment?</h2>
+      <p class="muted">One assessment takes you through seven parts.</p>
+    </div>
+    <div class="whys">
+      <div class="wc part"><span class="n">Part 1</span></div><div class="wc"><h3>How you decide</h3><p class="muted">Identify your decision intelligence sequence and finally understand how you make decisions.</p></div><div class="wc whybox"><h3>Why</h3><p class="muted">To help you make better decisions.</p></div>
+      <div class="wc part"><span class="n">Part 2</span></div><div class="wc"><h3>How you execute</h3><p class="muted">Understand how you act on a decision once it is made.</p></div><div class="wc whybox"><h3>Why</h3><p class="muted">To execute better, every time.</p></div>
+      <div class="wc part"><span class="n">Part 3</span></div><div class="wc"><h3>How well you read yourself and others</h3><p class="muted">Recognise your own decision intelligence sequence and everyone else’s.</p></div><div class="wc whybox"><h3>Why</h3><p class="muted">Less friction with partners, teams and customers.</p></div>
+      <div class="wc part"><span class="n">Part 4</span></div><div class="wc"><h3>How you learn</h3><p class="muted">Understand how you take in information.</p></div><div class="wc whybox"><h3>Why</h3><p class="muted">So every framework and workbook reaches you in the way you learn.</p></div>
+      <div class="wc part"><span class="n">Part 5</span></div><div class="wc"><h3>What environment you need to work well</h3><p class="muted">Understand the conditions you need around you.</p></div><div class="wc whybox"><h3>Why</h3><p class="muted">So you can control them, allowing you to decide and execute better.</p></div>
+      <div class="wc part"><span class="n">Part 6</span></div><div class="wc"><h3>Your mindset</h3><p class="muted">Understand the attitude you bring into every decision.</p></div><div class="wc whybox"><h3>Why</h3><p class="muted">Improve it, so it stops working against your decisions.</p></div>
+      <div class="wc part"><span class="n">Part 7</span></div><div class="wc"><h3>Your beliefs and values</h3><p class="muted">Understand what allows, limits or overrides your decisions.</p></div><div class="wc whybox"><h3>Why</h3><p class="muted">So they shape your business on purpose, not by accident.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="mentors">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="kicker">AI mentors</p>
+      <h2>Two AI mentors, one for each sequence</h2>
+      <p>Each mentor is built from one decision intelligence sequence: the Architect’s or the Alchemist’s. The one that matches your sequence guides you to strengthen your dominant sequence, whilst the other builds your awareness of the other sequence, giving you a view you would otherwise miss.</p>
+    </div>
+    <div class="card story">
+      <h3>Where the two mentors come from</h3>
+      <p class="muted">Fariza Javed, a Forbes Business Council member, and Hanif Khan have spent more than two decades scaling businesses together. Early on they noticed something they could not explain: given the same facts, they would clash and execute differently. Sometimes they reached exactly the same decision from completely different facts. Whether they agreed was touch and go, and neither of them understood why.</p>
+      <p class="muted">Almost twenty years ago Fariza asked a question in a Facebook post: do thoughts create emotion, or do emotions create thought? That question started a journey that ran alongside scaling her businesses, and over two decades it became Decision Intelligence and, finally, E-DNA.</p>
+      <p class="muted">Her research showed that Hanif uses the Architect sequence and she uses the Alchemist sequence. He became her muse while she developed E-DNA for everyone else. Since then they have removed the conflict and friction between them, understood each other and their team, become better leaders, and scaled their businesses ten times over by making better decisions. The two mentors carry that same difference, so every member gets both views.</p>
+    </div>
+    <div class="mentors">
+      <div class="mentor card"><img class="only-uk" src="assets/alchemist-bs.gif" alt="AI mentor built from Fariza Javed"><img class="only-uae" src="assets/alchemist-bsai.gif" alt="AI mentor built from Fariza Javed"><p class="muted">Built from Fariza Javed. Vision, the offer, and whether a direction sits right.</p></div>
+      <div class="mentor card"><img class="only-uk" src="assets/architect-bs.gif" alt="AI mentor built from Hanif Khan"><img class="only-uae" src="assets/architect-bsai.gif" alt="AI mentor built from Hanif Khan"><p class="muted">Built from Hanif Khan. Clarity, the numbers, and the systems that make execution repeatable.</p></div>
+    </div>
+    <p class="muted" style="margin-top:20px;max-width:64ch">Your mentors assist: they propose, you decide. This is Brandscaling’s own model, developed, tried and tested with their own teams, mentees, and a multitude of entrepreneurs and their business partners. It is not a psychological or clinical test.</p>
+  </div>
+</section>
+
+<section class="section" id="proof">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="kicker">Proof</p>
+      <h2>Businesses already in the room</h2>
+      <p>Mentee and partner businesses working with Hanif Khan and Fariza Javed. Among them: five PropTech Company of the Year titles and eight national awards, 2024 to 2026.</p>
+    </div>
+    <div class="logos" aria-label="Mentee and partner businesses">
+      <div class="marquee to-left" aria-hidden="false"><div class="mtrack"><div class="logo-tile"><img src="assets/proof/m-property-filter.svg" alt="Property Filter"></div><div class="logo-tile dark"><img src="assets/proof/m-pin.png" alt="PIN, Property Investors Network"></div><div class="logo-tile dark"><img src="assets/proof/m-premier-property.png" alt="Premier Property"></div><div class="logo-tile"><img src="assets/proof/m-ppn.png" alt="PPN Stratford"></div><div class="logo-tile"><img src="assets/proof/m-booking-hub.png" alt="Booking Hub"></div><div class="logo-tile"><img src="assets/proof/m-care-property-hub.png" alt="Care Property Hub"></div><div class="logo-tile"><img src="assets/proof/m-sitefindr.png" alt="SiteFindr"></div><div class="logo-tile"><img src="assets/proof/m-adminless.png" alt="Adminless"></div><div class="logo-tile"><img src="assets/proof/m-housing-solutions-platform.png" alt="Housing Solutions Platform"></div><div class="logo-tile"><img src="assets/proof/m-property-filter.svg" alt="Property Filter"></div><div class="logo-tile dark"><img src="assets/proof/m-pin.png" alt="PIN, Property Investors Network"></div><div class="logo-tile dark"><img src="assets/proof/m-premier-property.png" alt="Premier Property"></div><div class="logo-tile"><img src="assets/proof/m-ppn.png" alt="PPN Stratford"></div><div class="logo-tile"><img src="assets/proof/m-booking-hub.png" alt="Booking Hub"></div><div class="logo-tile"><img src="assets/proof/m-care-property-hub.png" alt="Care Property Hub"></div><div class="logo-tile"><img src="assets/proof/m-sitefindr.png" alt="SiteFindr"></div><div class="logo-tile"><img src="assets/proof/m-adminless.png" alt="Adminless"></div><div class="logo-tile"><img src="assets/proof/m-housing-solutions-platform.png" alt="Housing Solutions Platform"></div></div></div>
+      <div class="marquee to-right" aria-hidden="false"><div class="mtrack"><div class="logo-tile dark"><img src="assets/proof/m-insurance-desk.png" alt="Insurance Desk"></div><div class="logo-tile"><img src="assets/proof/m-crowdproperty.svg" alt="CrowdProperty"></div><div class="logo-tile"><img src="assets/proof/m-impacting-lives.png" alt="Impacting Lives"></div><div class="logo-tile"><img src="assets/proof/m-uces-2.png" alt="UCES"></div><div class="logo-tile faces"><img src="assets/proof/m-faces.svg" alt="Faces Consent"></div><div class="logo-tile dark"><img src="assets/proof/m-negotiatorhq.png" alt="NegotiatorHQ"></div><div class="logo-tile"><img src="assets/proof/m-sell-my-house-quickly.png" alt="Sell My House Quickly"></div><div class="logo-tile"><img src="assets/proof/m-impact-network.png" alt="Impact Network"></div><div class="logo-tile dark"><img src="assets/proof/m-insurance-desk.png" alt="Insurance Desk"></div><div class="logo-tile"><img src="assets/proof/m-crowdproperty.svg" alt="CrowdProperty"></div><div class="logo-tile"><img src="assets/proof/m-impacting-lives.png" alt="Impacting Lives"></div><div class="logo-tile"><img src="assets/proof/m-uces-2.png" alt="UCES"></div><div class="logo-tile faces"><img src="assets/proof/m-faces.svg" alt="Faces Consent"></div><div class="logo-tile dark"><img src="assets/proof/m-negotiatorhq.png" alt="NegotiatorHQ"></div><div class="logo-tile"><img src="assets/proof/m-sell-my-house-quickly.png" alt="Sell My House Quickly"></div><div class="logo-tile"><img src="assets/proof/m-impact-network.png" alt="Impact Network"></div></div></div>
+    </div>
+    <div class="proof-grid">
+      <figure class="card award"><img src="assets/proof/nisha-patel-npa-2026-v2.jpg" alt="Nisha Patel of Care Property Hub holding the National Property Awards 2026 winner’s plaque"><figcaption><b>Care Property Hub · Nisha Patel</b><span>PropTech Company of the Year, National Property Awards 2026</span></figcaption></figure>
+      <figure class="card award"><img src="assets/proof/property-filter-mpia-2024.jpg" alt="The Property Filter team on stage at the Midland Property &amp; Investment Awards 2024"><figcaption><b>Property Filter · Guillaume Black</b><span>PropTech Company of the Year, Midland Property &amp; Investment Awards 2024</span></figcaption></figure>
+      <figure class="card award"><img src="assets/proof/dion-wright-wales-startup-2026.jpg" alt="Dion Wright of Booking Hub holding the UK StartUp Awards 2026 winner’s board"><figcaption><b>Booking Hub · Dion Wright</b><span>Hospitality, Tourism &amp; Events StartUp of the Year, UK StartUp Awards 2026, Wales winner</span></figcaption></figure>
+      <figure class="card award"><img src="assets/proof/faces-gbea-2024.jpg" alt="Winners on stage at the Great British Entrepreneur Awards 2024, Technology Entrepreneur of the Year"><figcaption><b>Faces Consent</b><span>Technology Entrepreneur of the Year, Great British Entrepreneur Awards 2024</span></figcaption></figure>
+    </div>
+    <details class="card awdrop"><summary><span class="awrow first"><span class="yr">2026</span><span>PropTech Company of the Year · National Property Awards</span></span><svg class="chev" width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 9l7 7 7-7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+    <div class="awlist" aria-label="Eight national awards">
+      <div class="awrow"><span class="yr">2026</span><span>Supported Housing Innovation Award · Housing with Care Awards</span></div>
+      <div class="awrow"><span class="yr">2026</span><span>Hospitality, Tourism &amp; Events StartUp of the Year · UK StartUp Awards, Wales winner and UK national finalist</span></div>
+      <div class="awrow"><span class="yr">2024</span><span>PropTech Company of the Year · National Property Awards</span></div>
+      <div class="awrow"><span class="yr">2024</span><span>PropTech Company of the Year · National LIS Awards</span></div>
+      <div class="awrow"><span class="yr">2024</span><span>PropTech Company of the Year · Midland Property &amp; Investment Awards</span></div>
+      <div class="awrow"><span class="yr">2024</span><span>PropTech Company of the Year · Sourcing Investments</span></div>
+      <div class="awrow"><span class="yr">2024</span><span>Technology Entrepreneur of the Year · Great British Entrepreneur Awards</span></div>
+    </div>
+    </details>
+    <div class="quotes marquee to-left" aria-label="What mentees say"><div class="mtrack qtrack">
+      <img class="tcard" src="assets/proof/t-simon.jpg" alt="Simon Zutshi, Founder – PIN (Property Investors Network), CEO – Crowd Property: “What stood out was the simplicity and power of the models—they’re instantly applicable. I’ve been part of many masterminds, and this is definitely one of the best”" loading="lazy">
+      <img class="tcard" src="assets/proof/t-lee.jpg" alt="Lee Blake, Founder – SMHQ Network: “It [mastermind] has totally revolutionized my business. If you want to take your business to the next level, I can’t think of two better people to help you.”" loading="lazy">
+      <img class="tcard" src="assets/proof/t-nisha.jpg" alt="Nisha Patel, CEO – Care Property Hub: “They take time to understand you—how you think, how you work, where you shine—and then they help you build your business around your strengths. That’s what makes this so powerful.”" loading="lazy">
+      <img class="tcard" src="assets/proof/t-john.jpg" alt="John Cox, CEO – Insurance Desk: “This Mastermind shifted my mindset—from chasing short-term profits to building a strategically de-risked, high-value business. Every layer added real clarity and momentum”" loading="lazy">
+      <img class="tcard" src="assets/proof/t-josh.jpg" alt="Josh, CEO – Insurance Desk: “They don’t just teach strategy—they unlock the mindset and growth hidden inside you. Fariza and Hanif truly get you and your business, then tailor a path to real, scalable success. It’s a complete game changer.”" loading="lazy">
+      <img class="tcard" src="assets/proof/t-jamie.jpg" alt="Jamie Glasper, Edgehill Property Finance: “My partner James and I had no idea how AI could fit into our work. Now we’re building our own AI-driven tech for Edgehill — all thanks to the knowledge and encouragement from Fariza and Hanif.”" loading="lazy">
+      <img class="tcard" src="assets/proof/t-simon.jpg" alt="Simon Zutshi, Founder – PIN (Property Investors Network), CEO – Crowd Property: “What stood out was the simplicity and power of the models—they’re instantly applicable. I’ve been part of many masterminds, and this is definitely one of the best”" loading="lazy">
+      <img class="tcard" src="assets/proof/t-lee.jpg" alt="Lee Blake, Founder – SMHQ Network: “It [mastermind] has totally revolutionized my business. If you want to take your business to the next level, I can’t think of two better people to help you.”" loading="lazy">
+      <img class="tcard" src="assets/proof/t-nisha.jpg" alt="Nisha Patel, CEO – Care Property Hub: “They take time to understand you—how you think, how you work, where you shine—and then they help you build your business around your strengths. That’s what makes this so powerful.”" loading="lazy">
+      <img class="tcard" src="assets/proof/t-john.jpg" alt="John Cox, CEO – Insurance Desk: “This Mastermind shifted my mindset—from chasing short-term profits to building a strategically de-risked, high-value business. Every layer added real clarity and momentum”" loading="lazy">
+      <img class="tcard" src="assets/proof/t-josh.jpg" alt="Josh, CEO – Insurance Desk: “They don’t just teach strategy—they unlock the mindset and growth hidden inside you. Fariza and Hanif truly get you and your business, then tailor a path to real, scalable success. It’s a complete game changer.”" loading="lazy">
+      <img class="tcard" src="assets/proof/t-jamie.jpg" alt="Jamie Glasper, Edgehill Property Finance: “My partner James and I had no idea how AI could fit into our work. Now we’re building our own AI-driven tech for Edgehill — all thanks to the knowledge and encouragement from Fariza and Hanif.”" loading="lazy">
+    </div></div>
+  </div>
+</section>
+
+<section class="section" id="layers">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="kicker">The Infinite Scaling Methodology</p>
+      <h2>Once you have learnt how to make better decisions, learn how to build a better business.</h2>
+      <p class="muted">The lower layers make a business profitable and create systems. The higher layers make it compound. Your membership decides how far up the tower you go.</p>
+    </div>
+    <div class="grid-2" style="margin-bottom:24px">
+      <div class="card glass">
+        <h3>The problem</h3>
+        <p class="muted">Decision Intelligence fixes how you decide. It does not tell you what to build, or in what order. That is where most businesses fail: they are built by trial and error. Tools chosen one at a time, systems that live in one person’s head, products launched before the price and the customer were right, assets never built, and no route to an exit. Every lesson costs money and time, and the next decision is another guess.</p>
+      </div>
+      <div class="card glass">
+        <h3>The solution</h3>
+        <p class="muted">The Infinite Scaling Methodology is the order to build in. Six layers, each one making the next possible, from a profitable foundation to an ecosystem that compounds without you in every decision. Every layer comes with the frameworks that explain it and workbooks written for your decision intelligence sequence, so you build the right thing, in the right order, in the way you decide.</p>
+      </div>
+    </div>
+    <div class="card story">
+      <h3>Where the methodology comes from</h3>
+      <p class="muted">Hanif Khan started his career designing air traffic control systems for British Aerospace. After the birth of his daughter, when a nine-to-five was no longer an option, he moved into the entrepreneurial world, beginning in property. He is a well-known speaker and mentor in the United Kingdom, known for his 51 creative property plays and for innovative strategies that were first to market. He is also an avid investor who, with Fariza, has helped scale a number of businesses over two decades.</p>
+      <p class="muted">Hanif created the Infinite Scaling Methodology with Fariza as his muse when they launched the Brandscaling Mastermind, to speed up the scaling of the businesses they had invested in and of their mentees. It is the sequence they learned the hard way, built into a done-for-you system so that nobody else has to go through the failures and rebuilds they went through over the last two decades.</p>
+    </div>
+    <div class="layer-list">
+      <div class="layer-card l1">
+        <div class="badge b1">1</div>
+        <div class="what"><h3>Profit Maximisation Blueprint</h3><p class="muted">Get the fundamentals right: the right product, at the right price, for the right customer. Profitable on paper and cash-positive in practice before anything is scaled.</p></div>
+        <div class="get"><span class="lbl">What you get</span><ul><li>11 frameworks, each with two workbooks, one for each way of deciding</li><li>A profit plan the whole business works to</li><li>Guided by your AI mentor, step by step</li></ul></div>
+      </div>
+      <div class="layer-card l2">
+        <div class="badge b2">2</div>
+        <div class="what"><h3>AI Infrastructure</h3><p class="muted">Engines that set up and run your business. Every call, meeting and customer signal is captured. A business brain you can ask anything. Funnels that test and improve themselves. Repeat tasks handed to AI, with you approving what goes out.</p></div>
+        <div class="get"><span class="lbl">What you get</span><ul><li>A business systems checklist</li><li>Engines released one by one, as your business expands</li><li>AI that assists first, and acts only with your approval</li></ul></div>
+      </div>
+      <div class="layer-card l3">
+        <div class="badge b3">3</div>
+        <div class="what"><h3>Asset Builder</h3><p class="muted">Turn what you already own into assets that compound: your lists, relationships, brand, data and intellectual property. Then put them to work with other members instead of building everything alone.</p></div>
+        <div class="get"><span class="lbl">What you get</span><ul><li>Collaboration Club: six Asset Decks and the asset marketplace</li><li>Partners and collaborators without giving away equity</li></ul></div>
+      </div>
+      <div class="layer-card l4">
+        <div class="badge b4">4</div>
+        <div class="what"><h3>Multiple Exits</h3><p class="muted">Build a business that is worth buying and can run without you, and know every route out: a sale, a merger, an acquisition, or keeping it and taking the profit.</p></div>
+        <div class="get"><span class="lbl">What you get</span><ul><li>Multiple exit strategies workshop, with framework and workbook</li><li>Mergers and acquisitions workshop, with framework and workbook</li></ul></div>
+      </div>
+      <div class="layer-card l5">
+        <div class="badge b5">5</div>
+        <div class="what"><h3>Platform Thinking</h3><p class="muted">Become the thing other businesses build on, plug into or transact through. This is where growth stops depending on your own effort.</p></div>
+        <div class="get"><span class="lbl">What you get</span><ul><li>Full-day one-to-one consultation and implementation</li><li>Case study breakdowns, Mastermind access and inner-circle events</li></ul></div>
+      </div>
+      <div class="layer-card l6">
+        <div class="badge b6">6</div>
+        <div class="what"><h3>Ecosystem</h3><p class="muted">Provide everything your customer needs for their whole job, with partners supplying the pieces and you at the centre of the relationship.</p></div>
+        <div class="get"><span class="lbl">What you get</span><ul><li>High-level boardroom access</li><li>Long-term scale with the co-founders alongside you</li><li>Investment deals and opportunities</li><li>A 3-day exclusive retreat</li></ul></div>
+      </div>
+    </div>
+    <div class="sequence"><b>Twelve frameworks. Thirty-one workbooks.</b> Every one written twice, so it fits the way you decide, not the way its author decides.</div>
+  </div>
+</section>
+
+
+<section class="section" id="who">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="kicker">Sound familiar?</p>
+      <h2>One app, two systems that improve how you decide and how you build your business.</h2>
+      <p>Which one is you? Find yourself below, then see what changes and where you start.</p>
+    </div>
+    <div class="avatars">
+      <div class="avatar card glass">
+        <h3>The Divided Partners</h3>
+        <p class="q">Have you ever left a meeting with your business partner wondering how two smart people could look at the same facts and reach different decisions?</p>
+        <p class="own">“Same facts, same numbers, and we still want different things.”</p>
+        <p class="after"><b>What changes</b>You use your difference instead of fighting it. You decide faster, work from one plan on one system, and agree where the business is going and how you will exit.</p>
+        <p class="fit"><b>Where you start</b>Every partner starts with the free test. Entry for a new business, Expert for an existing one.</p>
+      </div>
+      <div class="avatar card glass">
+        <h3>The Disconnected Team</h3>
+        <p class="q">Have you ever explained something perfectly, watched your team do something completely different, and wondered whether it’s them or you?</p>
+        <p class="own">“If I want it done right, I have to do it myself.”</p>
+        <p class="after"><b>What changes</b>Instructions land and feedback is heard. Good people stay. You stop being the bottleneck, and the business runs on systems, not on one person.</p>
+        <p class="fit"><b>Where you start</b>Your whole team takes the free test. Entry or Expert for you; Enterprise by invitation.</p>
+      </div>
+      <div class="avatar card glass">
+        <h3>The Solo Decision-Maker</h3>
+        <p class="q">Have you ever made a big business decision at midnight, completely alone, with no one to tell you whether you’d got it right?</p>
+        <p class="own">“If I stop, the business stops.”</p>
+        <p class="after"><b>What changes</b>You are no longer deciding alone: two mentors test every big decision. Systems carry the workload and collaborators fill the gaps, without giving away equity.</p>
+        <p class="fit"><b>Where you start</b>Free test, then the detailed report. Entry or Expert.</p>
+      </div>
+      <div class="avatar card glass">
+        <h3>The Idea-Stuck Dreamer</h3>
+        <p class="q">Have you had that feeling at 3 AM: a business idea that could change everything, and something invisible holding you back?</p>
+        <p class="own">“I don’t even know where to start.”</p>
+        <p class="after"><b>What changes</b>The idea becomes a launched business built on the right foundations, with decisions made in confidence instead of fear.</p>
+        <p class="fit"><b>Where you start</b>Free test, then the detailed report. Entry to build the business. No business needed.</p>
+      </div>
+      <div class="avatar card glass">
+        <h3>The Framework-Frustrated</h3>
+        <p class="q">Have you felt that flash of hope when a “proven” framework promises clarity, only to break under your reality?</p>
+        <p class="own">“I’ve done every course and I’m still stuck.”</p>
+        <p class="after"><b>What changes</b>Frameworks that work with how you decide, one system instead of ten tools, and results instead of more learning.</p>
+        <p class="fit"><b>Where you start</b>Entry for a new business. Expert for an existing one.</p>
+      </div>
+      <div class="avatar card glass">
+        <h3>The Serial Networker</h3>
+        <p class="q">Have you ever felt the rooms and events that once excited you become a burden to attend, because nothing you talked about ever turned into a collaboration?</p>
+        <p class="own">“Nobody wants to collaborate with me yet, and I don’t know how to start.”</p>
+        <p class="after"><b>What changes</b>You walk into every room with something to offer, collaborations worth having with people who want to work with you, and a business that grows beyond you.</p>
+        <p class="fit"><b>Where you start</b>Entry for a new business. Expert for an existing one.</p>
+      </div>
+      <div class="avatar card glass">
+        <h3>The Successful-but-Stuck Entrepreneur</h3>
+        <p class="q">Have you faced the moment when your success becomes the thing that fogs your next move?</p>
+        <p class="own">“I can’t change anything without breaking something else.”</p>
+        <p class="after"><b>What changes</b>A business rebuilt on purpose, decisions made with confidence, and growth without breaking what already works.</p>
+        <p class="fit"><b>Where you start</b>Expert. Elite once qualified. Enterprise by invitation.</p>
+      </div>
+    </div>
+    <div class="card story bridge">
+      <h3>Before you can work on any business, you need to understand yourself and how you and others make decisions.</h3>
+      <p class="muted">Whichever one is you, it starts the same way: a free 30-minute test, your result, and then a system that builds your business in the right order. Fariza and Hanif built it after two decades of failures and rebuilds, so you do not have to repeat them. The next step is below.</p>
+      <div class="cta-row"><a class="btn btn-energy" href="/edna/index.html">Take your free test now</a><a class="btn btn-outline" href="#membership">See membership</a></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="membership">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="kicker">Membership</p>
+      <h2>Start free. Climb as far as your business needs.</h2>
+      <p class="muted">Every paid tier has a 30-day money-back guarantee, including the joining fee. Cancel at any time.</p>
+    </div>
+    <div class="tiers">
+      <div class="tier"><h3>Free</h3><div class="price">Free</div><div class="meta">No business needed</div><ul><li>The 30-minute assessment</li><li>Your basic report</li></ul><a class="btn btn-energy tier-btn" href="/edna/index.html" title="Take the Test">Take the Test</a></div>
+      <div class="tier"><h3>Detailed report</h3><div class="price"><span data-gbp="99">£99</span></div><div class="meta">One-off. No business needed</div><ul><li>Your full seven-part report</li><li>Workbooks to help you improve</li><li>AI mentor credits to guide you</li></ul><a class="btn btn-energy tier-btn" href="/edna/index.html" title="Take the Test">Take the Test</a></div>
+      <div class="tier lead-tier"><h3>Entry</h3><div class="price"><span data-gbp="297">£297</span> <span class="meta">/ month</span></div><div class="meta"><span data-gbp="497">£497</span> joining fee. New business or pre-launch</div><ul><li>Decision intelligence report for you and one partner</li><li>Access to Layers 1 to 3</li><li>Bespoke workbooks for your business</li><li>Increased mentor credits to guide you as you build</li></ul><a class="btn btn-energy tier-btn" href="#apply-entry">Join Entry</a></div>
+      <div class="tier"><h3>Expert</h3><div class="price"><span data-gbp="497">£497</span> <span class="meta">/ month</span></div><div class="meta"><span data-gbp="497">£497</span> joining fee. Existing business</div><ul><li><b>Everything in Entry</b></li><li>Decision intelligence report for you and your partner or team, up to 7 people</li><li>Advanced AI Infrastructure and Asset Builder features</li></ul><a class="btn btn-energy tier-btn" href="#apply-expert">Join Expert</a></div>
+      <div class="tier"><h3>Elite</h3><div class="price"><span data-gbp="20000">£20,000</span> <span class="meta">/ year</span></div><div class="meta">Or four instalments of <span data-gbp="6000">£6,000</span>. By qualification</div><ul><li><b>Everything in Expert</b></li><li>Decision intelligence report for you and your team, up to 15 people</li><li>Access to all six layers, the most advanced features and every workbook, bespoke to you and your business</li><li>Live Mastermind workshops and a fortnightly Zoom deal clinic</li><li>One half-day one-to-one consultation and implementation workshop</li></ul><a class="btn btn-energy tier-btn" href="#apply-elite">Apply for Elite</a></div>
+      <div class="tier"><h3>Enterprise</h3><div class="price"><span data-gbp="50000">£50,000</span> <span class="meta">/ year</span></div><div class="meta">Or two instalments. By invitation only</div><ul><li><b>Everything in Elite</b></li><li>Live boardroom event access</li><li>A 3-day retreat</li><li>Two full-day one-to-one consultation and implementation workshops with Hanif and Fariza</li></ul></div>
+    </div>
+    <p class="tax-note only-uk">All prices exclude VAT, added at checkout.</p>
+    <p class="tax-note only-uae">Prices are set in GBP and exclude applicable tax, added at checkout. Amounts in other currencies are shown for guidance at preview rates; the exact amount is confirmed at checkout.</p>
+    
+  </div>
+</section>
+
+<section class="section" id="about">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="kicker">About</p>
+      <h2>Built by two co-founders who decide in different sequences.</h2>
+      <p class="muted">Fariza Javed and Hanif Khan built and scaled their own companies before Brandscaling. They decide and operate differently, and they built the method around using that difference instead of fighting it.</p>
+    </div>
+    <div class="people">
+      <div class="person">
+        <img src="assets/fariza.jpg" alt="Fariza Javed">
+        <div style="display:grid;gap:8px"><h3>Fariza Javed</h3><p class="muted">Started her first business at 23, a lettings agency, then built and invested across property, jewellery, beauty and distribution. Her last company before Brandscaling, a beauty distribution business, scaled across the United Kingdom, Europe, South Korea and the United States, supplying Harrods, Selfridges, Sephora and Boots among others, while she raised four children. Member of the Forbes Business Council. Fariza leads how you decide, and the mentor built from her.</p></div>
+      </div>
+      <div class="person">
+        <img src="assets/hanif.jpg" alt="Hanif Khan">
+        <div style="display:grid;gap:8px"><h3>Hanif Khan</h3><p class="muted">A former software architect turned scaling strategist. Co-founded Albright Estates with automation at its core, launched the TYCOON mastermind alliance for property entrepreneurs, patented the Loft Storage Stilt and built a multi-million-pound distribution business supplying B&amp;Q, Screwfix and Travis Perkins. An angel investor. Hanif leads the Infinite Scaling Methodology, and the mentor built from him.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="final">
+  <div class="wrap">
+    <div class="stage">
+      <p class="kicker" style="color:#FFAA1A">Profit – Purpose – Profit</p>
+      <h2>Understand how you decide. Then build in the right order.</h2>
+      <p class="lead">Thirty minutes, free, and you will know your dominant decision-making sequence, how to start improving your decision making, and your next step on the journey to a successful business, wherever you are on it.</p>
+      <div class="hero-ctas"><a class="btn btn-energy" href="/?signin=1" title="Take the Test">Decision Intelligence Test</a><a class="btn btn-on-stage" href="#membership">See membership</a></div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <span class="logo-box"><img class="only-uk" src="assets/logo-bs.png" alt="Brandscaling" style="height:40px;width:auto"><img class="only-uae" src="assets/logo-bsai.png" alt="Brandscaling AI" style="height:40px;width:auto"></span>
+        <p style="margin-top:14px">Decision Intelligence &amp; Infinite Scaling Mastery</p>
+        <p>Profit – Purpose – Profit</p>
+      </div>
+      <div><h3>The method</h3><ul><li><a href="#why">Why businesses stall</a></li><li><a href="#layers">The six layers</a></li><li><a href="#decide">How you decide</a></li></ul></div>
+      <div><h3>Membership</h3><ul><li><a href="#membership">Tiers</a></li><li><a href="#applications">Elite and Enterprise</a></li><li><a href="/?signin=1">Sign in</a></li></ul></div>
+      <div><h3>Company</h3><ul><li><a href="#about">About</a></li><li><a href="legal/contact.html">Contact</a></li><li><a href="legal/complaints.html">Complaints</a></li><li><a href="legal/accessibility.html">Accessibility</a></li></ul></div>
+      <div><h3>Legal</h3><ul><li><a href="legal/terms-of-use.html">Terms of Use</a></li><li><a href="legal/membership-terms.html">Membership Terms</a></li><li><a href="legal/privacy-policy.html">Privacy Policy</a></li><li><a href="legal/cookie-policy.html">Cookie Policy</a></li><li><a href="legal/refunds-and-cancellation.html">Refunds and Cancellation</a></li><li><a href="legal/acceptable-use.html">Acceptable Use</a></li><li><a href="legal/ai-disclosure.html">AI Disclosure</a></li><li><a href="legal/sub-processors.html">Sub-processors</a></li></ul></div>
+    </div>
+    <div class="legal">
+      <p class="only-uk">Brand Scaling Limited, trading as Brandscaling. Registered in England and Wales, company number 15563510. Registered office: 11 Old Bond Street, London, W1S 4PN. info@brandscaling.co.uk. © <span class="year">2026</span> Brand Scaling Limited.</p>
+      <p class="only-uae">Brandscaling Ai Ltd, trading as Brandscaling AI. A private company registered in the Dubai International Financial Centre, registered number 14230, commercial licence CL14230. Registered office: Unit IH-00-01-03-OF-05, Level 3, Innovation One, DIFC, Dubai, United Arab Emirates. info@brandscalingai.com. © <span class="year">2026</span> Brandscaling Ai Ltd.</p>
+      <p>Assessment results describe how a person tends to make decisions. They are not a psychological, medical or clinical assessment and are not advice. AI mentors are AI systems; you remain responsible for your decisions.</p>
+    </div>
+  </div>
+</footer>
+
+</div>
+
+
+<script>
+(function(){
+  var root=document.documentElement, site=document.getElementById('site');
+  var savedTheme=null; try{savedTheme=localStorage.getItem('bs-theme')}catch(e){}
+  root.setAttribute('data-theme', savedTheme==='dark'?'dark':'light');
+  var tbtn=document.getElementById('theme-toggle');
+  function themeGlyph(){ if(tbtn) tbtn.textContent = root.getAttribute('data-theme')==='dark' ? '\u2600' : '\u263E'; }
+  themeGlyph();
+  if(tbtn) tbtn.addEventListener('click',function(){
+    var next=root.getAttribute('data-theme')==='dark'?'light':'dark';
+    root.setAttribute('data-theme',next); try{localStorage.setItem('bs-theme',next)}catch(e){} themeGlyph();
+  });
+  document.querySelectorAll('#site-seg button').forEach(function(b){b.addEventListener('click',function(){
+    document.querySelectorAll('#site-seg button').forEach(function(x){x.classList.remove('on')}); b.classList.add('on');
+    site.className = b.dataset.site==='uae' ? 'site-uae' : 'site-uk';
+    if(b.dataset.site!=='uae'){ document.getElementById('currency').value='GBP'; applyCurrency('GBP'); }
+  })});
+  document.querySelectorAll('#theme-seg button').forEach(function(b){b.addEventListener('click',function(){
+    document.querySelectorAll('#theme-seg button').forEach(function(x){x.classList.remove('on')}); b.classList.add('on');
+    if(b.dataset.theme){root.setAttribute('data-theme',b.dataset.theme)} else {root.removeAttribute('data-theme')}
+  })});
+  var menu=document.getElementById('menu'), bar=document.getElementById('navbar');
+  menu.addEventListener('click',function(){var o=bar.classList.toggle('open');menu.setAttribute('aria-expanded',o?'true':'false')});
+  document.querySelectorAll('#navlinks a').forEach(function(a){a.addEventListener('click',function(){bar.classList.remove('open');menu.setAttribute('aria-expanded','false')})});
+  var rates={GBP:1, AED:4.6, USD:1.25, EUR:1.15}, sym={GBP:'£', AED:'AED ', USD:'$', EUR:'€'};
+  function fmt(n,c){ return sym[c]+Math.round(n*rates[c]).toLocaleString('en-GB'); }
+  function applyCurrency(c){ document.querySelectorAll('[data-gbp]').forEach(function(el){ el.textContent=fmt(parseFloat(el.dataset.gbp),c); }); }
+  document.getElementById('currency').addEventListener('change',function(e){applyCurrency(e.target.value)});
+  document.querySelectorAll('.year').forEach(function(y){y.textContent=new Date().getFullYear()});
+})();
+</script>
+
+
+
+<script>
+(function(){
+  document.querySelectorAll('.story').forEach(function(card){
+    var ps=card.querySelectorAll(':scope > p'); if(ps.length<2) return;
+    var wrap=document.createElement('div'); wrap.className='more';
+    for(var i=1;i<ps.length;i++){ wrap.appendChild(ps[i]); }
+    card.appendChild(wrap);
+    var b=document.createElement('button'); b.type='button'; b.className='more-btn'; b.textContent='Read the full story';
+    b.setAttribute('aria-expanded','false');
+    b.addEventListener('click',function(){ var o=card.classList.toggle('open'); b.setAttribute('aria-expanded',o?'true':'false'); b.textContent=o?'Show less':'Read the full story'; });
+    card.appendChild(b);
+  });
+  document.querySelectorAll('.layer-card .get .lbl').forEach(function(l){
+    l.addEventListener('click',function(){ l.parentNode.classList.toggle('open'); });
+  });
+})();
+</script>
+<script>
+(function(){
+  function place(){
+    var sel=document.getElementById('currency'), nav=document.getElementById('navlinks'), end=document.querySelector('.nav-end');
+    if(!sel||!nav||!end) return;
+    if(window.innerWidth<=640){ if(sel.parentNode!==nav){ var wrap=document.getElementById('cur-wrap'); if(!wrap){ wrap=document.createElement('label'); wrap.id='cur-wrap'; wrap.className='only-menu cur-wrap'; wrap.appendChild(document.createTextNode('Currency')); nav.insertBefore(wrap, nav.querySelector('.only-menu')); } wrap.appendChild(sel); } }
+    else if(sel.parentNode!==end){ end.insertBefore(sel, end.firstChild); }
+  }
+  place(); window.addEventListener('resize',place);
+})();
+</script>
+</body>
+</html>

@@ -25,7 +25,8 @@ import { PersonalizedAIChat } from './components/PersonalizedAIChat';
 import { AIMentorHub } from './components/AIMentorHub';
 import { ProfileInsights } from './components/ProfileInsights';
 import { OnboardingFlow } from './components/OnboardingFlow';
-import { BrandHome } from './components/brand/BrandHome';
+// BrandHome (the interim Mockup-01 landing) was replaced by Fariza's approved homepage at
+// /home/ on 18 Nov 2026 (BS-WEB-012); BrandNav still serves the internal About/Courses shell.
 import { BrandNav } from './components/brand/BrandNav';
 import { BrandDashboard } from './components/brand/BrandDashboard';
 import { AuthScreens } from './components/AuthScreens';
@@ -1134,15 +1135,12 @@ export default function App() {
     );
   }
 
-  // Phase 5 (BS-BRAND-001): the signed-out home is the redesigned landing page with its own
-  // navigation (Mockup 01), so the old global Navigation is skipped for it.
+  // BS-WEB-012 (18 Nov 2026): the signed-out home is Fariza's APPROVED homepage, served as
+  // production HTML at /home/ (its Sign in points back here at /?signin=1, handled above).
   if (currentView === 'home' && !isAuthenticated) {
-    return (
-      <BrandHome
-        onViewChange={handleViewChange}
-        onSignIn={() => { setAuthMode('login'); setShowAuth(true); }}
-      />
-    );
+    /* Vite's dev server has no /home/ directory-index rule, so dev uses the file path */
+    window.location.replace(import.meta.env.DEV ? '/home/index.html' : '/home/');
+    return null;
   }
 
   // Phase 5: About and (public) Courses share the brand shell — BrandNav on top, restyled

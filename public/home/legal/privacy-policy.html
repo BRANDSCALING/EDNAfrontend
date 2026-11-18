@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy | Brandscaling</title>
+<meta name="robots" content="index,follow">
+<style>
+/* Layout: the 3D tower is the hero object on a dark stage in both modes; canvas 60%, glass 30%, brand colour 10%. Three type sizes. Left-aligned. */
+:root{
+  --canvas:#FFFFFF; --surface:#F8F4EF; --text:#0B0B0B; --text-2:#454545;
+  --action:#42047D; --action-hover:#6F409C; --action-label:#FFFFFF;
+  --energy:#F6782F; --energy-label:#0B0B0B; --link:#841477; --focus:#C72170; --line:#E5E5E5; --border:#777777;
+  --logic-ink:#42047D; --feel-ink:#EC4049; --indigo:#42047D; --plum:#841477; --pink:#C72170; --red:#EC4049; --orange:#F6782F; --amber:#FFAA1A;
+  --stage:#0B0B0B; --stage-2:#171717; --stage-text:#FFFFFF; --stage-text-2:#C5C5C5;
+  --glass:rgba(255,255,255,.72); --glass-border:rgba(255,255,255,.5); --glass-edge:rgba(255,255,255,.6);
+  --glass-shadow:8px 8px 24px rgba(11,11,11,.08), -4px -4px 12px rgba(255,255,255,.6);
+  --glow:rgba(185,162,207,.16);
+  --metal-indigo:linear-gradient(135deg,#643194,#9370B5,#360466);
+  --metal-orange:linear-gradient(135deg,#F7955A,#FBB58A,#C4562A);
+  --display:'Sora',Inter,Arial,sans-serif; --body:'Inter',-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+  --s1:56px; --s2:28px; --s3:18px; --r-card:16px; --r-hero:24px; --r-ctl:8px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --canvas:#0B0B0B; --surface:#171717; --text:#FFFFFF; --text-2:#C5C5C5;
+  --action:#9B7ABA; --action-hover:#B9A2CF; --action-label:#0B0B0B; --link:#BE82B7; --line:#2A2A2A;
+  --glass:rgba(11,11,11,.78); --glass-border:rgba(255,255,255,.12); --glass-edge:rgba(255,255,255,.3);
+  --glass-shadow:8px 8px 24px rgba(11,11,11,.4); --glow:rgba(100,49,148,.22); --logic-ink:#9B7ABA; --feel-ink:#F16E75; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --canvas:#0B0B0B; --surface:#171717; --text:#FFFFFF; --text-2:#C5C5C5;
+  --action:#9B7ABA; --action-hover:#B9A2CF; --action-label:#0B0B0B; --link:#BE82B7; --line:#2A2A2A;
+  --glass:rgba(11,11,11,.78); --glass-border:rgba(255,255,255,.12); --glass-edge:rgba(255,255,255,.3);
+  --glass-shadow:8px 8px 24px rgba(11,11,11,.4); --glow:rgba(100,49,148,.22); --logic-ink:#9B7ABA; --feel-ink:#F16E75; color-scheme:dark }
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--canvas);color:var(--text);font-family:var(--body);font-size:var(--s3);line-height:1.5;font-variant-numeric:tabular-nums;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--canvas)}
+img{max-width:100%;display:block}
+a{color:var(--link)}
+h1,h2,h3{font-family:var(--display);font-weight:800;letter-spacing:-.01em;margin:0;text-wrap:balance}
+h1{font-size:var(--s1);line-height:1.08;color:var(--action)}
+h2{font-size:var(--s2);line-height:1.15;color:var(--action)}
+h3{font-size:var(--s3);line-height:1.3;font-family:var(--body);font-weight:700}
+p{margin:0}
+.wrap{max-width:1200px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.kicker{font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--red);line-height:1.3;font-size:16px;white-space:nowrap}
+@media (max-width:640px){.kicker{white-space:normal}}
+.btn-swap{position:relative;display:inline-grid}
+.btn-swap>span{grid-area:1/1;transition:opacity 250ms cubic-bezier(.2,0,0,1)}
+.btn-swap .alt{opacity:0}
+.btn-swap:hover .alt,.btn-swap:focus-visible .alt{opacity:1}
+.btn-swap:hover .main,.btn-swap:focus-visible .main{opacity:0}
+.muted{color:var(--text-2)}
+.lead{max-width:60ch}
+:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+
+.btn{display:inline-flex;align-items:center;gap:8px;padding:14px 18px;border-radius:var(--r-ctl);font-weight:700;text-decoration:none;border:2px solid transparent;cursor:pointer;font-family:var(--body);font-size:var(--s3);line-height:1.2;transition:transform 250ms cubic-bezier(.2,0,0,1),filter 250ms cubic-bezier(.2,0,0,1)}
+.btn:hover{transform:translateY(-1px);filter:brightness(1.06)}
+.btn-energy{background:var(--metal-orange);color:var(--energy-label);box-shadow:0 8px 24px rgba(246,120,47,.28)}
+.btn-primary{background:var(--metal-indigo);color:#FFFFFF}
+.btn-outline{background:transparent;color:var(--action);border-color:var(--action)}
+.btn-outline:hover{background:var(--surface)}
+.btn-ghost{background:transparent;color:var(--text);padding-left:12px;padding-right:12px}
+.btn-ghost:hover{background:var(--surface)}
+.btn-on-stage{background:transparent;color:#FFFFFF;border-color:rgba(255,255,255,.5)}
+
+/* Nav */
+.nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;padding-block:12px}
+.nav-bar{display:flex;align-items:center;gap:16px;padding:10px 16px;border-radius:var(--r-card);background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--glass-border);box-shadow:var(--glass-shadow);position:relative}
+.nav-bar::before{content:"";position:absolute;left:24px;right:24px;top:0;height:1px;background:linear-gradient(90deg,transparent,var(--glass-edge),transparent)}
+.logo-box{background:#FFFFFF;border-radius:8px;padding:6px 8px;display:inline-flex;flex:none}
+.logo-box img{height:42px;width:auto}
+.nav-links{display:flex;gap:2px;flex:1;flex-wrap:nowrap}
+.nav-links a{color:var(--text);text-decoration:none;font-weight:600;padding:10px 12px;border-radius:var(--r-ctl);white-space:nowrap}
+.nav-links a:hover{background:var(--surface)}
+.nav-end{display:flex;align-items:center;gap:8px;margin-left:auto}
+.select{appearance:none;-webkit-appearance:none;background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:var(--r-ctl);padding:10px 36px 10px 12px;font:inherit;font-weight:600;cursor:pointer;background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 12px) 50%;background-size:6px 6px;background-repeat:no-repeat}
+.menu-btn{display:none}
+@media (max-width:1180px){.nav-links{display:none;flex-direction:column;width:100%;order:3}.nav-bar{flex-wrap:wrap}.nav-bar.open .nav-links{display:flex}.menu-btn{display:inline-flex}.nav-end .hide-m{display:none}}
+
+/* Hero */
+.hero{padding-block:48px 72px;position:relative}
+.hero::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(55% 45% at 78% 40%,var(--glow),transparent 70%)}
+.hero-grid{display:grid;grid-template-columns:1.12fr .88fr;gap:36px;align-items:stretch;position:relative}
+.hero-copy{display:grid;gap:24px;align-content:space-between;padding-block:20px;animation:rise 300ms cubic-bezier(.2,0,0,1) both}
+.hero-ctas{display:flex;gap:10px;flex-wrap:wrap}
+.hero-ctas .btn{padding:14px 16px;white-space:nowrap}
+.proof{display:grid;grid-template-columns:1fr;gap:12px;color:var(--text);font-weight:500}
+.proof span{display:inline-flex;align-items:center;gap:8px}
+.proof i{width:12px;height:12px;border-radius:50%;display:inline-block;flex:none}
+
+/* The stage: a dark panel in both modes, holding the 3D tower */
+.stage{position:relative;background:radial-gradient(70% 55% at 50% 30%,#2A0D4A 0%,#130124 55%,#130124 100%);color:var(--stage-text);border-radius:var(--r-hero);padding:28px;box-shadow:var(--glass-shadow);border:1px solid rgba(255,255,255,.12);animation:rise 300ms 80ms cubic-bezier(.2,0,0,1) both;overflow:hidden}
+.stage::before{content:"";position:absolute;left:24px;right:24px;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent)}
+.stage img{width:min(100%,460px);margin:0 auto;border-radius:12px;mix-blend-mode:screen}
+.stage-labels{display:grid;gap:6px;margin-top:16px}
+.stage-labels .row{display:grid;grid-template-columns:12px 1fr auto;gap:12px;align-items:center;padding:6px 10px;border-radius:8px;background:rgba(255,255,255,.06)}
+.stage-labels .sw{width:12px;height:12px;border-radius:3px}
+.stage-labels .n{color:var(--stage-text-2)}
+.stage-labels .t{font-weight:600}
+@media (max-width:960px){.hero-grid{grid-template-columns:1fr}.hero{padding-block:32px 48px}h1{font-size:34px}}
+
+/* Sections */
+.section{padding-block:72px;border-top:1px solid var(--line)}
+.section-head{display:grid;gap:12px;max-width:64ch;margin-bottom:36px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+@media (max-width:960px){.grid-3{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:640px){.grid-2,.grid-3{grid-template-columns:1fr}}
+.card{background:var(--surface);border-radius:var(--r-card);padding:24px;display:grid;gap:10px;min-width:0;align-content:start;position:relative}
+.card.glass{background:var(--glass);border:1px solid var(--glass-border);box-shadow:var(--glass-shadow);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.card.glass::before{content:"";position:absolute;left:20px;right:20px;top:0;height:1px;background:linear-gradient(90deg,transparent,var(--glass-edge),transparent)}
+.card .num{font-family:var(--display);font-weight:800;font-size:var(--s2);line-height:1;color:var(--action)}
+
+/* Journey steps */
+.journey{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+@media (max-width:860px){.journey{grid-template-columns:1fr}}
+
+/* Layers */
+.layer-list{display:grid;gap:16px}
+.layer-card{display:grid;grid-template-columns:56px 1.1fr 1fr;gap:24px;align-items:start;padding:24px;border-radius:var(--r-card);background:var(--surface);border-left:6px solid var(--indigo);min-width:0}
+.layer-card .badge{width:56px;height:56px;border-radius:12px;display:grid;place-items:center;color:#fff;font-family:var(--display);font-weight:800;font-size:var(--s2)}
+.layer-card h3{font-family:var(--display);font-weight:800;font-size:var(--s2);line-height:1.15;color:var(--text)}
+.layer-card .what{display:grid;gap:8px}
+.layer-card .get{background:var(--canvas);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:6px;min-width:0}
+.layer-card .get .lbl{font-weight:700}
+.layer-card ul{margin:0;padding-left:18px;color:var(--text-2)}
+@media (max-width:860px){.layer-card{grid-template-columns:56px 1fr}.layer-card .get{grid-column:1 / -1}}
+.l6{border-left-color:var(--amber)} .l5{border-left-color:var(--orange)} .l4{border-left-color:var(--red)} .l3{border-left-color:var(--pink)} .l2{border-left-color:var(--plum)} .l1{border-left-color:var(--indigo)}
+.b6{background:linear-gradient(135deg,#FFC24D,#FFAA1A,#B87400)} .b5{background:linear-gradient(135deg,#F99655,#F6782F,#B04E18)} .b4{background:linear-gradient(135deg,#F4A1A5,#EC4049,#A52D33)} .b3{background:linear-gradient(135deg,#E189B3,#C72170,#8B174E)} .b2{background:linear-gradient(135deg,#BE82B7,#841477,#5B0E52)} .b1{background:var(--metal-indigo)}
+.sequence{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:24px;color:var(--text-2)}
+.sequence b{color:var(--text)}
+
+/* Decide section */
+.decide{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:start}
+@media (max-width:960px){.decide{grid-template-columns:1fr}}
+.whys{display:grid;grid-template-columns:130px 1.2fr 1fr;gap:10px}
+.wc{background:var(--surface);border-radius:12px;padding:16px 18px;display:grid;gap:4px;min-width:0;align-content:start}
+.wc.part{align-content:center}
+.wc .n{font-family:var(--display);font-weight:800;color:var(--action);font-size:var(--s2);line-height:1}
+.wc.whybox h3,.wc.whybox p{color:var(--feel-ink)}
+@media (max-width:760px){.whys{grid-template-columns:1fr}.wc.part{padding-bottom:4px}}
+.seqbox{border:2px solid var(--line);background:var(--canvas)}
+.seqbox.alch{border-color:var(--feel-ink)}
+.avatars{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+.avatar{padding:22px;gap:10px}
+.avatar h3{color:var(--action)}
+.avatar .q{color:var(--text)}
+.avatar .own{color:var(--feel-ink);font-weight:600}
+.avatar .after,.avatar .fit{font-size:16px;color:var(--text-2);display:grid;gap:2px}
+.avatar .after b,.avatar .fit b{color:var(--text);font-size:14px;letter-spacing:.04em;text-transform:uppercase}
+.avatar .fit{margin-top:auto;padding-top:8px;border-top:1px solid var(--line)}
+
+.avatars .avatar:last-child{grid-column:1/-1;grid-template-columns:1.3fr 1fr .9fr;column-gap:24px}
+.avatars .avatar:last-child h3{grid-column:1/-1}
+.avatars .avatar:last-child .q{grid-column:1;grid-row:2}
+.avatars .avatar:last-child .own{grid-column:1;grid-row:3}
+.avatars .avatar:last-child .after{grid-column:2;grid-row:2/4;align-content:start}
+.avatars .avatar:last-child .fit{grid-column:3;grid-row:2/4;margin-top:0;padding-top:0;border-top:0;align-content:start}
+@media (max-width:960px){.avatars .avatar:last-child{grid-template-columns:1fr}.avatars .avatar:last-child .q,.avatars .avatar:last-child .own,.avatars .avatar:last-child .after,.avatars .avatar:last-child .fit{grid-column:auto;grid-row:auto}.avatars .avatar:last-child .fit{padding-top:8px;border-top:1px solid var(--line)}}
+.tier{grid-template-rows:auto auto auto 1fr}
+.tier:has(.tier-btn){grid-template-rows:auto auto auto 1fr auto}
+.tier .tier-btn{justify-self:start;align-self:end;margin-top:8px}
+.tier li b{color:var(--text);font-weight:700}
+.h1-block{display:grid;gap:10px}
+.h1-sub{font-family:var(--display);font-weight:800;font-size:var(--s2);line-height:1.15;color:var(--action)}
+.only-menu{display:none}
+@media (max-width:1180px){.nav-links .only-menu{display:inline-flex;justify-content:center;margin-top:8px;border:2px solid var(--action);color:var(--action);align-self:stretch}}
+@media (max-width:1180px){.menu-btn{order:2;padding:9px;min-width:44px;justify-content:center}.nav-end{order:1}.nav-bar{gap:10px}}
+@media (max-width:640px){.nav-bar{padding:8px 10px;gap:8px}.logo-box img{height:34px}.nav-end .btn{padding:10px 12px;font-size:15px}.nav-end .select{padding:9px 28px 9px 10px;font-size:14px;background-position:calc(100% - 14px) 50%,calc(100% - 9px) 50%}}
+@media (max-width:1180px){.nav-links .cur-wrap{display:flex !important;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;margin:0;border:0 !important;font-weight:600;color:var(--text-2)}.site-uk .cur-wrap{display:none}}
+.bridge{margin:0}
+.bridge h3{font-size:var(--s2)}
+.bridge .cta-row{margin-top:8px}
+@media (max-width:960px){.avatars{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:640px){.avatars{grid-template-columns:1fr}}
+/* Proof: mentee and partner businesses, awards, quote slots */
+.logos{display:grid;gap:12px;margin-bottom:28px;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
+.marquee{overflow:hidden;width:100%}
+.mtrack{display:flex;gap:12px;width:max-content}
+.mtrack .logo-tile{width:190px;flex:0 0 190px}
+.to-left .mtrack{animation:mleft 36s linear infinite}
+.to-right .mtrack{animation:mright 36s linear infinite}
+@keyframes mleft{from{transform:translateX(0)}to{transform:translateX(calc(-50% - 6px))}}
+@keyframes mright{from{transform:translateX(calc(-50% - 6px))}to{transform:translateX(0)}}
+.logos:hover .mtrack{animation-play-state:paused}
+@media (prefers-reduced-motion:reduce){.mtrack{animation:none !important}.logos{-webkit-mask-image:none;mask-image:none}.marquee{overflow-x:auto}}
+@media (max-width:640px){.mtrack .logo-tile{width:150px;flex-basis:150px}}
+.awdrop{padding:0}
+.awdrop summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 24px;font-size:18px;min-height:56px}
+.awdrop summary::-webkit-details-marker{display:none}
+.awdrop .chev{flex:0 0 auto;color:var(--action);transition:transform 250ms cubic-bezier(.2,0,0,1)}
+.awdrop[open] .chev{transform:rotate(180deg)}
+.awrow.first{flex:1;padding:0;border-top:0;font-weight:400}
+.awdrop .awlist .awrow:first-child{border-top:1px solid var(--line)}
+.awdrop .awlist{padding:0 24px 8px}
+.logo-tile{height:76px;border-radius:12px;background:#FFFFFF;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;padding:12px 16px;min-width:0}
+.logo-tile.dark{background:#0B0B0B;border-color:#2A2A2A}
+.logo-tile.faces{background:#391DFE;border-color:#391DFE}
+.logo-tile img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain}
+.proof-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-bottom:20px}
+.award{margin:0;padding:0;overflow:hidden;gap:0}
+.award img{display:block;width:100%;aspect-ratio:1/1;object-fit:cover;object-position:top}
+.award figcaption{padding:14px 18px 18px;display:grid;gap:4px}
+.award figcaption b{font-weight:700;color:var(--text)}
+.award figcaption span{color:var(--text-2);font-size:15px}
+.awlist{display:grid;gap:0;padding:8px 24px}
+.awrow{display:grid;grid-template-columns:72px 1fr;gap:16px;align-items:baseline;padding:12px 0;border-top:1px solid var(--line)}
+.awrow:first-child{border-top:0}
+.awrow .yr{font-family:var(--display);font-weight:800;color:var(--action)}
+.awrow .who{color:var(--text-2);font-size:16px;text-align:right}
+.quotes{margin-top:20px;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
+.qtrack{gap:20px;animation-duration:60s}
+.qtrack .tcard{width:380px;flex:0 0 380px}
+.quotes:hover .mtrack{animation-play-state:paused}
+@keyframes qleft{from{transform:translateX(0)}to{transform:translateX(calc(-50% - 10px))}}
+.quotes.to-left .mtrack{animation-name:qleft}
+@media (max-width:640px){.qtrack .tcard{width:300px;flex-basis:300px}}
+.tcard{display:block;width:100%;height:auto;aspect-ratio:1/1;border-radius:var(--r-card);background:#FFFFFF}
+@media (max-width:960px){.proof-grid{grid-template-columns:1fr 1fr}}
+@media (max-width:640px){.proof-grid{grid-template-columns:1fr}.awrow{grid-template-columns:60px 1fr}.awrow .who{grid-column:2;text-align:left}}
+ .seqbox.arch{border-color:var(--logic-ink)}
+.loopfig{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-weight:700;font-size:16px}
+.loopfig .box{padding:7px 11px;border-radius:8px;color:#FFFFFF;line-height:1.2}
+.loopfig .box.logic{background:#42047D} .loopfig .box.feel{background:#EC4049}
+.loopfig .arr{color:var(--text-2);font-weight:400}
+.loopfig .rep{display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border:2px dashed var(--border);border-radius:8px}
+.loopfig .rep .w{font-weight:700} .loopfig .rep .w.logic{color:var(--logic-ink)} .loopfig .rep .w.feel{color:var(--feel-ink)}
+.loopfig .rep svg .l{stroke:var(--logic-ink)} .loopfig .rep svg .f{stroke:var(--feel-ink)}
+.loopfig .rep svg{width:28px;height:20px;display:block}
+.loopcap{display:grid;grid-template-columns:auto auto 1fr auto;gap:8px 14px;color:var(--text-2);margin-top:6px;font-size:16px}
+@media (max-width:640px){.loopcap{grid-template-columns:1fr}}
+.story{margin-bottom:24px;max-width:none;gap:12px}
+.story p{max-width:none}
+.story h3{font-family:var(--display);font-weight:800;font-size:var(--s2);color:var(--action)}
+.mentors{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.mentor.card{grid-template-columns:220px 1fr;align-items:center}
+@media (max-width:640px){.mentor.card{grid-template-columns:1fr}}
+@media (max-width:520px){.mentors{grid-template-columns:1fr}}
+.mentor{display:grid;gap:16px}
+.mentor img{width:100%;max-width:220px;aspect-ratio:1;object-fit:cover;border-radius:var(--r-card);background:#fff}
+.parts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.parts span{background:var(--canvas);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--text-2);min-width:0}
+.parts span b{display:block;color:var(--text)}
+@media (max-width:640px){.parts{grid-template-columns:1fr 1fr}}
+
+/* Avatars */
+
+
+
+
+
+
+.tag{display:inline-block;padding:4px 10px;border-radius:999px;background:var(--canvas);border:1px solid var(--line);font-weight:600}
+
+/* Membership */
+.tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media (max-width:960px){.tiers{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:640px){.tiers{grid-template-columns:1fr}}
+.tier{background:var(--surface);border-radius:var(--r-card);padding:22px;display:grid;gap:8px;min-width:0;border:1px solid transparent;align-content:start}
+.tier.lead-tier{border-color:var(--action)}
+.tier .price{font-family:var(--display);font-weight:800;font-size:var(--s2);line-height:1.15}
+.tier .meta{color:var(--text-2)}
+.tier ul{margin:4px 0 0;padding-left:18px;color:var(--text-2)}
+.tier ul li{margin:2px 0}
+.tax-note{color:var(--text-2);margin-top:16px}
+.cta-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:28px}
+
+/* People */
+.people{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media (max-width:760px){.people{grid-template-columns:1fr}}
+.person{display:grid;grid-template-columns:140px 1fr;gap:20px;background:var(--surface);border-radius:var(--r-card);padding:22px;align-items:start}
+.person img{width:140px;height:170px;object-fit:cover;border-radius:12px}
+@media (max-width:480px){.person{grid-template-columns:1fr}}
+
+/* Final + footer */
+.final{padding-block:72px}
+.final .stage{animation:none;display:grid;gap:20px;padding:40px}
+.final .stage h2{color:#FFFFFF}
+.final .stage p{color:var(--stage-text-2)}
+footer{border-top:1px solid var(--line);padding-block:48px 32px;color:var(--text-2)}
+.foot-grid{display:grid;grid-template-columns:1.4fr repeat(4,1fr);gap:28px}
+@media (max-width:960px){.foot-grid{grid-template-columns:1fr 1fr}}
+@media (max-width:520px){.foot-grid{grid-template-columns:1fr}}
+footer h3{color:var(--text);margin-bottom:8px}
+footer ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+footer a{color:var(--text-2);text-decoration:none}
+footer a:hover{color:var(--link);text-decoration:underline}
+.legal{margin-top:36px;padding-top:20px;border-top:1px solid var(--line);display:grid;gap:8px}
+.site-uk .only-uae{display:none !important}
+.site-uae .only-uk{display:none !important}
+
+.preview{position:fixed;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:30;background:var(--canvas);border:1px solid var(--border);border-radius:var(--r-card);padding:10px 12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;box-shadow:var(--glass-shadow)}
+.preview .lbl{font-weight:700}
+.preview .seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:3px}
+.preview button{font:inherit;font-weight:600;border:0;background:transparent;color:var(--text);padding:6px 12px;border-radius:999px;cursor:pointer}
+.preview button.on{background:var(--action);color:var(--action-label)}
+
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}html{scroll-behavior:auto}}
+/* Mobile optimisation (≤640px only; desktop untouched) */
+@media (max-width:640px){
+  :root{--s2:24px;--s3:16px}
+  body{font-size:16px}
+  .section{padding-block:40px}
+  .section-head{margin-bottom:20px;gap:8px}
+  .hero{padding-block:24px 32px}
+  .hero-copy{gap:16px;padding-block:0}
+  h1{font-size:32px}
+  .h1-sub{font-size:22px}
+  .stage{padding:16px}
+  .stage-labels{display:none}
+  .card,.tier,.avatar{padding:18px}
+  /* swipe rows */
+  .hs{display:flex !important;grid-template-columns:none !important;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;padding:4px 2px 12px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+  .hs>*{flex:0 0 84%;scroll-snap-align:start;min-width:0}
+  .journey,.seqboxes,.proof-grid,.tiers,.avatars,.layer-list{display:flex;grid-template-columns:none;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;padding:4px 2px 12px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+  .journey>*,.seqboxes>*,.proof-grid>*,.tiers>*,.avatars>*,.layer-list>*{flex:0 0 84%;scroll-snap-align:start;min-width:0}
+  .avatars .avatar:last-child{display:grid;grid-template-columns:1fr}
+  .avatars .avatar:last-child .q,.avatars .avatar:last-child .own,.avatars .avatar:last-child .after,.avatars .avatar:last-child .fit{grid-column:auto;grid-row:auto}
+  .tiers{margin-bottom:4px}
+  .tier{display:grid}
+  .layer-card{grid-template-columns:1fr;gap:12px;padding:18px}
+  .layer-card .get{grid-column:auto}
+  .layer-card .n,.layer-card .num{font-size:22px}
+  .award img{aspect-ratio:4/3}
+  /* the seven parts: one column per part, swipe sideways */
+  .whys{display:grid;grid-auto-flow:column;grid-template-rows:auto auto auto;grid-auto-columns:78%;grid-template-columns:none;overflow-x:auto;scroll-snap-type:x mandatory;gap:8px 12px;padding:4px 2px 12px;scrollbar-width:thin}
+  .whys>*{scroll-snap-align:start}
+  .wc.part{padding-bottom:12px}
+  .mentors{gap:12px}
+  .mentor.card img{max-width:180px;margin:0 auto}
+  .story{gap:8px}
+  .story h3{font-size:22px}
+  .bridge h3{font-size:22px}
+  .quotes .tcard{width:280px;flex-basis:280px}
+  .mtrack .logo-tile{width:140px;flex-basis:140px;height:64px}
+  .cta-row{margin-top:16px}
+  .swipe-hint{display:block;font-size:14px;color:var(--text-2);margin:-4px 0 12px}
+}
+
+
+/* Mobile optimisation, pass 2 */
+.more-btn{display:none}
+.story .more{display:contents}
+@media (max-width:640px){
+  .hero-copy{gap:14px}
+  .hero-copy .proof{gap:6px;font-size:15px}
+  .stage{display:grid;justify-items:center;padding:12px}
+  .stage img{max-height:340px;width:auto;max-width:100%;object-fit:contain}
+  .story .more{display:none}
+  .story.open .more{display:contents}
+  .more-btn{display:inline-flex;align-items:center;gap:6px;background:transparent;border:0;padding:0;font:inherit;font-weight:700;color:var(--action);cursor:pointer;justify-self:start}
+  .more-btn::after{content:"";width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);margin-left:4px;margin-top:-4px}
+  .story.open .more-btn::after{transform:rotate(-135deg);margin-top:4px}
+  .layer-card .get ul{display:none}
+  .layer-card .get.open ul{display:block}
+  .layer-card .get .lbl{display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+  .layer-card .get .lbl::after{content:"";width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);margin-top:-4px}
+  .layer-card .get.open .lbl::after{transform:rotate(-135deg);margin-top:4px}
+  .mentors,#layers .grid-2,.people{display:flex;grid-template-columns:none;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;padding:4px 2px 12px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+  .mentors>*,#layers .grid-2>*,.people>*{flex:0 0 84%;scroll-snap-align:start;min-width:0}
+  .mentor.card{display:grid;grid-template-columns:1fr}
+  .mentor.card img{max-width:150px}
+  .person{grid-template-columns:1fr;gap:12px;padding:18px}
+  .person img{width:110px;height:130px}
+  .final{padding-block:40px}
+  .foot-grid{grid-template-columns:1fr 1fr;gap:18px}
+  .foot-grid>div:first-child{grid-column:1 / -1}
+  footer h3{font-size:16px}
+}
+</style>
+<style>
+.doc{max-width:860px;margin:0 auto;padding:48px 20px 72px}
+.doc h1{font-size:40px;line-height:1.1;margin:0 0 20px}
+.doc h2{font-size:24px;margin:34px 0 10px}
+.doc h3{font-size:19px;margin:24px 0 8px}
+.doc p,.doc li{font-size:17px;line-height:1.65;color:var(--ink-2,inherit)}
+.doc ul,.doc ol{padding-left:24px;margin:0 0 14px}
+.doc blockquote{border-left:4px solid var(--indigo,#42047D);margin:14px 0;padding:10px 16px;background:var(--surface,rgba(0,0,0,0.04));border-radius:8px}
+.doc .tablewrap{overflow-x:auto;margin:0 0 16px}
+.doc table{border-collapse:collapse;width:100%;font-size:15.5px}
+.doc th,.doc td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line,rgba(0,0,0,0.12));vertical-align:top}
+.doc th{font-weight:700}
+</style>
+</head>
+<body>
+<div id="site" class="site-uk">
+<header class="nav wrap">
+  <div class="nav-bar" id="navbar">
+    <a class="logo-box" href="../" aria-label="Brandscaling home">
+      <img class="only-uk" src="../assets/logo-bs.png" alt="Brandscaling">
+      <img class="only-uae" src="../assets/logo-bsai.png" alt="Brandscaling AI">
+    </a>
+    <button class="btn btn-ghost menu-btn" id="menu" aria-expanded="false" aria-controls="navlinks" aria-label="Menu"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
+    <nav class="nav-links" id="navlinks" aria-label="Main">
+      <a href="../#why">Why businesses stall</a>
+      <a href="../#decide">How you decide</a>
+      <a href="../#layers">The six layers</a>
+      <a href="../#membership">Membership</a>
+      <a href="../#about">About</a>
+      <a class="only-menu btn btn-ghost" href="/?signin=1">Sign in</a>
+    </nav>
+    <div class="nav-end">
+      <select class="select only-uae" id="currency" aria-label="Currency">
+        <option value="GBP">GBP £</option><option value="AED">AED</option><option value="USD">USD $</option><option value="EUR">EUR €</option>
+      </select>
+      <button class="btn btn-ghost" id="theme-toggle" aria-label="Switch between light and dark mode">☾</button>
+      <a class="btn btn-ghost hide-m" href="/?signin=1">Sign in</a>
+      <a class="btn btn-energy" href="/edna/index.html">Take the Test</a>
+    </div>
+  </div>
+</header>
+<main class="doc">
+<h1>Privacy Policy</h1>
+<p>Effective: [date]. Last updated: [date].</p>
+<h2>1. Who we are</h2>
+<p>[Company name], trading as Brandscaling ("Brandscaling", "we", "us"), is the data controller for the personal data described in this policy. Company details are in Section 16.</p>
+<h2>2. Who this policy covers</h2>
+<ul>
+<li>Visitors to our websites.</li>
+<li>People who take the free E-DNA assessment.</li>
+<li>Members of any paid tier, and team members added to a business account.</li>
+<li>People who contact us, apply for Elite or Enterprise, or attend our events.</li>
+<li>Mentees, affiliates and collaboration partners.</li>
+</ul>
+<h2>3. What we collect</h2>
+<p><b>You give us:</b></p>
+<ul>
+<li>Identity and contact: name, email address, telephone number, company name, role, country.</li>
+<li>Account: sign-in details (passwords are stored hashed and we never see them), two-factor settings, roles in a business account.</li>
+<li>E-DNA assessment: your answers, your experience band, and the results we calculate from them (core type, subtype, Decision Intelligence Loop results and the other parts of your profile).</li>
+<li>Content you create: workbook entries, notes, documents, files, images, voice recordings and messages you give to the AI mentors, decision logs.</li>
+<li>Applications: information in Elite and Enterprise applications, and notes from any live session you attend.</li>
+<li>Payment: handled by Stripe. We receive a payment token, the card brand, the last four digits, the billing name and address, and the outcome. We never store full card numbers.</li>
+<li>Correspondence: emails, support requests and complaints.</li>
+</ul>
+<p><b>We collect automatically:</b></p>
+<ul>
+<li>Device and usage data: IP address, browser, device type, operating system, pages viewed, features used, time spent, errors and crash reports.</li>
+<li>AI processing records: the prompts you send to the AI mentors and the responses, so the mentors can remember your context and so we can check quality and safety.</li>
+<li>Cookies and similar technologies, as described in the Cookie Policy.</li>
+</ul>
+<p><b>We collect from others:</b></p>
+<ul>
+<li>Sign-in providers (for example Google or Apple sign-in), if you choose to use them: your name, email address and profile picture.</li>
+<li>Tools you choose to connect (for example calendar or email). We access only what the connection screen describes, and you can disconnect at any time.</li>
+<li>Our payment provider and email service, for delivery and fraud records.</li>
+</ul>
+<p><b>We do not want:</b> special category data. The E-DNA assessment does not ask about health, religion, politics, sexuality, ethnicity or similar. E-DNA Part 5 asks about learning preferences and accessibility needs so that we can adapt how content is shown to you; answering is optional, and if you tell us about a disability we treat it as special category data processed with your explicit consent. Please do not enter special category data about yourself or anyone else into the AI mentors or workbooks unless you want us to process it.</p>
+<h2>4. Why we use your data and on what basis</h2>
+<div class="tablewrap"><table><tr><th>Purpose</th><th>Data</th><th>Legal basis (UK GDPR Article 6 / DIFC DPL Article 10)</th></tr><tr><td>Create and run your account; deliver your tier</td><td>Identity, account, content, usage</td><td>Performance of a contract</td></tr><tr><td>Run the E-DNA assessment and produce your reports</td><td>Assessment answers and results</td><td>Performance of a contract (free tier: performance of the terms you accept at sign-up)</td></tr><tr><td>Operate the AI mentors for you</td><td>Your profile, content and prompts</td><td>Performance of a contract</td></tr><tr><td>Adapt content to accessibility needs you declare</td><td>E-DNA Part 5 answers</td><td>Explicit consent</td></tr><tr><td>Take payment, prevent fraud, keep accounts</td><td>Payment and billing data</td><td>Performance of a contract; legal obligation</td></tr><tr><td>Send service messages (receipts, security, changes)</td><td>Contact data</td><td>Performance of a contract; legal obligation</td></tr><tr><td>Send marketing emails about Brandscaling</td><td>Email address</td><td>Consent (free tier sign-up); legitimate interests for existing customers, with an unsubscribe link in every email</td></tr><tr><td>Improve the service and the AI mentors</td><td>Anonymised and aggregated usage and assessment data</td><td>Legitimate interests (improving our products)</td></tr><tr><td>Keep the service secure and prevent abuse</td><td>Device, usage and AI processing records</td><td>Legitimate interests (security)</td></tr><tr><td>Handle complaints, disputes and legal claims</td><td>Correspondence, records</td><td>Legitimate interests; legal obligation</td></tr><tr><td>Comply with law, tax and regulators</td><td>Records required by law</td><td>Legal obligation</td></tr></table></div>
+<p>Where we rely on legitimate interests we have checked that our interest is not overridden by your rights. You can object at any time (Section 12).</p>
+<h2>5. How we use AI</h2>
+<p>The AI mentors (AI Architect and AI Alchemist) and the OS Brain process your data to give you responses. How this works:</p>
+<ul>
+<li>Your AI mentors can see all of your own data in the app, so that their guidance fits you.</li>
+<li>Your identifiable data is never shown to another member's AI mentor and never used to answer another member.</li>
+<li>The AI learns across members only from anonymised, aggregated evidence that cannot identify you.</li>
+<li>Prompts and responses are sent to our AI model providers (listed in the Sub-processor and Data Transfer Register) to generate responses. Our contracts prohibit those providers from using your data to train their models.</li>
+<li>No decision with legal or similarly significant effects on you is made solely by automated means. E-DNA results are calculated automatically from your answers; they describe decision preferences and do not affect your access, price or rights. You can ask a human to review any AI output.</li>
+</ul>
+<p>Full details are in the AI Disclosure and AI Mentor Policy.</p>
+<h2>6. What other members can see</h2>
+<ul>
+<li>Your E-DNA result is private to you. In a business account, the Owner and Administrators can see the core type of each team member so that the team can work together; they cannot see your assessment answers or detailed report unless you share them.</li>
+<li>The AI mentors never reveal one member's data to another.</li>
+</ul>
+<h2>7. Who we share data with</h2>
+<ul>
+<li><b>Service providers</b> that host, store, process payments, send email, provide AI models and give support. Each is listed, with its role and location, in the Sub-processor and Data Transfer Register. Each acts under a written contract and only on our instructions.</li>
+<li><b>Our group companies:</b> Brand Scaling Limited (United Kingdom) and Brandscaling Ai Ltd (United Arab Emirates) run one shared platform and act as joint controllers for it.</li>
+<li><b>Our staff and contractors</b> in the United Kingdom, the United Arab Emirates and Pakistan, under confidentiality obligations and access controls.</li>
+<li><b>Other members</b>, only as described in Section 6.</li>
+<li><b>Professional advisers, auditors, insurers, regulators, courts and law enforcement</b>, where required.</li>
+<li><b>A buyer or successor</b> if we sell or restructure the business; you will be told.</li>
+</ul>
+<p>We do not sell personal data. We do not share it with advertisers or data brokers.</p>
+<h2>8. International transfers</h2>
+<p>Our services are hosted in the United States (Amazon Web Services, us-east-1 region) and we use providers in the United States, the United Kingdom and the European Union.</p>
+<p><i>United Kingdom residents:</i> transfers outside the United Kingdom are protected by the UK International Data Transfer Agreement or the UK Addendum to the EU Standard Contractual Clauses, or by a UK adequacy regulation where one exists (for example for the EU).</p>
+<p><i>DIFC processing:</i> transfers out of the DIFC are made to jurisdictions the DIFC Commissioner of Data Protection recognises as adequate, or under DIFC standard contractual clauses or another mechanism permitted by DIFC Law No. 5 of 2020.</p>
+<p>You can ask for a copy of the relevant safeguards at info@brandscaling.co.uk.</p>
+<h2>9. How long we keep data</h2>
+<div class="tablewrap"><table><tr><th>Data</th><th>Retention</th></tr><tr><td>Account, E-DNA profile and content</td><td>While your account is open, then for the period you choose at closure: immediately, 30 days, 90 days or 12 months. Default if you do not choose: 30 days.</td></tr><tr><td>E-DNA profile when you remain a member</td><td>Indefinitely while you have an account, because it belongs to you across businesses, unless you ask us to delete it</td></tr><tr><td>Free assessment email address</td><td>Until you unsubscribe or ask us to delete it</td></tr><tr><td>Payment, invoice and tax records</td><td>6 years after the transaction (United Kingdom tax law) or the period required by applicable law</td></tr><tr><td>AI processing records</td><td>90 days, then deleted or anonymised</td></tr><tr><td>Security and access logs</td><td>12 months</td></tr><tr><td>Support and complaint correspondence</td><td>3 years after closure</td></tr><tr><td>Elite and Enterprise applications not accepted</td><td>12 months</td></tr></table></div>
+<h2>10. Security</h2>
+<p>We protect your data with encryption in transit and at rest, access controls and role-based permissions, two-factor authentication, logging, regular backups and staff confidentiality obligations. Member data is separated so that one customer's data cannot reach another. No system is completely secure; if a breach affects you we will tell you and the regulator as the law requires.</p>
+<h2>11. Children</h2>
+<p>Our services are for adults aged 18 and over. We do not knowingly collect data from anyone under 18. If you believe a child has given us data, contact us and we will delete it.</p>
+<h2>12. Your rights</h2>
+<p>You have the right to:</p>
+<ul>
+<li>access the personal data we hold about you;</li>
+<li>correct inaccurate data;</li>
+<li>delete your data ("right to be forgotten");</li>
+<li>restrict or object to processing, including objecting to direct marketing at any time;</li>
+<li>receive your data in a portable format;</li>
+<li>withdraw consent at any time, where consent is the basis;</li>
+<li>not be subject to a solely automated decision with legal or similarly significant effects.</li>
+</ul>
+<p>Most of these can be done in your account settings, including downloading your E-DNA report and deleting your account. For anything else, email info@brandscaling.co.uk. We respond within one month (UK GDPR) or within the time required by DIFC law, and may ask you to verify your identity.</p>
+<p>If you are unhappy with how we handle your data you can complain to:</p>
+<ul>
+<li><i>United Kingdom:</i> the Information Commissioner's Office, ico.org.uk.</li>
+<li><i>DIFC:</i> the Commissioner of Data Protection, difc.ae/data-protection.</li>
+</ul>
+<p>We would rather resolve it with you first: see our Complaints Procedure.</p>
+<h2>13. Cookies</h2>
+<p>See the Cookie Policy.</p>
+<h2>14. Marketing</h2>
+<p>When you take the free E-DNA assessment you give us your email address and agree to receive your report and emails from Brandscaling. Every marketing email has an unsubscribe link. Unsubscribing does not stop service emails about your account.</p>
+<h2>15. Changes</h2>
+<p>We may update this policy. Material changes are notified by email or in the app before they take effect. The date at the top shows the current version.</p>
+<h2>16. Contact and company details</h2>
+<p>Privacy requests: info@brandscaling.co.uk. No Data Protection Officer is appointed; the co-founders are responsible for data protection.</p>
+<p>Brand Scaling Limited, trading as Brandscaling. Registered in England and Wales, company number 15563510. Registered office: 11 Old Bond Street, London, W1S 4PN. info@brandscaling.co.uk.</p>
+</main>
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <span class="logo-box"><img class="only-uk" src="../assets/logo-bs.png" alt="Brandscaling" style="height:40px;width:auto"><img class="only-uae" src="../assets/logo-bsai.png" alt="Brandscaling AI" style="height:40px;width:auto"></span>
+        <p style="margin-top:14px">Decision Intelligence &amp; Infinite Scaling Mastery</p>
+        <p>Profit – Purpose – Profit</p>
+      </div>
+      <div><h3>The method</h3><ul><li><a href="../#why">Why businesses stall</a></li><li><a href="../#layers">The six layers</a></li><li><a href="../#decide">How you decide</a></li></ul></div>
+      <div><h3>Membership</h3><ul><li><a href="../#membership">Tiers</a></li><li><a href="../#applications">Elite and Enterprise</a></li><li><a href="/?signin=1">Sign in</a></li></ul></div>
+      <div><h3>Company</h3><ul><li><a href="../#about">About</a></li><li><a href="contact.html">Contact</a></li><li><a href="complaints.html">Complaints</a></li><li><a href="accessibility.html">Accessibility</a></li></ul></div>
+      <div><h3>Legal</h3><ul><li><a href="terms-of-use.html">Terms of Use</a></li><li><a href="membership-terms.html">Membership Terms</a></li><li><a href="privacy-policy.html">Privacy Policy</a></li><li><a href="cookie-policy.html">Cookie Policy</a></li><li><a href="refunds-and-cancellation.html">Refunds and Cancellation</a></li><li><a href="acceptable-use.html">Acceptable Use</a></li><li><a href="ai-disclosure.html">AI Disclosure</a></li><li><a href="sub-processors.html">Sub-processors</a></li></ul></div>
+    </div>
+    <div class="legal">
+      <p class="only-uk">Brand Scaling Limited, trading as Brandscaling. Registered in England and Wales, company number 15563510. Registered office: 11 Old Bond Street, London, W1S 4PN. info@brandscaling.co.uk. © <span class="year">2026</span> Brand Scaling Limited.</p>
+      <p class="only-uae">Brandscaling Ai Ltd, trading as Brandscaling AI. A private company registered in the Dubai International Financial Centre, registered number 14230, commercial licence CL14230. Registered office: Unit IH-00-01-03-OF-05, Level 3, Innovation One, DIFC, Dubai, United Arab Emirates. info@brandscalingai.com. © <span class="year">2026</span> Brandscaling Ai Ltd.</p>
+      <p>Assessment results describe how a person tends to make decisions. They are not a psychological, medical or clinical assessment and are not advice. AI mentors are AI systems; you remain responsible for your decisions.</p>
+    </div>
+  </div>
+</footer>
+</div>
+<script>(function(){var root=document.documentElement;var saved=null;try{saved=localStorage.getItem('bs-theme')}catch(e){}
+root.setAttribute('data-theme',saved==='dark'?'dark':'light');
+var t=document.getElementById('theme-toggle');function g(){if(t)t.textContent=root.getAttribute('data-theme')==='dark'?'\u2600':'\u263E'}g();
+if(t)t.addEventListener('click',function(){var n=root.getAttribute('data-theme')==='dark'?'light':'dark';root.setAttribute('data-theme',n);try{localStorage.setItem('bs-theme',n)}catch(e){}g()});
+var m=document.getElementById('menu'),b=document.getElementById('navbar');if(m&&b)m.addEventListener('click',function(){var o=b.classList.toggle('open');m.setAttribute('aria-expanded',o?'true':'false')});})();</script>
+</body>
+</html>
