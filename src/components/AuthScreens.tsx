@@ -26,6 +26,8 @@ export function AuthScreens({ onAuthenticate, onCancel, initialMode = 'login' }:
   const [formData, setFormData] = useState({
     email: '', password: '', confirmPassword: '', firstName: '', lastName: '', code: ''
   });
+  /* age consent on sign-up (Fariza, 19 Nov 2026: "sign up page before assessment") */
+  const [over18, setOver18] = useState(false);
 
   const set = (field: string, value: string) => {
     setFormData((p) => ({ ...p, [field]: value }));
@@ -40,6 +42,7 @@ export function AuthScreens({ onAuthenticate, onCancel, initialMode = 'login' }:
       if (!formData.firstName || !formData.lastName) { setError('Please enter your full name'); return false; }
       if (formData.password.length < 8) { setError('Password must be at least 8 characters long'); return false; }
       if (formData.password !== formData.confirmPassword) { setError('Passwords do not match'); return false; }
+      if (!over18) { setError('Please confirm that you are over 18 years old'); return false; }
     } else if (mode === 'login') {
       if (!formData.password) { setError('Please enter your password'); return false; }
     } else if (mode === 'confirm-code') {
@@ -258,6 +261,12 @@ export function AuthScreens({ onAuthenticate, onCancel, initialMode = 'login' }:
             {emailField}
             {passwordField('Password', 'At least 8 characters')}
             {confirmPasswordField('Confirm password')}
+            <div className="bs-auth-row" style={{ justifyContent: 'flex-start' }}>
+              <label>
+                <input type="checkbox" checked={over18} onChange={(e) => setOver18(e.target.checked)} />
+                <span>I'm over 18 years old</span>
+              </label>
+            </div>
             {alerts}
             <button type="submit" className="bs-btn bs-btn-action bs-btn-block" disabled={isLoading}>
               {isLoading ? 'Creating account…' : 'Create account'}
