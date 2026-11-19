@@ -425,15 +425,20 @@
 /* ---------- responsive: the dashboard shell on phones ---------- */
 @media (max-width: 760px) {
   .bs-dash { flex-direction: column; }
+  /* phones: the sidebar becomes one top bar — logo, then the views as a single
+     horizontally scrollable tab row (wrapping them stacked three ragged rows; 19 Nov 2026) */
   .bs-side {
-    width: auto; flex-direction: row; flex-wrap: wrap; align-items: center;
+    width: auto; flex-direction: row; flex-wrap: nowrap; align-items: center;
+    overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;
     border-right: 0; border-bottom: 1px solid var(--bs-line);
-    padding: 12px 12px; gap: 2px;
+    padding: 10px 12px; gap: 2px;
   }
-  .bs-side-logo { height: 40px; margin: 0 10px 0 2px; }
-  .bs-side button { width: auto; padding: 9px 11px; font-size: 14px; gap: 8px; }
+  .bs-side::-webkit-scrollbar { display: none; }
+  .bs-side-logo { height: 36px; margin: 0 10px 0 0; flex: 0 0 auto; }
+  .bs-side button { width: auto; flex: 0 0 auto; white-space: nowrap; padding: 9px 11px; font-size: 14px; gap: 7px; }
   .bs-side-foot { display: none; }
-  .bs-main { padding: 18px 14px 40px; }
+  .bs-main { padding: 14px 10px 40px; }
+  .bs-edna-frame { height: calc(100vh - 76px); border-radius: 10px; }
   .bs-dash-head { padding: 16px 18px; }
   .bs-dash-head h1 { font-size: 21px; }
   .bs-cards { grid-template-columns: 1fr; }

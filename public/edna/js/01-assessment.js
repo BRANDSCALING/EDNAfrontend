@@ -334,6 +334,17 @@ let profile = null;
 const screen = document.getElementById('screen');
 function esc(s) { return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
+/* On a phone the report, detailed report and plan render their narrow layout — the same one
+   the iOS app shows (BS-DI-007) — because the desktop two-column layout clips at phone width. */
+function rpNarrow() { return window.innerWidth <= 700; }
+let wasNarrow = rpNarrow();
+window.addEventListener('resize', () => {
+  const n = rpNarrow();
+  if (n === wasNarrow) return;
+  wasNarrow = n;
+  if (['report', 'detailed', 'adapt'].indexOf(screens[at]) >= 0) render();
+});
+
 /* Settings: applied to the root; remembered in this browser only */
 const settings = { font: 'inter', size: 100, spacing: 'standard', motion: 'standard', theme: 'light', transparency: 'standard' };
 function loadSettings() { try { Object.assign(settings, JSON.parse(localStorage.getItem('edna-settings') || '{}')); } catch (e) {} }
@@ -608,7 +619,7 @@ function render() {
   }
   if (s === 'report') {
     crumb.textContent = 'E-DNA assessment \u00b7 Your E-DNA report'; bar.style.width = '100%';
-    screen.innerHTML = '<div class="wrap" style="gap:32px">' + reportHTML(false) + '<div class="actions"><button type="button" class="back" id="back">Back</button><button type="button" id="next">What comes next</button></div></div>' + '<div class="modal" id="cmodal" hidden><div class="card" role="dialog" aria-modal="true" aria-labelledby="ct"><h2 id="ct">Before we show this comparison</h2>' + '<p>This compares your answers with how neurotypical and neurodivergent people often work. Because this can relate to health, we need your permission first.</p>' + '<ul><li>We use it to show you this comparison.</li><li>It is not a diagnosis.</li><li>You can withdraw your permission at any time in your settings.</li><li>Saying no changes nothing else in your report or in E\u2011DNA.</li></ul>' + '<label class="approve"><input type="checkbox" id="cagree"><span>I agree that Brandscaling can use my Part 5 answers to show this comparison.</span></label>' + '<div class="actions"><button type="button" id="cyes" disabled>Show my comparison</button><button type="button" class="back" id="cno">Not now</button></div></div></div>';
+    screen.innerHTML = '<div class="wrap" style="gap:32px">' + reportHTML(rpNarrow()) + '<div class="actions"><button type="button" class="back" id="back">Back</button><button type="button" id="next">What comes next</button></div></div>' + '<div class="modal" id="cmodal" hidden><div class="card" role="dialog" aria-modal="true" aria-labelledby="ct"><h2 id="ct">Before we show this comparison</h2>' + '<p>This compares your answers with how neurotypical and neurodivergent people often work. Because this can relate to health, we need your permission first.</p>' + '<ul><li>We use it to show you this comparison.</li><li>It is not a diagnosis.</li><li>You can withdraw your permission at any time in your settings.</li><li>Saying no changes nothing else in your report or in E\u2011DNA.</li></ul>' + '<label class="approve"><input type="checkbox" id="cagree"><span>I agree that Brandscaling can use my Part 5 answers to show this comparison.</span></label>' + '<div class="actions"><button type="button" id="cyes" disabled>Show my comparison</button><button type="button" class="back" id="cno">Not now</button></div></div></div>';
     const rr = () => { window.scrollTo({ top: 0 }); render(); };
     wireReport(screen, rr, () => { const m = document.getElementById('cmodal'); m.hidden = false; });
     const ag = document.getElementById('cagree'); ag.addEventListener('change', () => { document.getElementById('cyes').disabled = !ag.checked; });
@@ -628,13 +639,13 @@ function render() {
   }
   if (s === 'detailed') {
     crumb.textContent = 'E-DNA assessment \u00b7 Your detailed E-DNA report'; bar.style.width = '100%';
-    screen.innerHTML = '<div class="wrap" style="gap:32px">' + detailedHTML(false) + '<div class="actions"><button type="button" class="back" id="back">Back</button></div></div>';
+    screen.innerHTML = '<div class="wrap" style="gap:32px">' + detailedHTML(rpNarrow()) + '<div class="actions"><button type="button" class="back" id="back">Back</button></div></div>';
     wireReport(screen, () => { window.scrollTo({ top: 0 }); render(); }, () => {});
     document.getElementById('back').addEventListener('click', go(-1)); return;
   }
   if (s === 'adapt') {
     crumb.textContent = 'E-DNA assessment \u00b7 What to adapt, and what the app provides'; bar.style.width = '100%';
-    screen.innerHTML = '<div class="wrap" style="gap:32px">' + adaptHTML(false) + '<div class="actions"><button type="button" class="back" id="back">Back to my detailed report</button></div></div>';
+    screen.innerHTML = '<div class="wrap" style="gap:32px">' + adaptHTML(rpNarrow()) + '<div class="actions"><button type="button" class="back" id="back">Back to my detailed report</button></div></div>';
     wireReport(screen, () => { window.scrollTo({ top: 0 }); render(); }, () => {});
     document.getElementById('back').addEventListener('click', go(-1)); return;
   }
