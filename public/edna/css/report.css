@@ -281,4 +281,20 @@
 .rp-app .rp-disp { font-size: 15px; }
 .rp-app .rp-row .bl { font-size: 15px; }
 /* end app-size */
+/* Grid items may shrink below their one-line width, or a nowrap row (the Part 1 loop
+   chips) blows the body track past the card and every element on the page clips at the
+   right edge on narrow phones (member's 360px test, 20 Nov 2026). The middle "repeat"
+   box may wrap on phones so the row always fits. */
+.rp-root > *, .rp-body > *, .rp-cols > *, .rp > *, .rp-loop > * { min-width: 0; }
+/* narrow (phones): every flex/grid item may shrink — min-width only affects those, and an
+   explicit min-width (e.g. .rp-adapt .lv) still wins on specificity */
+.rp-narrow * { min-width: 0; }
+.rp-narrow .rp-band .p { flex: 0 0 auto; } /* "Part 1" never shrinks under its own text */
+/* the loop chips keep their natural size (the grid fits from ~350px up); on ultra-narrow
+   phones the sequence wraps onto a second line instead of shrinking or clipping */
+.rp-narrow .rp-loop > * { min-width: auto; }
+@media (max-width: 349px) {
+  .rp-narrow .rp-loop { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+  .rp-narrow .rp-loop .uline, .rp-narrow .rp-loop .cap { flex: 1 1 100%; }
+}
 /* REPORT-CSS-END */

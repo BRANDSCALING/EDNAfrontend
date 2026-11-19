@@ -28,6 +28,10 @@ interface BrandDashboardProps {
 
 export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, onViewChange, onLogout }: BrandDashboardProps) {
   const [edna, setEdna] = useState<EdnaState | null>(null);
+  /* phones: the sidebar is a top bar with a hamburger that slides the menu down
+     (member feedback, 20 Nov 2026 — the scrollable tab strip read badly) */
+  const [navOpen, setNavOpen] = useState(false);
+  const go = (v: MemberView) => { setNavOpen(false); onOpenMemberView(v); };
 
   useEffect(() => {
     let alive = true;
@@ -45,14 +49,27 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
 
   return (
     <div className="bs-dash">
-      <aside className="bs-side">
-        <img src="/edna/img/logo.png" alt="Brandscaling" className="bs-side-logo" />
-        <button className={view === 'overview' ? 'on' : ''} onClick={() => onOpenMemberView('overview')}>▦ Overview</button>
-        <button className={view === 'profile' ? 'on' : ''} onClick={() => onOpenMemberView('profile')}>◍ My E-DNA profile</button>
-        <button className={view === 'chat' ? 'on' : ''} onClick={() => onOpenMemberView('chat')}>💬 AI mentors</button>
-        <button className={view === 'workbooks' || view === 'plan' ? 'on' : ''} onClick={() => onOpenMemberView('workbooks')}>📓 Workbooks</button>
-        <button className={view === 'zoom-recordings' ? 'on' : ''} onClick={() => onOpenMemberView('zoom-recordings')}>▶ Recordings</button>
-        <button onClick={onLogout}>↩ Log out</button>
+      <aside className={'bs-side' + (navOpen ? ' nav-open' : '')}>
+        <div className="bs-side-top">
+          <img src="/edna/img/logo.png" alt="Brandscaling" className="bs-side-logo" />
+          <button
+            type="button"
+            className="bs-nav-burger"
+            aria-label={navOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={navOpen}
+            onClick={() => setNavOpen((o) => !o)}
+          >
+            {navOpen ? '✕' : '☰'}
+          </button>
+        </div>
+        <nav className="bs-side-menu">
+          <button className={view === 'overview' ? 'on' : ''} onClick={() => go('overview')}>▦ Overview</button>
+          <button className={view === 'profile' ? 'on' : ''} onClick={() => go('profile')}>◍ My E-DNA profile</button>
+          <button className={view === 'chat' ? 'on' : ''} onClick={() => go('chat')}>💬 AI mentors</button>
+          <button className={view === 'workbooks' || view === 'plan' ? 'on' : ''} onClick={() => go('workbooks')}>📓 Workbooks</button>
+          <button className={view === 'zoom-recordings' ? 'on' : ''} onClick={() => go('zoom-recordings')}>▶ Recordings</button>
+          <button onClick={onLogout}>↩ Log out</button>
+        </nav>
         <div className="bs-side-foot">Decision Intelligence &amp; Infinite Scaling Mastery</div>
       </aside>
 
