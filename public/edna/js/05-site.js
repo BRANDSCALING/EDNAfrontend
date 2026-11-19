@@ -397,6 +397,13 @@
 
   var origRender = render;
   function renderGuarded() {
+    if (!restored) {
+      /* the first paint happens before the saved state loads; hold a blank beat instead
+         of flashing the welcome screen (seen when opening #plan from the dashboard) */
+      var el = document.getElementById('screen');
+      if (el) el.innerHTML = '<div class="wrap"><section class="panel"><p class="small">Loading\u2026</p></section></div>';
+      return;
+    }
     deriveCore();
     var s = screens[at];
     if (ANON && (s === 'report' || s === 'end' || s === 'detailed' || s === 'adapt')) {
@@ -444,6 +451,7 @@
       else submitIfComplete();
     } else {
       restored = true;
+      renderGuarded(); /* first real paint: the welcome screen */
       retryPending();
       snapshot(); /* start the progress record from the welcome screen */
     }
