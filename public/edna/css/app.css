@@ -131,8 +131,11 @@ header img { height: 44px; width: auto; max-width: 100%; border-radius: 6px; }
 .panel h1 .brand { color: var(--brand-word); }
 .hook { font-weight: 700; color: var(--pink); text-align: center; text-wrap: balance; border: 2px solid var(--pink); border-radius: 12px; padding: 16px 20px; background: var(--bg); }
 
-.panel h1 .sub { display: block; white-space: nowrap; overflow-x: auto; }
-@media (max-width: 600px) { .panel h1 .sub { white-space: normal; } }
+/* Grid items must be allowed to shrink below their one-line width, or a long title at an
+   increased text size blows the track past the card and overflow:hidden clips every screen
+   (Ammar's test, 19 Nov 2026). */
+.panel > *, .wrap > * { min-width: 0; }
+.panel h1 .sub { display: block; }
 .panel .when, .panel .small { font-size: var(--s3); color: var(--fg2); }
 .panel p { margin: 0; }
 .panel ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
