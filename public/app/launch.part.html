@@ -1,0 +1,70 @@
+<!-- ===== Launch view (v1): one question, then one box at a time ===== -->
+<main class="main hide" id="main0">
+  <div class="hdr">
+    <div>
+      <div class="t13 sec">Home</div>
+      <div class="t28">Welcome back, <span class="ind" id="name0">Sample Name</span></div>
+    </div>
+    <div class="who"><span class="chip ex">Launch view</span><span class="chip type" id="typeChip0">Architect</span></div>
+  </div>
+
+  <!-- step 0: one question -->
+  <section class="glass panel lcol" id="l0" aria-labelledby="l0h">
+    <div class="strip" aria-hidden="true"></div>
+    <h1 class="t28 ind" id="l0h" style="margin:0 0 16px">What is the decision you are trying to make?</h1>
+    <div class="entry dec"><textarea id="d0" rows="3" placeholder="In your own words. One decision."></textarea><div class="more"><button class="plus" type="button" aria-label="Attach document"><span class="ic">+</span>Attach document</button></div></div>
+    <div class="optchips" style="margin:12px 0 16px">
+      <label class="optchip"><input type="checkbox" id="o_started"><span>I have already started on this</span></label>
+      <label class="optchip"><input type="checkbox" id="o_urgent"><span>There is a deadline, or money or conflict at stake</span></label>
+    </div>
+    <div class="btnrow"><button class="btn primary" id="start0">Start</button><span class="t13 sec" id="credit0"></span></div>
+    <div class="t13 sec" style="margin-top:12px" id="mline0"></div>
+  </section>
+
+  <!-- step 1+: one box at a time -->
+  <section class="glass panel lcol hide" id="l1" aria-labelledby="l1h">
+    <div class="strip" aria-hidden="true"></div>
+    <div class="lrow" style="margin-bottom:12px"><div><div class="t13 sec" id="l1dec"></div><h2 class="t19 b" id="l1h" style="margin:0">Your loop, one step at a time</h2></div><button class="btn small secondary" id="expand0" type="button">Show the full Frame</button></div>
+    <ol class="lstrip" id="lstrip"></ol>
+
+    <div class="mbubble" id="mbubble">
+      <img id="m0img" src="assets/ai_architect_approved.gif" alt="AI Architect">
+      <div><div class="t13 sec b" id="m0name">AI Architect</div><div class="t19" id="m0text">…</div></div>
+    </div>
+
+    <div id="orderpick" class="orders hide" role="radiogroup" aria-label="Which order for this decision"></div>
+
+    <div class="lbox" id="lbox">
+      <div class="tag"><span class="w" id="lbW">Your facts</span><span class="n" id="lbN">Logic · step 1 of 5</span></div>
+      <div class="entry"><textarea id="lbT" rows="3" placeholder=""></textarea></div>
+      <div class="btnrow" style="margin-top:8px">
+        <button class="btn primary small" id="lbSend">Send</button>
+        <button class="btn secondary small hide" id="lbRound" type="button">Go round again</button>
+        <button class="btn secondary small" id="lbSave" type="button">Save and come back</button>
+        <span class="t13 sec" id="lbHint"></span>
+      </div>
+    </div>
+
+    <div class="reply" style="margin-top:12px"><textarea id="r0" rows="1" placeholder="Reply to your mentor, if you want to"></textarea><button class="btn small secondary" id="r0send">Reply</button></div>
+
+    <div id="ready0" class="ready hide"></div>
+    <div id="log0" class="logcard hide"></div>
+    <div class="btnrow hide" id="done0" style="margin-top:12px"><button class="btn primary small" id="other0">Ask the other mentor to read it</button><button class="btn secondary small" id="new0">Make another decision</button></div>
+    <div class="t13 sec" style="margin-top:12px">AI mentor · can be wrong · you decide. Prototype: nothing is saved.</div>
+  </section>
+
+  <div class="grid2" style="margin-top:0">
+    <section class="glass panel" aria-labelledby="l2h"><div class="strip" aria-hidden="true"></div>
+      <div class="lrow"><div><h2 class="t19 b" id="l2h" style="margin:0">Decision log</h2><div class="t13 sec">Your last decisions and what they rest on</div></div><span class="chip ex">Example</span></div>
+      <table aria-label="Your last decisions"><thead><tr><th style="width:64px">Date</th><th>Decision</th><th style="width:130px">Status</th></tr></thead><tbody id="logRows0"></tbody></table>
+      <div class="btnrow" style="margin-top:12px"><button class="btn secondary small" id="openlog0">Open Decision log</button></div>
+    </section>
+    <section class="glass panel" aria-labelledby="l3h"><div class="strip" aria-hidden="true"></div>
+      <div class="lrow"><div><h2 class="t19 b" id="l3h" style="margin:0">Your loop</h2><div class="t13 sec" id="loopSub0">From Part 1 of your E-DNA</div></div><span class="chip type" id="loopChip0">Dominant</span></div>
+      <div id="loopFig0"></div>
+      <div class="btnrow" style="margin-top:12px"><button class="btn secondary small" id="room0">Invite someone to a decision</button><button class="btn secondary small">Your workbooks</button></div>
+    </section>
+  </div>
+
+  <div class="foot"><span>Brandscaling · Decision Intelligence &amp; Infinite Scaling Mastery</span><span>Example data for illustration.</span></div>
+</main>

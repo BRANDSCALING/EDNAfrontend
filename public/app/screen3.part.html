@@ -1,0 +1,67 @@
+<!-- ===== Screen 3: Decision log (list, filters, one decision opened) ===== -->
+<main class="main hide" id="main3">
+  <div class="hdr">
+    <div>
+      <div class="t13 sec">Decision log</div>
+      <div class="t28">Your <span class="ind">Decision log</span></div>
+    </div>
+    <div class="who">
+      <span class="chip ex">Example data</span>
+      <span class="chip type" id="typeChip3">Architect</span>
+    </div>
+  </div>
+
+  <section class="glass panel" aria-labelledby="l3h">
+    <div class="strip" aria-hidden="true"></div>
+    <div class="lrow">
+      <div><h2 class="t19 b" id="l3h" style="margin:0">Every decision, one row</h2><div class="t13 sec">Written by your mentor from the Frame (shaded) or by you by hand (plain). Nothing here changes your E-DNA result.</div></div>
+      <div class="btnrow" style="margin:0"><button class="btn small primary" id="l3new">Make a decision</button><button class="btn small secondary" id="l3add">Add a row by hand</button></div>
+    </div>
+
+    <div class="counts" id="counts3"></div>
+
+    <div class="filters" role="group" aria-label="Filters">
+      <span class="t13 sec b">Filter</span>
+      <select class="sel t13" data-f="context" aria-label="Context"><option value="">Context · all</option><option>Money</option><option>Time</option><option>People</option><option>Conflict</option><option>Personal</option></select>
+      <select class="sel t13" data-f="stress" aria-label="Under stress"><option value="">Under stress · all</option><option value="yes">Urgent only</option><option value="no">Not urgent</option></select>
+      <select class="sel t13" data-f="loop" aria-label="Loop used"><option value="">Loop used · all</option><option value="held">Finished in the loop it began with</option><option value="switched">Switched inside the decision</option><option value="L">Began with Logic</option><option value="F">Began with Feeling</option></select>
+      <select class="sel t13" data-f="workbook" aria-label="Workbook"><option value="">Workbook · all</option><option>Workbook 1</option><option>Workbook 3</option><option value="none">Outside a workbook</option></select>
+      <select class="sel t13" data-f="status" aria-label="Status"><option value="">Status · all</option><option value="open">In the Frame</option><option value="decided">Decided</option><option value="review">Review due</option><option value="reviewed">Reviewed</option></select>
+      <button class="btn small secondary" id="l3clear" type="button">Clear</button>
+      <span class="t13 sec" id="l3count"></span>
+    </div>
+
+    <table class="logtable" aria-label="Your decisions">
+      <thead><tr><th style="width:64px">Date</th><th>Decision</th><th style="width:120px">Context</th><th style="width:140px">Loop used</th><th style="width:70px">Urgent</th><th style="width:140px">Status</th><th style="width:90px">Review</th><th style="width:80px">By</th></tr></thead>
+      <tbody id="rows3"></tbody>
+    </table>
+  </section>
+
+  <!-- one decision opened -->
+  <section class="glass panel hide" id="open3" aria-labelledby="o3h">
+    <div class="strip" aria-hidden="true"></div>
+    <div class="lrow">
+      <div><div class="t13 sec" id="o3meta"></div><h2 class="t19 b" id="o3h" style="margin:0"></h2></div>
+      <div class="btnrow" style="margin:0"><button class="btn small secondary" id="o3reopen">Reopen in the Frame</button><button class="btn small secondary" id="o3close">Close</button></div>
+    </div>
+    <div class="o3grid">
+      <div>
+        <div class="t13 sec b" style="margin-bottom:6px">The boxes, as written</div>
+        <div id="o3boxes"></div>
+      </div>
+      <div>
+        <div class="t13 sec b" style="margin-bottom:6px">Your mentor's readiness read</div>
+        <div class="ready" id="o3ready" style="margin-top:0"></div>
+        <div class="t13 sec b" style="margin:14px 0 6px">Log line</div>
+        <div class="logcard" id="o3log" style="margin-top:0"></div>
+        <div class="t13 sec b" style="margin:14px 0 6px">Review</div>
+        <div class="review" id="o3review"></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="foot">
+    <span>Brandscaling · Decision Intelligence &amp; Infinite Scaling Mastery</span>
+    <span>Example data for illustration. No decision shown is real.</span>
+  </div>
+</main>

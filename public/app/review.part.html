@@ -1,0 +1,47 @@
+<!-- ===== Screen 12 (bar: 11 · Review): the review on the review date. Reached from Needs you (Review), the log row, and N6/N7. BS-AI-001 A·15; BS-AI-002 §5 move 12; BS-AI-004 §3.2 (at most three mentor turns) ===== -->
+<main class="main hide" id="main12">
+  <div class="hdr">
+    <div>
+      <button class="back" type="button" data-back="prev">‹ Back</button>
+      <div class="t13 sec">Decision log · review</div>
+      <div class="t28">Review: <span class="ind" id="rvTitle">the decision</span></div>
+    </div>
+    <div class="who"><span class="chip ex">Example data</span><span class="chip type" id="typeChip12">Architect</span></div>
+  </div>
+
+  <div class="grid-7-5 rvgrid">
+    <section class="glass panel" aria-labelledby="rvh">
+      <div class="strip" aria-hidden="true"></div>
+      <div class="lrow" style="margin-bottom:4px"><h2 class="t19 b" id="rvh" style="margin:0">Three questions with <span id="rvMentor">AI Architect</span></h2><span class="t13 sec">Review due today</span></div>
+      <div class="t13 sec" style="margin-bottom:12px">Five minutes. One question at a time. Nothing here changes your E-DNA result, and a review does not use a decision credit. <span class="infowrap"><button class="info" type="button" aria-label="What this means" aria-expanded="false">i</button><span class="tip" role="tooltip">On the review date the mentor asks three questions (did it hold; what you would change in how you decided; what to carry forward) and records the outcome on the log row (BS-AI-001 A·15; BS-AI-002 §5 move 12). At most three mentor turns (BS-AI-004 §3.2). Credits are charged at Check only (BS-AI-007 §7), so the review is free: design choice.</span></span></div>
+      <div class="rvchat" id="rvChat" aria-live="polite"></div>
+      <div class="rvinput" id="rvInput"></div>
+      <div class="rvdone hide" id="rvDone"></div>
+    </section>
+
+    <aside style="display:flex;flex-direction:column;gap:16px">
+      <section class="glass panel" aria-labelledby="rvl">
+        <div class="strip" aria-hidden="true"></div>
+        <h2 class="t13 sec b" id="rvl" style="margin:0 0 6px">The log line</h2>
+        <div class="t19" id="rvLog"></div>
+        <div class="t13 sec" style="margin-top:8px">Written by your mentor at Check. The review adds the outcome and your three answers to this row.</div>
+      </section>
+      <section class="glass panel" aria-labelledby="rvo">
+        <div class="strip" aria-hidden="true"></div>
+        <h2 class="t13 sec b" id="rvo" style="margin:0 0 6px">Outcome</h2>
+        <div class="rvout" id="rvOut">
+          <span class="chip grey">Not yet reviewed</span>
+        </div>
+        <div class="t13 sec" style="margin-top:8px">Held · Changed direction · Reopened. A change of direction is reversing or reopening a decision already made; it is not a switch, which happens inside one decision.</div>
+      </section>
+      <section class="glass panel" aria-labelledby="rvm">
+        <div class="strip" aria-hidden="true"></div>
+        <h2 class="t13 sec b" id="rvm" style="margin:0 0 6px">Your mentor</h2>
+        <div class="row" style="gap:12px;align-items:center"><img id="rvImg" src="assets/ai_architect_approved.gif" alt="AI Architect" style="width:56px;height:56px;border-radius:12px;object-fit:cover"><div><div class="t19 b" id="rvMentor2">AI Architect</div><div class="t13 sec" id="rvMentorSub">Your primary mentor</div></div></div>
+        <div class="btnrow hide" style="margin-top:10px" id="rvSwap"><button class="btn secondary small" type="button" id="rvSwapBtn">Review with AI Alchemist instead</button></div>
+      </section>
+    </aside>
+  </div>
+
+  <div class="foot"><span>Brandscaling · Decision Intelligence &amp; Infinite Scaling Mastery</span><span>AI mentor · can be wrong · you decide.</span></div>
+</main>

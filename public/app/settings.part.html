@@ -1,0 +1,150 @@
+<!-- ===== Screen 9 (bar: 8 · Settings): profile, notifications, consent, membership and credits, screen settings, account ===== -->
+<main class="main hide" id="main9">
+  <div class="hdr">
+    <div>
+      <button class="back" type="button" data-back="prev">‹ Back</button>
+      <div class="t13 sec">Settings</div>
+      <div class="t28">Settings</div>
+    </div>
+    <div class="who"><span class="chip ex">Example data</span><span class="chip type" id="typeChip9">Architect</span></div>
+  </div>
+
+  <div class="grid2 setgrid">
+
+    <!-- Profile: photo with initials fallback, names, email (BS-AI-003 §7.3, §9; BS-AI-009 §6) -->
+    <section class="glass panel" aria-labelledby="s9p">
+      <div class="strip" aria-hidden="true"></div>
+      <h2 class="t19 b" id="s9p" style="margin:0 0 4px">Profile</h2>
+      <div class="t13 sec" style="margin-bottom:14px">Your photo or initials are what people in a Decision Room see. <span class="infowrap"><button class="info" type="button" aria-label="What this means" aria-expanded="false">i</button><span class="tip" role="tooltip">In a room each person is a circle: your photo if you set one here, otherwise your initials from your first and last name. The circle's colour is your core type; a leaning is grey with a ring in the leaning loop's colour (BS-AI-003 §7.3). Your photo is personal data and is deleted with your account (BS-AI-003 §7.3; BS-WEB-004).</span></span></div>
+      <div class="prow">
+        <div class="pcircle big" id="s9circle" aria-hidden="true">SN</div>
+        <div class="pbtns">
+          <button class="btn secondary small" type="button" id="s9upload">Upload a photo</button>
+          <button class="btn secondary small hide" type="button" id="s9remove">Remove photo</button>
+          <div class="t13 sec">JPEG or PNG, square crop. Size cap to be set.</div>
+        </div>
+      </div>
+      <div class="frow">
+        <label class="t13 sec" for="s9first">First name</label><input class="inp" id="s9first" type="text" value="Sample" autocomplete="given-name">
+        <label class="t13 sec" for="s9last">Last name</label><input class="inp" id="s9last" type="text" value="Name" autocomplete="family-name">
+        <label class="t13 sec" for="s9email">Email</label><div class="inpwrap"><input class="inp" id="s9email" type="email" value="sample@example.com" autocomplete="email" readonly><button class="btn secondary small" type="button" id="s9emailChange">Change</button></div>
+        <div class="gwhat hide" id="s9emailBox" style="margin:8px 0 10px"><label class="t13 sec" for="s9emailNew">New email</label><input class="inp" id="s9emailNew" type="email" placeholder="you@company.com" autocomplete="off"><label class="t13 sec" for="s9emailPw">Your password</label><input class="inp" id="s9emailPw" type="password" autocomplete="current-password"><div class="btnrow" style="margin-top:8px"><button class="btn primary small" type="button" id="s9emailSend">Send the confirmation link</button></div><div class="t13 sec" style="margin-top:6px">We send a link to the new address. Your email changes only when you open it, within 24 hours. The old address is told (N15). Sign-ins and receipts move to the new address.</div><div class="t13 b hide" id="s9emailSent" style="margin-top:6px">Sent. Open the link in the email at the new address to finish.</div></div>
+        <label class="t13 sec" for="s9phone">Phone</label><input class="inp" id="s9phone" type="tel" value="+44 7700 900000" autocomplete="tel">
+        <label class="t13 sec" for="s9country">Country</label><select class="inp" id="s9country"><option>United Kingdom</option><option>United Arab Emirates</option><option>Other</option></select>
+        <label class="t13 sec" for="s9tz">Time zone</label><select class="inp" id="s9tz"><option>London (GMT)</option><option>Dubai (GMT+4)</option><option>Other</option></select>
+        <label class="t13 sec" for="s9biz">Business (optional)</label><input class="inp" id="s9biz" type="text" value="" placeholder="Business name">
+      </div>
+      <div class="t13 sec" style="margin-top:8px">Your initials come from your names. Changing your email or phone needs your password and sends a notice to both addresses. Time zone sets your quiet hours and review dates.</div>
+      <div class="btnrow" style="margin-top:12px"><button class="btn primary small" type="button">Save profile</button></div>
+    </section>
+
+    <!-- Membership and credits (BS-AI-007 §7; BS-WEB-006 §4) -->
+    <section class="glass panel" aria-labelledby="s9m">
+      <div class="strip" aria-hidden="true"></div>
+      <div class="lrow" style="margin-bottom:4px"><h2 class="t19 b" id="s9m" style="margin:0">Membership and credits</h2><span class="chip type" id="s9tier">£99</span></div>
+      <div class="t13 sec" style="margin-bottom:12px">One credit is one decision taken to Check with your mentor. <span class="infowrap"><button class="info" type="button" aria-label="What this means" aria-expanded="false">i</button><span class="tip" role="tooltip">A credit is charged when you press Check, not when you start; a saved decision costs nothing until then. The other mentor's read after Check is free. A room decision costs its owner one credit; collaborators are not charged. Allowances per tier and pack prices are proposals (BS-AI-007 §2, §3, §10; BS-AI-008 §8).</span></span></div>
+      <div class="credits" id="s9credits"></div>
+      <div class="t13 sec b" style="margin:0 0 6px">Grants</div>
+      <table class="logtable t13" aria-label="Credit grants"><thead><tr><th>Grant</th><th>Credits</th><th>Granted</th><th>Expires</th></tr></thead><tbody id="s9grants"></tbody></table>
+      <div class="t13 sec b" style="margin:14px 0 6px">Credits used</div>
+      <table class="logtable t13" aria-label="Credits used"><thead><tr><th>Date</th><th>Decision</th><th>Used</th><th>Left</th></tr></thead><tbody id="s9ledger"></tbody></table>
+      <div class="empty hide t13" id="s9ledgerEmpty">No credits used yet. Your first decision uses one at Check.</div>
+      <div class="btnrow" style="margin-top:14px">
+        <button class="btn primary small" type="button" id="s9topup" data-buy="topup">Top up</button>
+        <a href="#" class="t13" id="s9cancel">Cancel membership</a>
+      </div>
+      <div class="t13 sec" style="margin-top:8px" id="s9mnote"></div>
+      <div class="t13 sec b" style="margin:16px 0 6px">Upgrade</div>
+      <div id="s9tiers"></div>
+    </section>
+
+    <!-- Subscription (BS-WEB-003 §6, §7; BS-WEB-006 §4) -->
+    <section class="glass panel" aria-labelledby="s9sub">
+      <div class="strip" aria-hidden="true"></div>
+      <div class="lrow" style="margin-bottom:4px"><h2 class="t19 b" id="s9sub" style="margin:0">Subscription</h2><span class="chip type" id="s9substate">Active</span></div>
+      <div class="jbar" style="margin-bottom:10px"><span class="t13 sec">Preview · state (paid tiers)</span><button type="button" class="on" data-subst="ok">Active</button><button type="button" data-subst="failed">Payment failed</button><button type="button" data-subst="cancelled">Cancelled</button></div>
+      <div id="s9subrows"></div>
+      <div class="btnrow" style="margin-top:12px" id="s9subbtns"></div>
+    </section>
+
+    <!-- Payment details (card on file via Stripe; receipts) -->
+    <section class="glass panel" aria-labelledby="s9pay">
+      <div class="strip" aria-hidden="true"></div>
+      <h2 class="t19 b" id="s9pay" style="margin:0 0 4px">Payment details</h2>
+      <div class="t13 sec" style="margin-bottom:12px">Your card is held by our payment provider, never by Brandscaling. We keep only the last four digits and the expiry.</div>
+      <div class="crow"><div><div class="t13 b" id="s9cardline">Visa ending 4242 · expires 08/28</div><div class="t13 sec">Used for renewals and top-ups</div></div><button class="btn secondary small" type="button">Update card</button></div>
+      <div class="crow"><div><div class="t13 b">Billing address</div><div class="t13 sec">Sample Name · 11 Example Street · London · UK</div></div><button class="btn secondary small" type="button">Edit</button></div>
+      <div class="t13 sec b" style="margin:14px 0 6px">Receipts and VAT invoices</div>
+      <div class="t13 sec" style="margin:0 0 6px">Each receipt is a VAT invoice from Brand Scaling Limited, VAT number GB 465 2528 80, for orders on brandscaling.co.uk, or an invoice without VAT from Brandscaling Ai Ltd for orders on brandscalingai.com.</div>
+      <table class="logtable t13" aria-label="Receipts"><thead><tr><th>Date</th><th>Item</th><th>Amount</th><th></th></tr></thead><tbody id="s9receipts"></tbody></table>
+      <div class="empty hide t13" id="s9receiptsEmpty">No payments yet.</div>
+    </section>
+
+    <!-- Notifications (BS-AI-009 §3, §6) -->
+    <section class="glass panel span2" aria-labelledby="s9n">
+      <div class="strip" aria-hidden="true"></div>
+      <div class="lrow" style="margin-bottom:4px"><h2 class="t19 b" id="s9n" style="margin:0">Notifications</h2><span class="t13 sec" id="s9chan"></span></div>
+      <div class="t13 sec" style="margin-bottom:12px">Anything that needs your response or input reaches you in the app and by the channels switched on here. <span class="infowrap"><button class="info" type="button" aria-label="What this means" aria-expanded="false">i</button><span class="tip" role="tooltip">One event, one message, on every channel you have on; never twice on one channel. In the app, items show under Needs you and on the bell and leave when the action is done. A message names the decision and what is needed, never what is written in a box, another person's entries, a readiness read or an E-DNA result. Security and legal notices cannot be switched off (BS-AI-009 §2, §3, §5).</span></span></div>
+      <div class="nrows" id="s9rows"></div>
+      <div class="nopts">
+        <label class="sw"><input type="checkbox" role="switch" checked><span class="knob" aria-hidden="true"></span><span class="t13">Quiet hours: hold push messages between <b>21:00</b> and <b>08:00</b> and send them at 08:00 (your time zone)</span></label>
+        <label class="sw"><input type="checkbox" role="switch" checked><span class="knob" aria-hidden="true"></span><span class="t13">Group messages: more than three in an hour arrive as one</span></label>
+        <div class="t13 sec">Email goes to your account email, <span id="s9emailEcho">sample@example.com</span>. Push messages are sent by the iOS app when you allow them on the phone.</div>
+      </div>
+    </section>
+
+    <!-- Consent and sharing (BS-DI-005 §15 as cited on My E-DNA; BS-AI-008 §5) -->
+    <section class="glass panel" aria-labelledby="s9c">
+      <div class="strip" aria-hidden="true"></div>
+      <h2 class="t19 b" id="s9c" style="margin:0 0 4px">Consent and sharing</h2>
+      <div class="t13 sec" style="margin-bottom:12px">What you have agreed to share, and where to withdraw it.</div>
+      <div class="crow">
+        <div><div class="t13 b">Part 5 comparison in your E-DNA report</div><div class="t13 sec" id="s9p5">Consent given 3 November 2026. Withdrawing deletes the stored comparison; it is not hidden.</div></div>
+        <button class="btn secondary small" type="button" id="s9p5btn">Withdraw</button>
+      </div>
+      <div class="t13 sec b" style="margin:14px 0 6px">Decision rooms you share with</div>
+      <div class="t13 sec" style="margin-bottom:8px">Joining a room shares your name, core type or Mixed state, loop and mentor, your progress and your entries with the people in that room, for that decision only. <span class="infowrap"><button class="info" type="button" aria-label="What this means" aria-expanded="false">i</button><span class="tip" role="tooltip">Recorded once per person per room when you join. If you leave, your entries stay in the room with your name, because the sequence must still read; you can ask the room's owner to delete them (BS-AI-008 §5, §7).</span></span></div>
+      <div id="s9rooms"></div>
+      <div class="empty hide t13" id="s9roomsEmpty">You are not in any room yet. Consent is asked when you join one.</div>
+    </section>
+
+    <!-- Screen settings (BS-BRAND-001 §9.3; BS-DI-006 §1 "Set up your screen") -->
+    <section class="glass panel" aria-labelledby="s9s">
+      <div class="strip" aria-hidden="true"></div>
+      <h2 class="t19 b" id="s9s" style="margin:0 0 4px">Screen</h2>
+      <div class="t13 sec" style="margin-bottom:12px">These change how the app looks, never your questions, answers or results. They carry across your devices. Your Part 5 result may suggest some of them; nothing is set for you.</div>
+      <div class="srows" id="s9screen"></div>
+    </section>
+
+    <!-- Security -->
+    <section class="glass panel" aria-labelledby="s9sec">
+      <div class="strip" aria-hidden="true"></div>
+      <h2 class="t19 b" id="s9sec" style="margin:0 0 4px">Security</h2>
+      <div class="t13 sec" style="margin-bottom:12px">Changing your email, phone, card or password, exporting your data and deleting your account all ask for your password first.</div>
+      <div class="crow"><div><div class="t13 b">Password</div><div class="t13 sec">Last changed 3 November 2026</div></div><button class="btn secondary small" type="button">Change password</button></div>
+      <div class="crow"><div><div class="t13 b">Two-step verification <span class="chip ex">Recommended</span></div><div class="t13 sec">A code by email at every new sign-in. Off unless you turn it on.</div></div><label class="sw"><input type="checkbox" role="switch" aria-label="Two-step verification"><span class="knob" aria-hidden="true"></span></label></div>
+      <div class="t13 sec b" style="margin:14px 0 6px">Signed-in devices</div>
+      <div id="s9devices"></div>
+      <div class="btnrow" style="margin-top:12px"><button class="btn secondary small" type="button">Sign out everywhere else</button></div>
+    </section>
+
+    <!-- Account -->
+    <section class="glass panel span2" aria-labelledby="s9a">
+      <div class="strip" aria-hidden="true"></div>
+      <h2 class="t19 b" id="s9a" style="margin:0 0 4px">Account</h2>
+      <div class="crow"><div><div class="t13 b">Terms you accepted</div><div class="t13 sec">Terms of Use and Privacy Policy, version 1.0 · 3 Nov 2026 at the report gate · Membership Terms and Conditions 1.0 · 3 Nov 2026 at checkout. Recorded with the time and the version, so a later change to the terms is a new acceptance (N15).</div></div></div>
+      <div class="t13 sec" style="margin-bottom:12px">Signed in as <span id="s9acctEmail">sample@example.com</span>. A sign-in from a new device sends you a notice.</div>
+      <div class="btnrow">
+        <button class="btn secondary small" type="button" id="s9signout">Sign out</button>
+        <a href="#" class="t13" id="s9delete">Delete my account</a>
+      </div>
+      <div class="t13 sec b" style="margin:14px 0 6px">Take a copy</div>
+      <div class="crow"><div><div class="t13 b">Decision log</div><div class="t13 sec">Every row with its log line, as a file you can open in a spreadsheet</div></div><button class="btn secondary small" type="button">Export · CSV</button></div>
+      <div class="crow"><div><div class="t13 b">Reports</div><div class="t13 sec">Your basic and Advanced Reports</div></div><button class="btn secondary small" type="button">Download · PDF</button></div>
+      <div class="crow"><div><div class="t13 b">Everything</div><div class="t13 sec">All the data held on your account, in one file (your right under the Privacy Policy)</div></div><button class="btn secondary small" type="button">Download my data</button></div>
+      <div class="t13 sec" style="margin-top:8px">Deleting your account removes your E-DNA results, reports, Decision log, photo and credits after a 14-day wait, during which signing in cancels it. Your entries in other people's rooms stay with your name unless you ask the room's owner to delete them. <a href="#" class="t13">Privacy Policy</a> · <a href="#" class="t13">AI Disclosure and AI Mentor Policy</a> · <a href="#" class="t13">Membership Terms</a></div>
+    </section>
+  </div>
+
+  <div class="foot"><span>Brandscaling · Decision Intelligence &amp; Infinite Scaling Mastery</span><span>AI mentor · can be wrong · you decide.</span></div>
+</main>

@@ -1,0 +1,96 @@
+<!-- ===== Screen 13 (bar: 12 · Guest and consent): the invitation, take E-DNA first, consent on joining a room, the first room view with the 7-day line, the collaborator's profile (BS-AI-008 §2.3, §5; BS-AI-009 N1 guest, N12) ===== -->
+<main class="main hide authmain" id="main13">
+  <div class="jbar" role="group" aria-label="Preview: step (not part of the app)">
+    <span class="t13 sec">Preview · step</span>
+    <button type="button" data-g="invite" class="on">Invitation</button>
+    <button type="button" data-g="edna">Take E-DNA first</button>
+    <button type="button" data-g="consent">Consent on joining</button>
+    <button type="button" data-g="room">First room view · 7 days</button>
+    <button type="button" data-g="profile">Collaborator profile</button>
+    <button type="button" data-g="after">After day 7</button>
+  </div>
+
+  <div class="jwrap">
+    <img class="jlogo" src="assets/logo-white-box.png" alt="Brandscaling logo">
+
+    <!-- Invitation: the page the N1 guest email opens. No account yet, so Indigo chrome -->
+    <section class="glass panel jcard" data-gv="invite" aria-labelledby="g1h">
+      <div class="strip" aria-hidden="true"></div>
+      <div class="t13 sec">Decision Room · invitation</div>
+      <h1 class="t28 ind" id="g1h" style="margin:4px 0 8px">Dan Mehta has asked for your input</h1>
+      <p class="t19" style="margin:0 0 8px">On the decision <b>"Open a second office in Manchester in Q2"</b>.</p>
+      <p class="t13 sec" style="margin:0 0 12px">Dan uses Brandscaling to make decisions in the order he thinks. To add your input, the room needs to know how you decide, so you take the free E-DNA first: about 30 minutes, and your result and basic report are yours to keep.</p>
+      <div class="gwhat">
+        <div class="t13 b" style="margin-bottom:4px">As a guest you get, for 7 days</div>
+        <div class="t13">The room with Dan · the Make a decision Frame and your AI mentor · <b>3 decisions</b> of your own · your basic E-DNA report, for good</div>
+              </div>
+      <div class="jbtns">
+        <button class="btn primary" type="button" data-ggo="edna">Take your E-DNA</button>
+        <button class="btn secondary" type="button" data-ggo="consent">I already have an account · sign in</button>
+      </div>
+          </section>
+
+    <!-- Take E-DNA first: the interstitial before the test, with the invitation carried -->
+    <section class="glass panel jcard hide" data-gv="edna" aria-labelledby="g2h">
+      <div class="strip" aria-hidden="true"></div>
+      <div class="t13 sec">Decision Room · before you join</div>
+      <h1 class="t28 ind" id="g2h" style="margin:4px 0 8px">Your E-DNA first</h1>
+      <p class="t19" style="margin:0 0 8px">The room shows each person's loop so you can see how the others decide and they can see how you do. Yours comes from the E-DNA.</p>
+      <div class="jsteps">
+        <div class="jstep"><span class="jnum">1</span><div><div class="t13 b">About 30 minutes, in one sitting</div><div class="t13 sec">Seven parts, multiple choice. Pick what you actually do, not what you think you should do. Saved after every answer.</div></div></div>
+        <div class="jstep"><span class="jnum">2</span><div><div class="t13 b">Your free report</div><div class="t13 sec">Give your name and email at the end and the report is yours. That creates your account.</div></div></div>
+        <div class="jstep"><span class="jnum">3</span><div><div class="t13 b">Then the room</div><div class="t13 sec">Dan's invitation is kept with this link, so you land in the room straight after your report.</div></div></div>
+      </div>
+      <div class="jbtns"><button class="btn primary" type="button" data-ggo="consent">Start the E-DNA</button><button class="btn secondary" type="button" data-ggo="invite">Back</button></div>
+      <p class="t13 sec" style="margin:12px 0 0">Preview: the assessment itself is the "E-DNA Scenario Screen" preview; this step jumps to the consent screen as if the report had been claimed.</p>
+    </section>
+
+    <!-- Consent on joining a room: the exact list (BS-AI-008 §5), recorded per person per room -->
+    <section class="glass panel jcard hide" data-gv="consent" aria-labelledby="g3h">
+      <div class="strip" aria-hidden="true"></div>
+      <div class="t13 sec">Decision Room · joining</div>
+      <h1 class="t28 type" id="g3h" style="margin:4px 0 8px">Join Dan's room?</h1>
+      <p class="t19" style="margin:0 0 8px">"Open a second office in Manchester in Q2" · Dan Mehta, owner · 4 people in the room</p>
+      <p class="t13 sec" style="margin:0 0 10px">Joining shares the following with the people in this room, for this decision only:</p>
+      <ul class="glist t13">
+        <li>your <b>name</b> and your photo or initials</li>
+        <li>your <b>core type or Mixed state</b></li>
+        <li>your <b>loop and your mentor</b></li>
+        <li>your <b>progress</b> in the room ("added input 2 h ago")</li>
+        <li>your <b>entries</b> in Box 2 and Box 3, with your name on each</li>
+      </ul>
+      <p class="t13 sec" style="margin:0 0 12px">Not shared: your report, your workbook answers, your Decision log, anything from another room. If you leave, your entries stay in the room with your name, because the sequence must still read; you can ask Dan to delete them. Your consent is recorded for this room only.</p>
+      <label class="check t13 jagree"><input type="checkbox" required id="gAgree"><span>I agree to share these with the people in this room, for this decision only.</span></label>
+      <div class="jbtns"><button class="btn primary" type="button" data-ggo="room">Join the room</button><button class="btn secondary" type="button" data-ggo="invite">Not now</button></div>
+      <p class="t13 sec" style="margin:12px 0 0">You can leave the room at any time from the room or from Settings · Consent and sharing.</p>
+    </section>
+
+    <!-- Collaborator profile: what "Open profile" shows (proposed, BS-AI-008 §9 item 7) -->
+    <section class="glass panel jcard hide" data-gv="profile" aria-labelledby="g5h">
+      <div class="strip" aria-hidden="true"></div>
+      <div class="t13 sec">Decision Room · a person in the room <span class="chip ex">Proposed</span></div>
+      <div class="row" style="gap:14px;margin:8px 0 12px"><span class="pcircle big architect" id="gpCircle" aria-hidden="true">DM</span><div><h1 class="t28 type" id="g5h" style="margin:0">Dan Mehta</h1><div class="t13 sec" id="gpRole">Owner of this room</div></div></div>
+      <div class="crow"><div><div class="t13 b">Core type</div><div class="t13 sec" id="gpType">Architect</div></div></div>
+      <div class="crow"><div><div class="t13 b">Loop</div><div class="t13 sec" id="gpLoop">Logic → Feeling → Logic</div></div></div>
+      <div class="crow"><div><div class="t13 b">Mentor</div><div class="t13 sec" id="gpMentor">AI Architect</div></div></div>
+      <p class="t13 sec" style="margin:12px 0 0">That is all a collaborator sees: name, core type, loop and mentor (BS-AI-008 §2.3). No report, no log, no other rooms, no email or phone. Design choice for approval.</p>
+      <div class="jbtns"><button class="btn secondary" type="button" data-ggo="room">Back to the room</button></div>
+    </section>
+
+    <!-- After day 7: what a guest keeps and what waits (proposed; BS-AI-008 §5 says the access is 7 days with 3 decisions and then converts or expires) -->
+    <section class="glass panel jcard hide" data-gv="after" aria-labelledby="g6h">
+      <div class="strip" aria-hidden="true"></div>
+      <div class="t13 sec">Guest access · ended <span class="chip ex">Proposed</span></div>
+      <h1 class="t28 type" id="g6h" style="margin:4px 0 8px">Your 7 days have ended</h1>
+      <p class="t19" style="margin:0 0 12px">Everything you made is kept. Here is what stays open and what waits.</p>
+      <div class="jsteps">
+        <div class="jstep"><span class="jnum">✓</span><div><div class="t13 b">Stays open, to read</div><div class="t13 sec">Your basic E-DNA report · your Decision log · the rooms you joined, with your entries in them · your Settings.</div></div></div>
+        <div class="jstep"><span class="jnum">·</span><div><div class="t13 b">Waits until you keep the app</div><div class="t13 sec">New decisions with your mentor · Check · adding to a room · reviews.</div></div></div>
+      </div>
+      <div class="jbtns"><button class="btn primary" type="button" data-buy="report">Advanced Report · £99 · 10 decisions</button><button class="btn secondary" type="button" data-buy="entry">Join Entry · 60 a month</button></div>
+      <p class="t13 sec" style="margin:12px 0 0">Nothing is deleted. If you do nothing, your account stays as it is and you can come back to it at any time (deletion only on your request, Settings · Account).</p>
+    </section>
+
+    <p class="t13 sec jfoot">Brandscaling · Decision Intelligence &amp; Infinite Scaling Mastery · <a href="#" class="jlink">Privacy Policy</a> · <a href="#" class="jlink">AI Disclosure and AI Mentor Policy</a></p>
+  </div>
+</main>

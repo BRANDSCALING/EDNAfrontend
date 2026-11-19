@@ -1,0 +1,73 @@
+/* ===== Screen 3: Decision log ===== */
+(function(){
+  const $=id=>document.getElementById(id);
+  /* Example rows per preview state. Fields follow BS-AI-001 §6 (date, decision, order used, warnings, decided) plus the 19 Nov additions (review date, outcome, time to decide, written by, workbook). */
+  const R = {
+    core_logic: [
+      {d:'19 Nov',t:'Raise the day rate to £750 for new clients from January',ctx:'Money',began:'L',fin:'L',urg:false,st:'decided',rev:'1 Mar',by:'mentor',wb:'Workbook 1',rounds:1,warn:0,rests:'the 2024 response (1 of 9 declined) and a pipeline of 6 at the higher rate',dec:'Yes. £750 for new clients from 1 January; existing clients unchanged until April.',read:['Rests on logic in Box 1 and Box 3.','Nothing is missing that you can know today.','Ready'],time:'2 days',
+       boxes:[['Logic','Box 1','Current rate £650; 14 active clients; pipeline of 6; competitors £700 to £800.'],['Feeling','Box 2','Nervous. Two of the six came by referral and I do not want to look greedy.'],['Logic','Box 3','2024 rise of 10%: one of nine prospects declined; none mentioned price.'],['Logic','End with Logic','Rests on the 2024 response and the pipeline of 6.'],['Your decision','Box 4','Yes. £750 for new clients from 1 January; existing clients unchanged until April.']],
+       outcome:null},
+      {d:'11 Nov',t:'Take on the second office unit',ctx:'Money',began:'L',fin:null,urg:false,st:'open',rev:null,by:'mentor',wb:null,rounds:2,warn:0,rests:null,dec:null,read:null,time:'8 days in the Frame',boxes:[['Logic','Box 1','£1,400 a month, 12-month lease; 9 desks for 11 people.'],['Feeling','Box 2','It feels like the moment; people are on top of each other.'],['Logic','Box 3','Three of the 11 are contractors to June.']],outcome:null},
+      {d:'6 Nov',t:'Keep the Friday delivery slot',ctx:'Time',began:'F',fin:'F',urg:true,st:'reviewed',rev:'18 Nov',by:'hand',wb:'Workbook 1',rounds:1,warn:1,rests:'how the team felt about Fridays',dec:'Kept it.',read:['Rests on a feeling in Box 2; no data in Box 1 or Box 3 supports it.','Missing: the delivery figures for Fridays.','One more round'],time:'20 minutes',boxes:[['Feeling','Box 2','The team hate Friday deliveries and I want to keep them happy.'],['Your decision','Box 4','Keep the slot.']],outcome:{held:'Partly',what:'Two late deliveries in the fortnight; the team were fine with it.',same:'No: I would have looked at the Friday figures first.'}},
+      {d:'3 Nov',t:'Hire a part-time bookkeeper',ctx:'People',began:'L',fin:'L',urg:false,st:'review',rev:'19 Nov',by:'mentor',wb:null,rounds:1,warn:0,rests:'four hours a week at £35 against six hours of my own',dec:'Yes, from December, two mornings a week.',read:['Rests on Box 1 and Box 3.','Missing: nothing.','Ready'],time:'1 day',boxes:[['Logic','Box 1','Six hours a week on books; my hour is worth more than £35.'],['Feeling','Box 2','Relief, and a worry about letting someone into the accounts.'],['Logic','Box 3','References from two clients; a trial month.'],['Logic','End with Logic','Four hours a week at £35 against six of mine.'],['Your decision','Box 4','Yes, from December, two mornings a week.']],outcome:null},
+      {d:'28 Oct',t:'Answer the client who wants 30% off by 5 pm',ctx:'Conflict',began:'L',fin:'F',urg:true,st:'reviewed',rev:'11 Nov',by:'mentor',wb:'Workbook 1',rounds:1,warn:1,rests:'fear of losing 20% of revenue',dec:'Gave the 30%.',read:['Rests on the feeling in Box 2; the margin figure in Box 3 is not in it.','Missing: whether they would have walked.','One more round'],time:'40 minutes',boxes:[['Logic','Box 1','Contract £48k; margin 35% at full price.'],['Feeling','Box 2','Scared to lose them; they are 20% of revenue.'],['Logic','Box 3','At 30% off the margin is 7%.'],['Your decision','Box 4','Gave the 30%.']],outcome:{held:'No',what:'Margin on the account is 7%; they asked for the same next year.',same:'No. Offer two options next time.'}},
+      {d:'20 Oct',t:'Move the Saturday class online',ctx:'Personal',began:'L',fin:'L',urg:false,st:'decided',rev:'20 Jan',by:'hand',wb:null,rounds:1,warn:0,rests:'travel time and attendance figures',dec:'Yes, from January.',read:null,time:'made before the Frame',boxes:[['Logic','Box 1','Two hours of travel; attendance 60%.'],['Your decision','Box 4','Online from January.']],outcome:null},
+      {d:'14 Oct',t:'Sponsor the local football club',ctx:'Money',began:'L',fin:'L',urg:false,st:'reviewed',rev:'14 Nov',by:'mentor',wb:null,rounds:2,warn:0,rests:'£2,000 against three referrals a year',dec:'Yes, one season.',read:['Rests on Box 3.','Missing: nothing.','Ready'],time:'3 days',boxes:[['Logic','Box 1','£2,000 a season; 400 families.'],['Feeling','Box 2','I like the club; I worry it looks like vanity.'],['Logic','Box 3','Two clients came from the club last year.'],['Logic','End with Logic','£2,000 against three referrals a year.'],['Your decision','Box 4','Yes, one season.']],outcome:{held:'Yes',what:'Four enquiries so far, one signed.',same:'Yes.'}}
+    ]
+  };
+  // alchemist: mirror loops; mixed/leaning: mixed loop use
+  R.core_logic.forEach(r=>r.kind='mine');
+  R.core_logic.push(
+    {d:'19 Nov',t:'Hire a salesperson: contractor trial from January, hire decision 1 Feb',ctx:'People',began:'L',fin:'L',urg:false,st:'decided',rev:'1 Feb',by:'mentor',wb:null,rounds:1,warn:0,rests:'leads a month (you) and close rate (Sam); stop under 15, expand over 25',dec:'Contractor trial for four weeks; decide on 1 February.',read:['Rests on both Frames and the decision rule.','Missing: nothing until the date.','Ready'],time:'2 days · clash · owner · with Sam',kind:'room',boxes:[['Logic','Your Box 1','Pipeline 9 leads a month; cash covers 3 months.'],['Feeling','Sam’s Box 1','The market is moving now; first in with a real salesperson.'],['Your decision','Shared record','Contractor trial for four weeks from January; hire decision on 1 February on leads and cash. Sam leads now, you lead next.']],outcome:null},
+    {d:'17 Nov',t:'Manchester office in Q2, or remote hires',ctx:'Money',began:'L',fin:'L',urg:false,st:'open',rev:null,by:'mentor',wb:null,rounds:1,warn:0,rests:null,dec:null,read:['Rests on Box 1 and Priya’s Box 3.','Not answered: Tom’s and Aisha’s Box 2.','One more round'],time:'3 days · owner · 3 contributors',kind:'room',boxes:[['Logic','Box 1 · you','Manchester lease £38k a year; 6 of 22 staff remote; two clients there worth £140k.'],['Feeling','Box 2 · Priya, Tom, Aisha','Three inputs from the room.'],['Logic','Box 3 · Tom, Priya','Two inputs from the room.']],outcome:null},
+    {d:'5 Nov',t:'Switch the CRM before year end (Dana’s decision)',ctx:'Time',began:'F',fin:'F',urg:false,st:'decided',rev:'10 Jan',by:'mentor',wb:null,rounds:1,warn:0,rests:'the team’s readiness and your input on data migration',dec:'Dana decided: switch in January, not December.',read:null,time:'contributed · owner Dana',kind:'room',boxes:[['Logic','Your input · Box 3','Migration takes 2 weeks; December has 9 working days with everyone in.'],['Your decision','Dana’s decision','Switch in January, not December.']],outcome:null}
+  );
+  R.core_feeling = R.core_logic.map(r=>Object.assign({},r,{began:r.began==='L'?'F':'L',fin:r.fin?(r.fin==='L'?'F':'L'):null}));
+  R.find = R.core_logic.map((r,i)=>Object.assign({},r,{began:i%2?'F':'L',fin:r.fin?([0,3,6].includes(i)?(i%2?'F':'L'):(i%2?'L':'F')):null,warn:0}));
+
+  const F={context:'',stress:'',loop:'',workbook:'',status:''}; let VIEW='mine';
+  let KEY='architect', ROWS=[];
+  const LOOPW={L:'Logic',F:'Feeling'};
+  const ST={open:['open','In the Frame'],decided:['ok','Decided'],review:['ex','Review due'],reviewed:['type','Reviewed']};
+  function loopCell(r){ if(!r.fin) return `<span class="lp"><span class="${r.began}">${LOOPW[r.began]}</span> → …</span>`; const held=r.began===r.fin; return `<span class="lp"><span class="${r.began}">${LOOPW[r.began]}</span> → <span class="${r.fin}">${LOOPW[r.fin]}</span></span> <span class="mark ${held?'ok':'part'}" title="${held?'Finished in the loop it began with':'Switched inside the decision'}">${held?'✓':'–'}</span>`; }
+  function render(){
+    if(window.BS_ACCT==='new'){ $('rows3').innerHTML=`<tr><td colspan="9"><div class="empty"><b>No decisions yet.</b> Make your first one and it appears here: the date, the loop you used, what it rested on and its review date. Or add a decision you already made.</div></td></tr>`; const c=$('count3'); if(c) c.textContent='0 decisions'; return; }
+    const rows=ROWS.filter(r=>(r.kind||'mine')===VIEW).filter(r=>(!F.context||r.ctx===F.context)&&(!F.stress||(F.stress==='yes')===r.urg)&&(!F.loop||(F.loop==='held'?(r.fin&&r.fin===r.began):F.loop==='switched'?(r.fin&&r.fin!==r.began):r.began===F.loop))&&(!F.workbook||(F.workbook==='none'?!r.wb:r.wb===F.workbook))&&(!F.status||r.st===F.status));
+    $('rows3').innerHTML=rows.map((r,i)=>`<tr class="${r.by==='mentor'?'by-mentor':''} rowlink" data-i="${ROWS.indexOf(r)}" tabindex="0"><td>${r.d}</td><td><b>${r.t}</b> ${r.kind==='room'?'<span class="chip ind" style="padding:1px 8px">Room</span>':''}<div class="t13 sec">${r.time}${r.wb?' · '+r.wb:''}</div></td><td>${r.ctx}</td><td>${loopCell(r)}</td><td>${r.urg?'<span class="chip ex">Urgent</span>':'–'}</td><td><span class="chip ${ST[r.st][0]==='ok'?'type':ST[r.st][0]==='open'?'grey':ST[r.st][0]}">${ST[r.st][1]}</span></td><td>${r.rev||'–'}</td><td>${r.by==='mentor'?'Mentor':'By hand'}</td></tr>`).join('');
+    $('l3count').textContent=`${rows.length} of ${ROWS.filter(r=>(r.kind||'mine')===VIEW).length} decisions`;
+    const find=KEY!=='architect'&&KEY!=='alchemist';
+    const V=ROWS.filter(r=>(r.kind||'mine')===VIEW);
+    const held=V.filter(r=>r.fin&&r.fin===r.began).length, L=V.filter(r=>r.began==='L').length, Fc=V.filter(r=>r.began==='F').length;
+    const c = find ? [['Began with Logic',L],['Began with Feeling',Fc],['Finished in the loop it began with',held],['Reviews due',V.filter(r=>r.st==='review').length]]
+                   : [['Decisions this month',V.length],['Decided',V.filter(r=>r.st!=='open').length],['Still in the Frame',V.filter(r=>r.st==='open').length],['Where you switched',V.filter(r=>r.fin&&r.fin!==r.began).length]];
+    $('counts3').innerHTML=c.map(x=>`<div class="count"><div class="t13 sec">${x[0]}</div><div class="n">${x[1]}</div></div>`).join('');
+  }
+  function openRow(i){
+    const r=ROWS[i]; const o=$('open3'); o.classList.remove('hide');
+    $('o3meta').textContent=`${r.d} · ${r.ctx} · ${r.by==='mentor'?'written by your mentor':'written by hand'} · ${r.time}`;
+    $('o3h').textContent=r.t;
+    $('o3boxes').innerHTML=r.boxes.map(b=>`<div class="obox ${b[0]==='Logic'?'logic':b[0]==='Feeling'?'feeling':'dec'}"><div class="t13 sec"><b class="w">${b[0]}</b> · ${b[1]}</div><div class="t19">${b[2]}</div></div>`).join('');
+    $('o3ready').innerHTML = r.read ? `<div class="t19"><b>Rests on:</b> ${r.read[0].replace(/^Rests on /i,'')}</div><div class="t19"><b>Missing:</b> ${r.read[1].replace(/^Missing: /i,'')}</div><div class="t19"><b>Read:</b> <span class="chip ${r.read[2]==='Ready'?'type':'ex'}">${r.read[2]}</span></div>` : `<div class="t19 sec">${r.st==='open'?'Not yet checked. Reopen the Frame to finish it.':'Added by hand; no readiness read. Open it in the Frame to check how it was made.'}</div>`;
+    $('o3log').innerHTML = `<div class="t19">${r.d} · ${r.t} · began ${LOOPW[r.began]}${r.fin?', finished '+LOOPW[r.fin]:''} · ${r.rounds} round${r.rounds>1?'s':''} · ${r.warn?r.warn+' warning':'no warning'} · ${r.dec?'decided: '+r.dec:'not yet decided'}${r.rests?' · rests on '+r.rests:''}${r.rev?' · review '+r.rev:''}</div>`;
+    $('o3review').innerHTML = r.outcome
+      ? `<div class="t19"><b>Did the decision hold?</b> ${r.outcome.held}</div><div class="t19"><b>What happened?</b> ${r.outcome.what}</div><div class="t19"><b>Would you decide it the same way?</b> ${r.outcome.same}</div>`
+      : r.st==='review' ? `<div class="t19 b" style="margin-bottom:6px">Review due ${r.rev}. Three questions from your mentor:</div><div class="rq"><label class="t13 sec">Did the decision hold?</label><div class="seg"><button type="button">Yes</button><button type="button">Partly</button><button type="button">No</button></div></div><div class="rq"><label class="t13 sec">What happened?</label><textarea rows="2" placeholder="In a line or two"></textarea></div><div class="rq"><label class="t13 sec">Would you decide it the same way?</label><textarea rows="1" placeholder="Yes, or what you would change"></textarea></div><div class="btnrow" style="margin-top:8px"><button class="btn small primary" type="button" data-go="12">Review with your mentor</button></div>`
+      : `<div class="t19 sec">${r.rev?'Review on '+r.rev+'. Your mentor will remind you.':'No review date yet.'}</div>`;
+    o.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+  document.addEventListener('click',e=>{ const tr=e.target.closest('#rows3 tr.rowlink'); if(tr) openRow(Number(tr.dataset.i)); });
+  document.addEventListener('keydown',e=>{ const tr=e.target.closest&&e.target.closest('#rows3 tr.rowlink'); if(tr&&e.key==='Enter') openRow(Number(tr.dataset.i)); });
+  document.querySelectorAll('#main3 .fsel').forEach(s=>s.addEventListener('change',()=>{F[s.dataset.f]=s.value;render();}));
+  document.querySelectorAll('input[name="lview"]').forEach(r=>r.addEventListener('change',()=>{ VIEW=r.value; document.querySelectorAll('input[name="lview"]').forEach(x=>x.closest('.mode').classList.toggle('sel',x.checked)); $('open3').classList.add('hide'); render(); }));
+  $('l3clear').addEventListener('click',()=>{ Object.keys(F).forEach(k=>F[k]=''); document.querySelectorAll('#main3 .fsel').forEach(s=>s.value=''); render(); });
+  $('o3close').addEventListener('click',()=>$('open3').classList.add('hide'));
+  $('o3reopen').addEventListener('click',()=>{ if(window.showScreen) window.showScreen(2,false); });
+  $('l3new').addEventListener('click',()=>{ if(window.showScreen) window.showScreen(1); });
+  $('l3add').addEventListener('click',()=>{ if(window.showScreen) window.showScreen(1); const m=document.querySelector('input[name="mode"][value="made"]'); if(m){ m.checked=true; m.dispatchEvent(new Event('change')); } });
+
+  window.openScreen3=function(key){
+    KEY=key; ROWS = key==='architect'?R.core_logic:key==='alchemist'?R.core_feeling:R.find;
+    $('typeChip3').textContent = {architect:'Architect',alchemist:'Alchemist',archlean:'Mixed · leaning Architect',alchlean:'Mixed · leaning Alchemist',mixed:'Mixed'}[key];
+    $('open3').classList.add('hide'); VIEW='mine'; document.querySelectorAll('input[name="lview"]').forEach(x=>{x.checked=x.value==='mine'; x.closest('.mode').classList.toggle('sel',x.value==='mine');}); render();
+  };
+})();

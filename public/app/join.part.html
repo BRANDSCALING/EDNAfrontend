@@ -1,0 +1,244 @@
+<!-- ===== Screen 10 (bar: 9 · Join and sign in): report gate, create account, sign in, forgotten password, complete your order, order complete. No sidebar: the person has no account yet, or is outside it ===== -->
+<main class="main hide authmain" id="main10">
+  <div class="jbar" role="group" aria-label="Preview: step (not part of the app)">
+    <span class="t13 sec">Preview · step</span>
+    <button type="button" data-j="resume">Resume</button>
+    <button type="button" data-j="gate" class="on">Report gate</button>
+    <button type="button" data-j="idle">Idle warning</button>
+    <button type="button" data-j="expired">Timed out</button>
+    <button type="button" data-j="create">Set your password (from the email)</button>
+    <button type="button" data-j="next">What comes next (end of report)</button>
+    <button type="button" data-j="welcome">Welcome (first sign-in)</button>
+    <button type="button" data-j="signin">Sign in</button>
+    <button type="button" data-j="forgot">Sign-in link / forgotten password</button>
+    <button type="button" data-j="order">Complete your order</button>
+    <button type="button" data-j="done">Order complete</button>
+    <span class="t13 sec" style="margin-left:12px">Site</span>
+    <button type="button" data-site="uk" class="on">.co.uk · VAT 20%</button>
+    <button type="button" data-site="ai">.ai · no VAT</button>
+  </div>
+
+  <div class="jwrap">
+    <img class="jlogo" src="assets/logo-white-box.png" alt="Brandscaling logo">
+
+    <!-- Report gate: after the last question, before the free report. Three fields, one tick, one button; the account is created behind it (Fariza Javed, 19 Nov) -->
+    <section class="glass panel jcard" data-jv="gate" aria-labelledby="j1h">
+      <div class="strip" aria-hidden="true"></div>
+      <div class="t13 sec">E-DNA · 7 of 7 parts completed</div>
+      <h1 class="t28 ind" id="j1h" style="margin:4px 0 8px">Your free report is ready</h1>
+      <p class="t13 sec" style="margin:0 0 8px">Tell us where to send it. Your report, your answers and everything you do next are kept for you.</p>
+      <div class="jhold t13"><span class="jclock" aria-hidden="true"></span><span>Held on this device for <b id="jleft">23 h 41 min</b> more. After that it is cleared and the test must be taken again.</span></div>
+      <div class="jform">
+        <div class="jrow2">
+          <div><label class="t13 sec" for="j1f">First name</label><input class="inp" id="j1f" type="text" autocomplete="given-name"></div>
+          <div><label class="t13 sec" for="j1l">Last name</label><input class="inp" id="j1l" type="text" autocomplete="family-name"></div>
+        </div>
+        <div><label class="t13 sec" for="j1e">Email</label><input class="inp" id="j1e" type="email" autocomplete="email" placeholder="you@company.com"></div>
+        <label class="check t13"><input type="checkbox" required><span>I am 18 or over and I agree to the <a href="#" class="jlink">Terms of Use</a> and the <a href="#" class="jlink">Privacy Policy</a>.</span></label>
+        <label class="check t13 jshared"><input type="checkbox"><span>This is a shared or public computer. Nothing stays signed in after I close this page.</span></label>
+      </div>
+      <div class="jbtns">
+        <button class="btn primary" type="button" data-jgo="sent">Take me to my report</button>
+      </div>
+      <p class="t13 sec" style="margin:12px 0 0">Already have an account? <a href="#" class="jlink" data-jgo="signin">Sign in</a> and this result is added to it.</p>
+    </section>
+
+    <!-- Resume: the person comes back to the same browser within 24 hours -->
+    <section class="glass panel jcard hide" data-jv="resume" aria-labelledby="j8h">
+      <div class="strip" aria-hidden="true"></div>
+      <div class="t13 sec">E-DNA</div>
+      <h1 class="t28 ind" id="j8h" style="margin:4px 0 8px">A test was started on this computer</h1>
+      <p class="t19" style="margin:0 0 8px">Part 5 of 7, 2 hours ago. Carry on where it stopped, or start fresh.</p>
+      <div class="jhold t13"><span class="jclock" aria-hidden="true"></span><span>Held on this device for <b>21 h 50 min</b> more. No result is shown until it is claimed with a name and email.</span></div>
+      <div class="jbtns"><button class="btn primary" type="button">Continue my test</button><button class="btn secondary" type="button">Not me · start fresh</button></div>
+      <p class="t13 sec" style="margin:12px 0 0">Starting fresh clears the other test from this computer. It cannot be recovered.</p>
+    </section>
+
+    <!-- Timed out: 30 minutes idle on the web, or the 24 hours are up -->
+    <section class="glass panel jcard hide" data-jv="expired" aria-labelledby="j9h">
+      <div class="strip" aria-hidden="true"></div>
+      <div class="t13 sec">E-DNA</div>
+      <h1 class="t28 ind" id="j9h" style="margin:4px 0 8px">This page timed out</h1>
+      <p class="t19" style="margin:0 0 8px">Your answers were cleared from this computer after 30 minutes without activity, to keep them from anyone else who uses it.</p>
+      <p class="t13 sec" style="margin:0 0 16px">The test takes about 30 minutes. On your own phone or computer your answers are kept for 24 hours.</p>
+      <div class="jbtns"><button class="btn primary" type="button">Take the E-DNA again</button><button class="btn secondary" type="button" data-jgo="signin">I have an account · sign in</button></div>
+    </section>
+
+    <!-- Welcome: the first sign-in after the password is set, or the first open of the iOS app with an account -->
+    <!-- What comes next: the card at the end of the free report (web and iOS), the hand-off into the app. The result is carried into Home first open -->
+    <section class="glass panel jcard hide" data-jv="next" aria-labelledby="j11h">
+      <div class="strip" aria-hidden="true"></div>
+      <div class="t13 sec">At the end of your report</div>
+      <h1 class="t28 type" id="j11h" style="margin:4px 0 8px">What comes next</h1>
+      <p class="t19" style="margin:0 0 12px" id="j11line">Part 1 showed you are an Architect. Your report is saved in your account under My reports.</p>
+      <div class="jsteps">
+        <div class="jstep"><span class="jnum">1</span><div><div class="t13 b">Make your first decision</div><div class="t13 sec" id="j11m">Bring any decision. AI Architect takes you through it in your order, one box at a time, and tells you what it rests on. You decide. Your first 3 decisions are free.</div></div></div>
+        <div class="jstep"><span class="jnum">2</span><div><div class="t13 b">Go deeper when you want to</div><div class="t13 sec">The Advanced Report (£99) adds the other six parts, your three workbooks and 10 decisions that do not expire.</div></div></div>
+        <div class="jstep"><span class="jnum">3</span><div><div class="t13 b">Bring someone in</div><div class="t13 sec">A Decision Room puts up to 6 people on one decision, each in their own order.</div></div></div>
+      </div>
+      <div class="jbtns"><button class="btn primary" type="button" data-jgo="welcome">Open the app</button><button class="btn secondary" type="button" data-buy="report">Get the Advanced Report · £99</button></div>
+      <p class="t13 sec" style="margin:12px 0 0">Preview: in the app this card sits under the last section of the free report; "Open the app" goes to the welcome screen, then Home on first open with the same result.</p>
+    </section>
+
+    <section class="glass panel jcard hide" data-jv="welcome" aria-labelledby="j10h">
+      <div class="strip" aria-hidden="true"></div>
+      <div class="t13 sec">Welcome</div>
+      <h1 class="t28 type" id="j10h" style="margin:4px 0 8px">Welcome, Sample</h1>
+      <p class="t19" style="margin:0 0 16px" id="j10line">Part 1 showed you are an Architect. Three things to know before you start.</p>
+      <div class="jsteps">
+        <div class="jstep"><span class="jnum">1</span><div><div class="t13 b">Make a decision</div><div class="t13 sec" id="j10m">Bring any decision. AI Architect takes you through it in your order, one step at a time, and tells you what it rests on. You decide.</div></div></div>
+        <div class="jstep"><span class="jnum">2</span><div><div class="t13 b">Your Decision log</div><div class="t13 sec">Every decision is written down with the loop you used and a review date. Over time it shows how you decide.</div></div></div>
+        <div class="jstep"><span class="jnum">3</span><div><div class="t13 b">Your reports and workbooks</div><div class="t13 sec">Your free report is in My reports. The Advanced Report and your workbooks take it further.</div></div></div>
+      </div>
+      <div class="gwhat" style="margin-top:12px"><div class="t13 b">Recommended: two-step verification</div><div class="t13 sec" style="margin-bottom:6px">A code by email at every new sign-in. Off unless you turn it on here or in Settings · Security.</div><label class="check t13"><input type="checkbox"><span>Turn on two-step verification</span></label></div>
+      <div class="jbtns"><button class="btn primary" type="button" data-jgo="home">Make my first decision</button><button class="btn secondary" type="button" data-jgo="home">Go to Home</button></div>
+    </section>
+
+    <!-- What happens on "Take me to my report": the report opens on this device; the account exists; one email asks for a password -->
+    <section class="glass panel jcard hide" data-jv="sent" aria-labelledby="j7h">
+      <div class="strip" aria-hidden="true"></div>
+      <div class="t13 sec">Shown once, above your report</div>
+      <h1 class="t28 ind" id="j7h" style="margin:4px 0 8px">Your report is below</h1>
+      <p class="t19" style="margin:0 0 8px">We have emailed <b id="j7e">you@company.com</b> a link to set your password. It works for 24 hours. Until you set one, you stay signed in on this device only.</p>
+      <p class="t13 sec" style="margin:0 0 12px">Not there? Check your junk folder, or <a href="#" class="jlink">send it again</a>.</p>
+      <div class="jmail t13">
+        <div class="sec" style="margin-bottom:6px">The email, as the person receives it</div>
+        <div><b>Subject:</b> Set your Brandscaling password</div>
+        <p style="margin:6px 0">Hi Sample, your free E-DNA report is in your account. Set a password so you can sign in from any device. The link works for 24 hours; after that, ask for a new one from the sign-in page.</p>
+        <span class="chip type">Set my password</span>
+        <p class="sec" style="margin:8px 0 0">If this was not you, ignore this email. Without this link no one can sign in to this account.</p>
+      </div>
+      <div class="jbtns"><button class="btn primary" type="button" data-jgo="report">See my report</button><button class="btn secondary" type="button" data-jgo="create">Open the email link</button></div>
+    </section>
+
+    <!-- Set your password: reached from the email link; also where "Create an account" from the sign-in page lands (same three fields first) -->
+    <section class="glass panel jcard hide" data-jv="create" aria-labelledby="j2h">
+      <div class="strip" aria-hidden="true"></div>
+      <h1 class="t28 ind" id="j2h" style="margin:0 0 4px">Set your password</h1>
+      <p class="t13 sec" style="margin:0 0 16px">For <b>sample@example.com</b>. One password, used on the web and in the iOS app.</p>
+      <div class="jform">
+        <div><label class="t13 sec" for="j2p">Password</label><input class="inp" id="j2p" type="password" autocomplete="new-password"><div class="t13 sec" style="margin-top:4px">At least 8 characters. Not one you use elsewhere.</div></div>
+        <div><label class="t13 sec" for="j2q">Password again</label><input class="inp" id="j2q" type="password" autocomplete="new-password"></div>
+        <label class="check t13"><input type="checkbox"><span>Send me Brandscaling news by email. You can stop it at any time.</span></label>
+      </div>
+      <div class="jbtns"><button class="btn primary" type="button" data-jgo="home">Save and go to my account</button></div>
+      <p class="t13 sec" style="margin:12px 0 0">Link expired? <a href="#" class="jlink" data-jgo="forgot">Ask for a new one</a>.</p>
+    </section>
+
+    <!-- Sign in -->
+    <section class="glass panel jcard hide" data-jv="signin" aria-labelledby="j3h">
+      <div class="strip" aria-hidden="true"></div>
+      <h1 class="t28 ind" id="j3h" style="margin:0 0 4px">Sign in</h1>
+      <p class="t13 sec" style="margin:0 0 16px">Before you can work on any business, you need to understand yourself and how you and others make decisions.</p>
+      <div class="jform">
+        <div><label class="t13 sec" for="j3e">Email</label><input class="inp" id="j3e" type="email" autocomplete="email" placeholder="you@company.com"></div>
+        <div><label class="t13 sec" for="j3p">Password</label><input class="inp" id="j3p" type="password" autocomplete="current-password"></div>
+        <div class="lrow" style="margin:0"><label class="check t13"><input type="checkbox"><span>Keep me signed in on this device</span></label><a href="#" class="jlink t13" data-jgo="forgot">Forgotten your password?</a></div>
+      </div>
+      <div class="jbtns">
+        <button class="btn primary" type="button" data-jgo="home">Sign in</button>
+        <button class="btn secondary jios" type="button">Sign in with Apple</button>
+      </div>
+      <p class="t13 sec" style="margin:12px 0 0">No password yet? <a href="#" class="jlink" data-jgo="forgot">Email me a sign-in link</a> · New here? <a href="#" class="jlink">Take the free E-DNA</a>, your account is made at the end.</p>
+    </section>
+
+    <!-- Forgotten password -->
+    <section class="glass panel jcard hide" data-jv="forgot" aria-labelledby="j4h">
+      <div class="strip" aria-hidden="true"></div>
+      <h1 class="t28 ind" id="j4h" style="margin:0 0 4px">Get a sign-in link</h1>
+      <p class="t13 sec" style="margin:0 0 16px">Enter the email on your account. We send a link that signs you in and lets you set or change your password. It works for one hour.</p>
+      <div class="jform"><div><label class="t13 sec" for="j4e">Email</label><input class="inp" id="j4e" type="email" autocomplete="email" placeholder="you@company.com"></div></div>
+      <div class="jbtns"><button class="btn primary" type="button" id="j4send">Send the link</button><button class="btn secondary" type="button" data-jgo="signin">Back to sign in</button></div>
+      <div class="jnote hide t13" id="j4sent">If that email has an account, the link is on its way. Check your inbox and your junk folder.</div>
+    </section>
+
+    <!-- Complete your order: the live GHL checkout as built (go.brandscaling.co.uk/checkout-page-quiz-report, screenshots 19 Nov), in the app's type and colours -->
+    <section class="glass panel jcard hide" data-jv="order" aria-labelledby="j5h">
+      <div class="strip" aria-hidden="true"></div>
+      <h1 class="t28 ind" id="j5h" style="margin:0 0 4px;text-align:center">Complete your order</h1>
+      <p class="t19" id="j5sub" style="margin:0 0 16px;text-align:center"><b class="ind jbig">£99</b> + VAT · E-DNA Advanced Report</p>
+      <div class="jform">
+        <div><label class="sr t13" for="j5n">Full name</label><input class="inp pillinp" id="j5n" type="text" autocomplete="name" placeholder="Full Name..."></div>
+        <div><label class="sr t13" for="j5e">Email address</label><input class="inp pillinp" id="j5e" type="email" autocomplete="email" placeholder="Email Address..."></div>
+        <div><label class="sr t13" for="j5ph">Phone number</label><input class="inp pillinp" id="j5ph" type="tel" autocomplete="tel" placeholder="Phone Number..."></div>
+        <div class="jdiv t13 sec"><span>PAYMENT</span></div>
+        <table class="logtable t13 jtable" aria-label="Items"><thead><tr><th>Item</th><th>Quantity</th><th>Price</th></tr></thead><tbody id="jitems"></tbody></table>
+        <div class="jrow2 jcoupon"><div><label class="sr t13" for="j5c">Coupon code</label><input class="inp" id="j5c" type="text" autocomplete="off" placeholder="Enter coupon code"></div><button class="btn secondary small" type="button" id="j5apply">Apply</button></div>
+        <div class="jdiv t13 sec" style="text-transform:none;letter-spacing:0"><span>Order summary</span></div>
+        <table class="logtable t13 jtable" aria-label="Order summary"><thead><tr><th>Item</th><th>Quantity</th><th>Amount</th></tr></thead><tbody id="jsummary"></tbody></table>
+        <div class="jline tot"><span class="t19 b">Order Total</span><span class="t19 b" id="jtotal">£118.80</span></div>
+        <div class="t13 sec" id="jsite"></div>
+        <div class="hide" id="jcurwrap" style="margin-top:8px"><label class="t13 sec" for="jcur">Currency</label><select class="inp jbig" id="jcur" style="max-width:320px"><option value="aed">AED · amounts to be set</option><option value="gbp">GBP</option></select></div>
+        <div class="jpay" role="radiogroup" aria-label="Payment method">
+          <label class="jtile on"><input type="radio" name="pm" checked><span>Card</span></label>
+          <label class="jtile"><input type="radio" name="pm"><span>Apple Pay</span></label>
+          <label class="jtile"><input type="radio" name="pm"><span>Amazon Pay</span></label>
+          <label class="jtile"><input type="radio" name="pm"><span>More ▾</span></label>
+        </div>
+        <div class="t13 sec">Secure, fast checkout with Link</div>
+        <div><label class="t13 sec" for="j5card">Card number</label><input class="inp" id="j5card" type="text" inputmode="numeric" autocomplete="cc-number" placeholder="1234 1234 1234 1234"></div>
+        <div class="jrow2">
+          <div><label class="t13 sec" for="j5x">Expiration date</label><input class="inp" id="j5x" type="text" inputmode="numeric" autocomplete="cc-exp" placeholder="MM / YY"></div>
+          <div><label class="t13 sec" for="j5v">Security code</label><input class="inp" id="j5v" type="text" inputmode="numeric" autocomplete="cc-csc" placeholder="CVC"></div>
+        </div>
+        <div><label class="t13 sec" for="j5co">Country</label><select class="inp" id="j5co" autocomplete="country"><option>United Kingdom</option><option>United Arab Emirates</option><option>Germany</option><option>United States</option></select></div>
+        <label class="check t13 jagree"><input type="checkbox" required id="j5agree"><span>I am 18 or over and I agree to the <a href="#" class="jlink">Membership Terms and Conditions</a> (including the <a href="#" class="jlink">Refund and Cancellation Policy</a>) and the <a href="#" class="jlink">Privacy Policy</a>.</span></label>
+      </div>
+      <div class="jbtns"><button class="btn primary" type="button" id="j5pay" data-jgo="done" style="width:100%;justify-content:center">Get my Advanced Report</button></div>
+      <p class="t13 sec" style="margin:12px 0 0;text-align:center">Secure payment. VAT is added at checkout.</p>
+    </section>
+
+    <!-- Order complete -->
+    <section class="glass panel jcard hide" data-jv="done" aria-labelledby="j6h">
+      <div class="strip" aria-hidden="true"></div>
+      <div class="t13 sec">Order complete</div>
+      <h1 class="t28 ind" id="j6h" style="margin:4px 0 8px">Thank you</h1>
+      <p class="t19" style="margin:0 0 12px" id="j6line">Your Advanced Report, your three workbooks and 10 decisions with your AI mentor are unlocked.</p>
+      <p class="t13 sec" style="margin:0 0 16px">Your receipt has been sent to your email. Order reference and date appear here.</p>
+      <div class="jbtns"><button class="btn primary" type="button" data-jgo="reports">Open my Advanced Report</button><button class="btn secondary" type="button" data-jgo="home">Go to Home</button></div>
+    </section>
+
+    <p class="t13 sec jfoot">Brandscaling · Decision Intelligence &amp; Infinite Scaling Mastery · <a href="#" class="jlink">Privacy Policy</a> · <a href="#" class="jlink">Terms of Use</a></p>
+  </div>
+  <!-- Idle warning (A12): 25 minutes without activity on the web test or at the gate; the clear comes at 30 -->
+  <div class="jmodal hide" id="idleModal" role="dialog" aria-modal="true" aria-labelledby="idlh">
+    <div class="jmbox glass">
+      <h2 class="t19 b" id="idlh" style="margin:0 0 4px">Still there?</h2>
+      <p class="t13 sec" style="margin:0 0 12px">Nothing has happened here for 25 minutes. In <b id="idleLeft">4 min 58 s</b> this screen clears to protect your answers on a shared computer. Your answers are saved: you can carry on now, or come back within 24 hours.</p>
+      <div class="jbtns" style="margin-top:0"><button class="btn primary small" type="button" id="idleStay">I am still here</button><button class="btn secondary small" type="button" data-jgo="resume">Save my progress by email</button></div>
+    </div>
+  </div>
+  <!-- Cookie banner (BS-WEB-005): website pages only; essential cookies run the test and the sign-in, analytics only if allowed -->
+  <div class="cookiebar hide" id="cookieBar" role="region" aria-label="Cookies">
+    <div class="t13">We use essential cookies to run the E-DNA and your sign-in. Analytics cookies are used only if you allow them. <a href="#" class="jlink">Cookie Policy</a></div>
+    <div class="btnrow" style="margin:0"><button class="btn small primary" type="button" data-cookie="all">Allow analytics</button><button class="btn small secondary" type="button" data-cookie="essential">Essential only</button></div>
+  </div>
+</main>
+
+<!-- Sign-out pop-up (from Settings · Sign out) -->
+<div class="jmodal hide" id="signoutModal" role="dialog" aria-modal="true" aria-labelledby="somh">
+  <div class="jmbox glass">
+    <h2 class="t19 b" id="somh" style="margin:0 0 4px">Sign out?</h2>
+    <p class="t13 sec" style="margin:0 0 12px">Everything is saved: your log, your reports and any decision left in the Frame, where you left it. Take a copy with you if you want one.</p>
+    <div class="jmrows">
+      <button class="btn secondary small" type="button">Export my Decision log · CSV</button>
+      <button class="btn secondary small" type="button">Download my reports · PDF</button>
+    </div>
+    <div class="jbtns" style="margin-top:14px"><button class="btn primary small" type="button" id="soConfirm">Yes, sign out</button><button class="btn secondary small" type="button" id="soStay">Stay signed in</button></div>
+  </div>
+</div>
+
+<!-- Delete account (from Settings · Delete my account): password first, then a 14-day wait -->
+<div class="jmodal hide" id="deleteModal" role="dialog" aria-modal="true" aria-labelledby="delh">
+  <div class="jmbox glass">
+    <h2 class="t19 b" id="delh" style="margin:0 0 4px">Delete your account?</h2>
+    <p class="t13 sec" style="margin:0 0 10px">This removes your E-DNA results, reports, Decision log, workbooks, photo and credits. Paid items are not refunded beyond the Refund and Cancellation Policy. Your entries in other people's rooms stay with your name unless the room's owner deletes them.</p>
+    <p class="t13" style="margin:0 0 10px">The account is removed <b>14 days</b> after you confirm. Signing in during those 14 days cancels the deletion. We email you when it is done.</p>
+    <div class="jform">
+      <div><label class="t13 sec" for="delpw">Your password</label><input class="inp" id="delpw" type="password" autocomplete="current-password"></div>
+      <div><label class="t13 sec" for="deltype">Type DELETE to confirm</label><input class="inp" id="deltype" type="text" autocomplete="off"></div>
+      <button class="btn secondary small" type="button" style="align-self:flex-start">Export my Decision log and reports first</button>
+    </div>
+    <div class="jbtns" style="margin-top:14px"><button class="btn primary small" type="button" id="delConfirm" style="background:var(--red-d1)">Delete my account</button><button class="btn secondary small" type="button" id="delStay">Keep my account</button></div>
+  </div>
+</div>

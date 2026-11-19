@@ -1,0 +1,56 @@
+<!-- ===== Screen 4: Decision Room ===== -->
+<main class="main hide" id="main4">
+  <div class="hdr">
+    <div>
+      <div class="t13 sec">Decision rooms · <b>Hire a salesperson now, or in Q2</b></div>
+      <div class="t28">Decision <span class="ind">Room</span></div>
+    </div>
+    <div class="who">
+      <span class="chip ex">Example data</span>
+      <span class="chip grey" id="roomCount">2 of 6 people</span>
+    </div>
+  </div>
+
+  <!-- people and invitation -->
+  <section class="glass panel" aria-labelledby="r4p">
+    <div class="strip" aria-hidden="true"></div>
+    <div class="lrow">
+      <div><h2 class="t19 b" id="r4p" style="margin:0">Who is in the room</h2><div class="t13 sec">Each person decides in their own order, with their own mentor. Core type and loop are shared for this decision only, by consent.</div></div>
+      <button class="btn small primary" id="r4invite">Invite · up to 6</button>
+    </div>
+    <div class="people" id="people"></div>
+    <div class="invite hide" id="invitePanel">
+      <div class="t19 b" style="margin-bottom:6px">Invite someone to this decision</div>
+      <div class="t13 sec" style="margin-bottom:10px">From your organisation, or anyone by link. A guest takes the free E-DNA first, then has the Frame, the mentors and the app for 7 days with 3 decisions.</div>
+      <div class="inviterow"><input class="t19" type="text" placeholder="Name or email" aria-label="Name or email"><select class="fsel t13" aria-label="Role"><option>Can contribute</option><option>Read only</option></select><button class="btn small primary" type="button">Send invitation</button></div>
+      <div class="t13 sec" style="margin-top:8px">Or copy a link: <a href="#">app.brandscaling.co.uk/room/4F7K-example</a> · expires in 7 days</div>
+    </div>
+  </section>
+
+  <!-- stages -->
+  <section class="glass panel" aria-labelledby="r4s">
+    <div class="strip" aria-hidden="true"></div>
+    <div class="lrow">
+      <div><h2 class="t19 b" id="r4s" style="margin:0">The eight steps</h2><div class="t13 sec">Repairing a clash, run inside the room (BS-DI-010). Steps 1, 2 and 4 are skipped when the room already agrees.</div></div>
+      <span class="chip ind" id="stageChip">Step 4 of 8</span>
+    </div>
+    <ol class="stages" id="stages"></ol>
+    <div id="stageBody"></div>
+    <div class="btnrow" style="margin-top:16px"><button class="btn secondary small" id="stPrev">Back</button><button class="btn primary small" id="stNext">Next step</button><span class="t13 sec">Everyone in the room sees the same step; each person's boxes stay their own.</span></div>
+  </section>
+
+  <!-- mentors in the room -->
+  <section class="glass panel" aria-labelledby="r4m">
+    <div class="strip" aria-hidden="true"></div>
+    <div class="lrow"><div><h2 class="t19 b" id="r4m" style="margin:0">The mentors in the room</h2><div class="t13 sec">AI Alchemist coaches the Alchemist's steps; AI Architect the Architect's. Neither decides.</div></div></div>
+    <div class="mentors">
+      <div class="mentor alch primary"><img src="assets/ai_alchemist_approved.gif" alt="AI Alchemist"><div><div class="name">AI Alchemist</div><div class="t13 sec" id="mAlchRoom"></div></div></div>
+      <div class="mentor arch primary"><img src="assets/ai_architect_approved.gif" alt="AI Architect"><div><div class="name">AI Architect</div><div class="t13 sec" id="mArchRoom"></div></div></div>
+    </div>
+  </section>
+
+  <div class="foot">
+    <span>Brandscaling · Decision Intelligence &amp; Infinite Scaling Mastery</span>
+    <span>Example room: an Architect and an Alchemist partner. No person or decision shown is real.</span>
+  </div>
+</main>

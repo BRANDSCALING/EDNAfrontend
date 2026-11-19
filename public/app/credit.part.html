@@ -1,0 +1,12 @@
+<!-- ===== Top-up sheet (BS-AI-007 §4, §7: Stripe Checkout in a sheet; packs are proposals awaiting approval) and the out-of-credits notice (BS-AI-007 §7) ===== -->
+<div class="jmodal hide" id="topupSheet" role="dialog" aria-modal="true" aria-labelledby="tuh">
+  <div class="jmbox glass">
+    <div class="t13 sec">Top up <span class="chip ex">Pack sizes and prices: proposed, BS-AI-007 §4</span></div>
+    <h2 class="t19 b" id="tuh" style="margin:4px 0 4px">Add decisions to your account</h2>
+    <p class="t13 sec" id="tuBal" style="margin:0 0 12px">You have 6 of 10 decisions left.</p>
+    <div class="packs" id="tuPacks" role="radiogroup" aria-label="Pack"></div>
+    <p class="t13 sec" id="tuNote" style="margin:12px 0 0">Top-up credits do not expire while your membership is active. One credit is one decision taken to Check. Used credits are not refundable; an unused pack is refundable within 30 days.</p>
+    <div class="jbtns" style="margin-top:14px"><button class="btn primary small" type="button" id="tuGo">Continue to payment · £36 + VAT</button><button class="btn secondary small" type="button" id="tuStay">Not now</button></div>
+    <p class="t13 sec" style="margin:10px 0 0">Payment is taken by Stripe Checkout on the order page. Your balance updates when the payment is confirmed, and a receipt goes to your email.</p>
+  </div>
+</div>
