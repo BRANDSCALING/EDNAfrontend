@@ -18,6 +18,7 @@ import {
 
 interface BrandWorkbooksProps {
   onOpenMentors?: () => void;
+  onOpenPlan?: () => void;
 }
 
 /* ---------- small render helpers ---------- */
@@ -242,7 +243,7 @@ function WorkbookView({ payload, onBack, onOpenMentors }: {
 
 /* ---------- list + container ---------- */
 
-export function BrandWorkbooks({ onOpenMentors }: BrandWorkbooksProps) {
+export function BrandWorkbooks({ onOpenMentors, onOpenPlan }: BrandWorkbooksProps) {
   const [list, setList] = useState<WorkbookList | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<WorkbookInstancePayload | null>(null);
@@ -278,7 +279,7 @@ export function BrandWorkbooks({ onOpenMentors }: BrandWorkbooksProps) {
 
       {/* The E-DNA plan ('adapt' screen in the approved /edna app), same entry the iOS
           Learning tab has. The /edna gate shows the £99 screen until purchased. */}
-      <button className="bs-wbk-plan" onClick={() => { window.location.href = '/edna/index.html#plan'; }}>
+      <button className="bs-wbk-plan" onClick={() => { if (onOpenPlan) onOpenPlan(); else window.location.href = '/edna/index.html#plan'; }}>
         <span className="bs-wbk-icon" aria-hidden="true">🗺</span>
         <span className="bs-wbk-plan-text">
           <b>Your E-DNA plan</b>

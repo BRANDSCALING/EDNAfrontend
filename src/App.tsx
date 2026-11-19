@@ -1180,8 +1180,8 @@ export default function App() {
     /* 'courses' (old pricing) is retired — old links land on the overview */
     const memberView =
       currentView === 'home' || currentView === 'courses' ? 'overview'
-      : (['profile', 'workbooks', 'chat', 'zoom-recordings'].includes(activeDashboardView)
-          ? (activeDashboardView as 'profile' | 'workbooks' | 'chat' | 'zoom-recordings')
+      : (['profile', 'plan', 'workbooks', 'chat', 'zoom-recordings'].includes(activeDashboardView)
+          ? (activeDashboardView as 'profile' | 'plan' | 'workbooks' | 'chat' | 'zoom-recordings')
           : 'overview');
     return (
       <BrandDashboard

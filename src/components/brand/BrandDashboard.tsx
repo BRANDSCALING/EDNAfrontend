@@ -15,7 +15,7 @@ import { ZoomRecordings } from '../ZoomRecordings';
 // The old Courses/pricing page is retired (Fariza, 18 Nov 2026: "the old pricing is
 // redundant… it's all new"); membership lives on the homepage until her tier pages land.
 
-export type MemberView = 'overview' | 'profile' | 'workbooks' | 'chat' | 'zoom-recordings';
+export type MemberView = 'overview' | 'profile' | 'plan' | 'workbooks' | 'chat' | 'zoom-recordings';
 
 interface BrandDashboardProps {
   userName: string;
@@ -50,7 +50,7 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
         <button className={view === 'overview' ? 'on' : ''} onClick={() => onOpenMemberView('overview')}>▦ Overview</button>
         <button className={view === 'profile' ? 'on' : ''} onClick={() => onOpenMemberView('profile')}>◍ My E-DNA profile</button>
         <button className={view === 'chat' ? 'on' : ''} onClick={() => onOpenMemberView('chat')}>💬 AI mentors</button>
-        <button className={view === 'workbooks' ? 'on' : ''} onClick={() => onOpenMemberView('workbooks')}>📓 Workbooks</button>
+        <button className={view === 'workbooks' || view === 'plan' ? 'on' : ''} onClick={() => onOpenMemberView('workbooks')}>📓 Workbooks</button>
         <button className={view === 'zoom-recordings' ? 'on' : ''} onClick={() => onOpenMemberView('zoom-recordings')}>▶ Recordings</button>
         <button onClick={onLogout}>↩ Log out</button>
         <div className="bs-side-foot">Decision Intelligence &amp; Infinite Scaling Mastery</div>
@@ -61,6 +61,13 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
           {/* the approved /edna report, embedded so the member stays in the dashboard
               (Munawar, 18 Nov 2026); ?embed=1 hides the page's own header chrome */}
           <iframe src="/edna/index.html?embed=1" className="bs-edna-frame" title="Your E-DNA report" />
+        </main>
+      )}
+
+      {view === 'plan' && (
+        <main className="bs-main">
+          {/* the E-DNA plan ('adapt' screen), embedded like the profile (Munawar, 19 Nov) */}
+          <iframe src="/edna/index.html?embed=1#plan" className="bs-edna-frame" title="Your E-DNA plan" />
         </main>
       )}
 
@@ -78,7 +85,7 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
               </>
             )}
             {edna !== null && edna.taken && (
-              <BrandWorkbooks onOpenMentors={() => onOpenMemberView('chat')} />
+              <BrandWorkbooks onOpenMentors={() => onOpenMemberView('chat')} onOpenPlan={() => onOpenMemberView('plan')} />
             )}
           </div>
         </main>

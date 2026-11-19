@@ -395,6 +395,33 @@
     } catch (e) { /* not complete yet */ }
   }
 
+  /* Purchased members (Munawar, 19 Nov 2026): no sales screen between the two reports —
+     report → detailed directly, each with its own PDF download; Back returns to the report. */
+  function retargetForPurchased(s) {
+    if (!purchased) return;
+    if (s === 'report') {
+      var next = document.getElementById('next');
+      if (next) {
+        var n2 = next.cloneNode(true);
+        n2.textContent = 'Your detailed report';
+        next.parentNode.replaceChild(n2, next);
+        n2.addEventListener('click', function () {
+          at = screens.indexOf('detailed'); window.scrollTo({ top: 0 }); renderGuarded();
+        });
+      }
+    }
+    if (s === 'detailed') {
+      var back = document.getElementById('back');
+      if (back) {
+        var b2 = back.cloneNode(true);
+        back.parentNode.replaceChild(b2, back);
+        b2.addEventListener('click', function () {
+          at = screens.indexOf('report'); window.scrollTo({ top: 0 }); renderGuarded();
+        });
+      }
+    }
+  }
+
   var origRender = render;
   function renderGuarded() {
     if (!restored) {
@@ -405,6 +432,7 @@
       return;
     }
     deriveCore();
+    if (purchased && screens[at] === 'end') at = screens.indexOf('detailed');
     var s = screens[at];
     if (ANON && (s === 'report' || s === 'end' || s === 'detailed' || s === 'adapt')) {
       snapshot(); /* keep the finished answers safe before leaving for sign-up */
@@ -420,6 +448,7 @@
     stripPreviewControls();
     addPdfButton(s);
     addDashboardButton(s);
+    retargetForPurchased(s);
     if (s === 'finish' || s === 'report' || s === 'end') submitIfComplete();
     snapshot();
   }
