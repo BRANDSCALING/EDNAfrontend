@@ -3,7 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Brandscaling app — Decision Intelligence screens (preview)</title>
+<title>Brandscaling — Decision Intelligence</title>
+<style>
+  /* production (site.part.js loads last): the preview-only chrome must never paint,
+     not even for the first frame, so it is hidden here statically rather than from the
+     script — the preview bar, the designer notes column, the Example chips, the frame note */
+  .pv{display:none!important}
+  .notes{display:none!important}
+  .chip.ex{display:none!important}
+  #frameNote{display:none!important}
+</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
