@@ -129,21 +129,49 @@
       }).join('');
       if ($('logRows') && rows.length) $('logRows').innerHTML = full;
     });
-    api('/log/reviews/due').then(function (d) {
-      if (d.__status !== 200 || !$('needs0')) return;
-      var rows = d.rows || [];
-      var n = rows.length;
+    patchNeedsYou();
+  }
+
+  /* ---------- Needs you + the bell (BS-AI-009 §5): live rows, cleared by the action ---------- */
+  var NYKIND = { N1: 'Invitation', N2: 'Your input', N3: 'Your room', N4: 'Confirm', N6: 'Review · due', N7: 'Review · due' };
+  function patchNeedsYou() {
+    api('/needs-you').then(function (d) {
+      if (d.__status !== 200) return;
+      var items = d.items || []; var n = items.length;
       var bell = $('bellN'); if (bell) { bell.textContent = String(n); bell.classList.toggle('zero', n === 0); }
       var needN = $('needN'); if (needN) { needN.textContent = String(n); needN.classList.toggle('hide', n === 0); }
+      var box = $('needs0'); if (!box) return;
       if (!n) {
-        $('needs0').innerHTML = '<div class="empty"><b>Nothing waiting.</b> Rooms that need your input and reviews that are due appear here, and reach you as a notification.</div>';
+        box.innerHTML = '<div class="empty"><b>Nothing waiting.</b> Rooms that need your input and reviews that are due appear here, and reach you as a notification.</div>';
         return;
       }
-      $('needs0').innerHTML = rows.map(function (r) {
-        return '<div class="need"><div><span class="t13 k">Review · due</span><span class="t19">' + r.text +
-          '</span><div class="t13 sec">Three questions with your mentor</div></div><span class="chip grey">Due</span></div>';
+      box.innerHTML = items.map(function (r, i) {
+        return '<div class="need"><div><span class="t13 k">' + (NYKIND[r.event] || r.event) + '</span><span class="t19">' + r.title +
+          '</span><div class="t13 sec">' + (r.line || '') + '</div></div>' +
+          '<button class="btn small primary" type="button" data-ny="' + i + '">' + (r.action || 'Open') + '</button></div>';
       }).join('');
+      box.onclick = function (e) {
+        var b = e.target.closest && e.target.closest('[data-ny]'); if (!b) return;
+        var r = items[parseInt(b.dataset.ny, 10)]; if (!r) return;
+        if (r.event === 'N1' && r.invite_token) { joinInvite(r.invite_token); return; }
+        if (r.room_id) {
+          if (window.showScreen) window.showScreen(4);
+          setTimeout(function () { openLiveRoom(r.room_id); }, 300);
+          return;
+        }
+        if (r.log_id) { openLogRow(r.log_id); }
+      };
     });
+  }
+  /** Go to the log screen and open the row (for a review that is due). */
+  function openLogRow(logId) {
+    if (window.showScreen) window.showScreen(3);
+    var tries = 0;
+    (function look() {
+      var v = (LOGCACHE.mine || []).concat(LOGCACHE.room || []).filter(function (x) { return x.raw && x.raw.id === logId; })[0];
+      if (v) return openRealRow(v);
+      if (tries++ < 10) setTimeout(look, 400);
+    })();
   }
 
   /* ---------- Screen 3 · the Decision log, from the real log ---------- */
@@ -709,19 +737,23 @@
     location.href = what === 'entry' ? '/home/#membership' : 'https://go.brandscaling.co.uk/checkout-page-quiz-report';
   }, true);
 
-  /* an invite link (#invite=token): the consent screen, then join and open the room */
-  (function () {
-    var m = location.hash.match(/#invite=([A-Za-z0-9_-]+)/);
-    if (!m) return;
+  /* an invite (#invite=token link, or a Needs you row): the consent list, then join and open */
+  function joinInvite(token) {
     var ok = confirm('Joining this room shares, for this decision only: your name, your core type or Mixed state, your loop and mentor, your progress, and your entries in Boxes 2 and 3 with the people in the room. Your report, log and other rooms are never shared. Join?');
     if (!ok) { history.replaceState(null, '', location.pathname + location.search); return; }
-    api('/invites/' + m[1] + '/accept', { method: 'POST', body: { consent: true } }).then(function (res) {
+    api('/invites/' + token + '/accept', { method: 'POST', body: { consent: true } }).then(function (res) {
       history.replaceState(null, '', location.pathname + location.search);
-      if (res.__status !== 200) { alert(res.message || 'This invitation has expired.'); return; }
+      if (res.__status !== 200 && res.__status !== 201) {
+        if (res.joined || res.room_id) { /* already a member */ } else { alert(res.message || 'This invitation has expired.'); return; }
+      }
       if (res.needs_edna) alert('Take your free E-DNA first: your loop and mentor come from it. The room is open to you meanwhile.');
       if (window.showScreen) window.showScreen(4);
-      setTimeout(function () { openLiveRoom(res.room_id); }, 400);
+      setTimeout(function () { if (res.room_id) openLiveRoom(res.room_id); patchNeedsYou(); }, 400);
     });
+  }
+  (function () {
+    var m = location.hash.match(/#invite=([A-Za-z0-9_-]+)/);
+    if (m) joinInvite(m[1]);
   })();
 
   /* ---------- Home · "How you decide" and the workbooks tile, from real data ---------- */
@@ -760,17 +792,69 @@
     }).join('');
   }
 
+  /* ---------- the guest's seven days (BS-AI-008 §5; BS-AI-003 §9.5) ---------- */
+  function paintGuestBan() {
+    var home = $('main0'); if (!home || !PROFILE) return;
+    var old = $('bsGuestBan'); if (old) old.remove();
+    var g = PROFILE.guest; if (!g) return;
+    var el = document.createElement('div'); el.id = 'bsGuestBan'; el.className = 'gban';
+    el.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 14px;margin-bottom:14px;border-radius:12px;background:var(--type-light);border:1px solid var(--type)';
+    el.innerHTML = g.ended
+      ? '<div><div class="t13 b">Your guest access has ended</div><div class="t13 sec">Your E-DNA result, report, log and rooms stay yours to read. Keep the app with the Advanced Report or a membership.</div></div><div class="btnrow" style="margin:0"><button class="btn small primary" type="button" data-buy="report">See the options</button></div>'
+      : '<div><div class="t13 b">Guest access · ' + g.days_left + (g.days_left === 1 ? ' day' : ' days') + ' left</div><div class="t13 sec">' + g.decisions_left + ' of 3 decisions left. Keep the Frame and your mentors with the Advanced Report (£99) or a membership.</div></div><div class="btnrow" style="margin:0"><button class="btn small secondary" type="button" data-buy="report">See the options</button></div>';
+    var h = home.querySelector('.hdr');
+    if (h) h.insertAdjacentElement('afterend', el); else home.insertBefore(el, home.firstChild);
+  }
+
   /* re-patch after the preview's own openLaunch paints its example data */
   var origOpenLaunch = window.openLaunch;
   window.openLaunch = function (key) {
     if (origOpenLaunch) origOpenLaunch(key);
-    patchCredits(); patchLog(); patchHowYouDecide(); patchWbTile();
+    patchCredits(); patchLog(); patchHowYouDecide(); patchWbTile(); paintGuestBan();
     if (PROFILE && PROFILE.first_name) {
       ['name', 'name0'].forEach(function (id) { if ($(id)) $(id).textContent = PROFILE.first_name; });
     }
-    /* production: the full Frame read view ships in the polish pass; hide its link */
-    var ex = $('expand0'); if (ex) ex.style.display = 'none';
+    /* the full Frame read view of the one-step decision (BS-AI-003-R1 item 6) */
+    wireFullFrame();
+    /* the bell goes to Needs you (BS-AI-009 §5) */
+    var bell = $('bell0');
+    if (bell && !bell.dataset.bsWired) {
+      bell.dataset.bsWired = '1';
+      bell.addEventListener('click', function () {
+        var p = $('needs0');
+        if (p) p.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    }
   };
+
+  /* ---------- the full Frame as a read view of the one-step decision ---------- */
+  var FF_WIRED = false;
+  function wireFullFrame() {
+    var ex = $('expand0'); if (!ex) return;
+    ex.style.display = '';
+    if (FF_WIRED) return;
+    FF_WIRED = true;
+    /* the preview switches to its designed read view (BS-AI-003-R1 item 6); we run after
+       it, in bubble phase, and fill that view with the real decision: one record, two
+       views (BS-AI-003 §5 rule of 19 Nov) */
+    document.addEventListener('click', function (e) {
+      var hit = e.target.closest && e.target.closest('#expand0');
+      if (!hit || !S.id) return;
+      api('/decisions/' + S.id).then(function (res) {
+        if (res.__status !== 200) return;
+        var d2 = $('d2'); if (d2) d2.value = res.decision ? res.decision.text : '';
+        /* the five read-only boxes after the decision, in Frame order */
+        var tas = Array.prototype.filter.call(document.querySelectorAll('textarea'), function (t) {
+          return t !== d2 && t.readOnly && t.getBoundingClientRect().height > 0;
+        });
+        var byBox = { box1: [], box2: [], box3: [], end: [], box4: [] };
+        (res.entries || []).forEach(function (en) { if (byBox[en.box]) byBox[en.box].push(en.text); });
+        ['box1', 'box2', 'box3', 'end', 'box4'].forEach(function (b, i) {
+          if (tas[i]) tas[i].value = byBox[b].join('\n\n');
+        });
+      });
+    });
+  }
 
   /* ---------- Screen 9 · Settings: the real minimal panel (production replaces the
      example panels wholesale; membership and payments stay with the checkout for now) */
@@ -854,6 +938,70 @@
     $('lbSend').textContent = stp === 'box4' ? 'Check my decision' : 'Send';
     $('lbHint').textContent = stp === 'end' ? 'Or go round again: add more ' + W[S.first === 'logic' ? 'feeling' : 'logic'] + ' and ' + W[S.first] + '.' : '';
     strip();
+    paintAttach();
+  }
+
+  /* ---------- attachments (BS-AI-004 step 5): PDF, Word, text, images · 10 MB · five
+     per decision; the facts extract enters the box only when the person confirms it ---------- */
+  var ATTACH_OK = 'application/pdf,.pdf,.doc,.docx,.txt,.csv,image/png,image/jpeg';
+  function paintAttach() {
+    var lb = $('lbox'); if (!lb || !S.id) return;
+    var host = $('bsAttach');
+    if (!host) {
+      host = document.createElement('div'); host.id = 'bsAttach'; host.style.marginTop = '8px';
+      host.innerHTML = '<div id="bsAttList"></div>' +
+        '<button class="btn small secondary" type="button" id="bsAttBtn">+ Attach document</button>' +
+        '<span class="t13 sec" id="bsAttMsg" style="margin-left:8px"></span>' +
+        '<input type="file" id="bsAttFile" accept="' + ATTACH_OK + '" style="display:none">';
+      lb.appendChild(host);
+      $('bsAttBtn').addEventListener('click', function () { $('bsAttFile').click(); });
+      $('bsAttFile').addEventListener('change', function () {
+        var f = this.files && this.files[0]; this.value = ''; if (!f || !S.id) return;
+        if (f.size > 10 * 1024 * 1024) { $('bsAttMsg').textContent = 'Over 10 MB. Make it smaller and try again.'; return; }
+        $('bsAttMsg').textContent = 'Reading ' + f.name + '…';
+        var rd = new FileReader();
+        rd.onload = function () {
+          var b64 = String(rd.result).split(',')[1] || '';
+          api('/decisions/' + S.id + '/attachments', {
+            method: 'POST',
+            body: { box: STEPS[S.i], filename: f.name, mime: f.type || 'text/plain', data: b64 },
+          }).then(function (res) {
+            $('bsAttMsg').textContent = res.__status === 201 ? 'Read. Confirm the extract to put it in the box.' : (res.message || 'That did not work.');
+            listAttach();
+          });
+        };
+        rd.readAsDataURL(f);
+      });
+      $('bsAttList').addEventListener('click', function (e) {
+        var c = e.target.closest && e.target.closest('[data-att-confirm]');
+        if (c) {
+          api('/attachments/' + c.dataset.attConfirm + '/confirm', { method: 'POST' }).then(function () {
+            $('bsAttMsg').textContent = 'In the box. Your mentor reads the extract with your own words.';
+            listAttach();
+          });
+          return;
+        }
+        var x = e.target.closest && e.target.closest('[data-att-del]');
+        if (x) api('/attachments/' + x.dataset.attDel, { method: 'DELETE' }).then(listAttach);
+      });
+    }
+    listAttach();
+  }
+  function listAttach() {
+    if (!S.id || !$('bsAttList')) return;
+    api('/decisions/' + S.id + '/attachments').then(function (res) {
+      if (res.__status !== 200) return;
+      var rows = res.attachments || [];
+      $('bsAttList').innerHTML = rows.map(function (a) {
+        return '<div class="t13" style="padding:8px 10px;margin-bottom:6px;border:1px solid var(--grey-p3);border-radius:10px">' +
+          '<b>' + a.filename + '</b> · ' + Math.max(1, Math.round((a.size || 0) / 1024)) + ' KB' +
+          (a.confirmed_at ? ' · <span class="chip type" style="display:inline-block">In the box</span>' : '') +
+          '<div class="t13 sec" style="margin:4px 0;white-space:pre-wrap">' + (a.extract || '') + '</div>' +
+          (a.confirmed_at ? '' : '<div class="btnrow" style="margin:0"><button class="btn small primary" type="button" data-att-confirm="' + a.id + '">Confirm: put this in the box</button>' +
+            '<button class="btn small secondary" type="button" data-att-del="' + a.id + '">Remove</button></div>') +
+          '</div>';
+      }).join('');
+    });
   }
   function setMentor(side) {
     $('m0img').src = side === 'arch' ? 'assets/ai_architect_approved.gif' : 'assets/ai_alchemist_approved.gif';
