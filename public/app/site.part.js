@@ -60,7 +60,10 @@
     /* production: the phone frame fills a real phone, not the preview's fixed 390px canvas */
     '.frame.phone{width:100%!important;max-width:390px;margin-left:auto;margin-right:auto;border-radius:0}' +
     '@media (max-width: 420px){.frame{margin-top:0}.frame.phone{box-shadow:none}}' +
-    '#frameNote{display:none}.notes{display:none!important}';
+    '#frameNote{display:none}.notes{display:none!important}' +
+    /* the set-your-password banner is the preview's example state (A3); everyone on /app signed in
+       with a real password, and the report-gate flow that creates password-less accounts is not built yet */
+    '#homeBanners .gban:not(.warn){display:none!important}';
   document.head.appendChild(st);
 
   /* ---------- platform by viewport (BS-AI-003 §2.4) ---------- */
