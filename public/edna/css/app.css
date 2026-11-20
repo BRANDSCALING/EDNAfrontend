@@ -210,3 +210,16 @@ input[type=range] { width: 100%; accent-color: var(--action); }
 @media (max-width: 480px) { .setting { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) { .progress span { transition: none; } }
 :root.nomotion .progress span { transition: none; }
+
+/* Dark theme repairs (20 Nov 2026, member report in dark): the logo asset carries a baked
+   white background cropped to its edges, so on the dark chrome it read as a broken white
+   patch. In dark it sits on the designed white box — the same treatment as the approved
+   logo-white-box asset in the Decision Intelligence preview — and the report, whose
+   colours are fixed on white by design (the report is a document; BS-DI-005 contrast
+   table), reads as a rounded white sheet on the dark page rather than an edge-to-edge slab. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) header img { background: #FFFFFF; padding: 6px 12px; border-radius: 10px !important; height: 56px; }
+  :root:not([data-theme="light"]) .rp-root { border-radius: 16px; padding: 20px; }
+}
+:root[data-theme="dark"] header img { background: #FFFFFF; padding: 6px 12px; border-radius: 10px !important; height: 56px; }
+:root[data-theme="dark"] .rp-root { border-radius: 16px; padding: 20px; }
