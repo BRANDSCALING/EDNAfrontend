@@ -13,6 +13,7 @@ export interface EdnaState {
   taken: boolean;
   coreName?: string;      // "Architect" / "Alchemist" / "Mixed (…-leaning)" / "Mixed"
   core?: 'architect' | 'alchemist' | 'mixed';
+  lean?: 'architect' | 'alchemist' | 'none';  // Mixed only: the leaning side
   dominantLoop?: string;  // e.g. "Logic → Feeling → Logic"
   alternateLoop?: string; // the under-stress loop
   assessedAt?: string;    // ISO date
@@ -58,6 +59,7 @@ export async function fetchEdnaState(): Promise<EdnaState> {
       taken: true,
       coreName: res.p1?.result || core,
       core,
+      lean: (lean === 'architect' || lean === 'alchemist' ? lean : 'none'),
       dominantLoop: loops?.[0],
       alternateLoop: loops?.[1],
       assessedAt: env.ednaV2.savedAt,

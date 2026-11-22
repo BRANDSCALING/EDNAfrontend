@@ -44,8 +44,14 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
   const assessedOn = edna?.assessedAt
     ? new Date(edna.assessedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
     : null;
-  const primaryMentor = edna?.core === 'alchemist' ? 'AI Alchemist' : 'AI Architect';
-  const complementaryMentor = edna?.core === 'alchemist' ? 'AI Architect' : 'AI Alchemist';
+  /* The primary mentor follows the Dominant loop OR the leaning (02-report.js part 1):
+     Alchemist or Alchemist-leaning → AI Alchemist; pure Mixed has no primary — both mentors. */
+  const mentorSide =
+    edna?.core === 'alchemist' || edna?.core === 'architect' ? edna.core
+    : edna?.lean === 'alchemist' || edna?.lean === 'architect' ? edna.lean
+    : null;
+  const primaryMentor = mentorSide === 'alchemist' ? 'AI Alchemist' : 'AI Architect';
+  const complementaryMentor = mentorSide === 'alchemist' ? 'AI Architect' : 'AI Alchemist';
 
   return (
     <div className="bs-dash">
@@ -184,9 +190,20 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
           <section className="bs-card">
             <div className="bs-card-head">
               <h2>Your AI mentors</h2>
-              {edna?.taken && <span className="bs-when">Primary mentor matches your Dominant Decision Loop</span>}
+              {edna?.taken && (
+                <span className="bs-when">
+                  {mentorSide ? 'Primary mentor matches your Dominant Decision Loop'
+                    : 'AI mentors: AI Architect and AI Alchemist'}
+                </span>
+              )}
             </div>
-            {edna?.taken ? (
+            {edna?.taken && !mentorSide ? (
+              /* pure Mixed: no Dominant loop yet, so no Primary — both mentors, as the report says */
+              <>
+                <div className="bs-loop bs-loop-alt">AI Architect</div>
+                <div className="bs-loop bs-loop-alt">AI Alchemist</div>
+              </>
+            ) : edna?.taken ? (
               <>
                 <div className="bs-loop bs-loop-main">
                   <small>Primary</small>
