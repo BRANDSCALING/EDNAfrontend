@@ -91,14 +91,13 @@ export function AuthScreens({ onAuthenticate, onCancel, initialMode = 'login' }:
           const name = (error as any).name || (error as any).code || '';
           const msg = error.message || 'Registration failed';
           if (name === 'UsernameExistsException' || msg.toLowerCase().includes('already') || msg.toLowerCase().includes('exists')) {
-            /* An existing account goes straight to sign-in — resending a code here let a
-               member "register" over a confirmed account and then fail with the new
-               password (Fiza, 23 Nov 2026). A half-finished registration still recovers:
-               sign-in answers UserNotConfirmedException and the login path resends the
-               code from there. */
-            setError('');
-            setNotice('You already have an account with this email. Sign in below — or use "Forgot password?" if you do not remember your password.');
-            setMode('login');
+            /* An existing account is told so ON the register screen — resending a code here
+               let a member "register" over a confirmed account and then fail with the new
+               password (Fiza, 23 Nov 2026), and jumping to the sign-in form reads as if the
+               account was just created (Munawar, same day). The member switches themselves.
+               A half-finished registration still recovers: sign-in answers
+               UserNotConfirmedException and the login path resends the code from there. */
+            setError('You already have an account with this email. Please sign in instead — or use "Forgot password?" if you do not remember your password.');
           } else setError(msg);
           setIsLoading(false); return;
         }
