@@ -164,6 +164,36 @@
         at: screens[at], answers: toAnswers(), p3Trigger: !!p3Trigger, savedAt: new Date().toISOString()
       }));
     } catch (e) { /* storage full/blocked — non-fatal */ }
+    pushProgress();
+  }
+
+  /* ---------- server progress mirror (23 Nov 2026): the same snapshot, stored per account,
+     so the resume email's link restores the exact question on ANY device. Debounced;
+     never sent for guests, finished runs, or the report screens. ---------- */
+  var pushTimer = null;
+  function pushProgress() {
+    if (ANON || submitted) return;
+    var s = screens[at];
+    if (s === 'report' || s === 'end' || s === 'detailed' || s === 'adapt' || s === 'finish') return;
+    if (pushTimer) clearTimeout(pushTimer);
+    pushTimer = setTimeout(function () {
+      try {
+        fetch(API + '/api/v2/edna/progress', {
+          method: 'PUT',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+          body: JSON.stringify({ snapshot: {
+            at: screens[at], answers: toAnswers(), p3Trigger: !!p3Trigger, savedAt: new Date().toISOString()
+          } }),
+        }).catch(function () {});
+      } catch (e) { /* non-fatal */ }
+    }, 2500);
+  }
+  function fetchProgress() {
+    if (ANON) return Promise.resolve(null);
+    return fetch(API + '/api/v2/edna/progress', { headers: authHeaders() })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) { return j && j.snapshot && j.snapshot.answers ? j.snapshot : null; })
+      .catch(function () { return null; });
   }
   function restoreLocal() {
     try {
@@ -482,10 +512,20 @@
       if (hasPending) { if (!submitted) retryPending(); submitted = true; }
       else submitIfComplete();
     } else {
-      restored = true;
-      renderGuarded(); /* first real paint: the welcome screen */
-      retryPending();
-      snapshot(); /* start the progress record from the welcome screen */
+      /* nothing on this browser: an unfinished run saved from another device resumes
+         here at the exact question (the resume email's cross-device case, 23 Nov 2026) */
+      fetchProgress().then(function (snap) {
+        if (snap) {
+          fromAnswers(snap.answers);
+          p3Trigger = !!snap.p3Trigger;
+          var idx = screens.indexOf(snap.at);
+          at = idx >= 0 ? idx : 0;
+        }
+        restored = true;
+        renderGuarded(); /* first real paint: the restored question, or the welcome screen */
+        retryPending();
+        snapshot(); /* start (or refresh) the progress record */
+      });
     }
   });
 })();
