@@ -72,6 +72,10 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
           <button className={view === 'overview' ? 'on' : ''} onClick={() => go('overview')}>▦ Overview</button>
           <button className={view === 'profile' ? 'on' : ''} onClick={() => go('profile')}>◍ My E-DNA profile</button>
           <button className={view === 'chat' ? 'on' : ''} onClick={() => go('chat')}>💬 AI mentors</button>
+          {/* One Brandscaling app (Fariza, #edna-app 23 Nov 2026): Decision Intelligence joins the
+              dashboard menu in the iOS sidebar's position. Plain navigation, not an embed — /app
+              draws its own sidebar and shares the sign-in on this origin. */}
+          <button onClick={() => { window.location.href = '/app/'; }}>◑ Decision Intelligence</button>
           <button className={view === 'workbooks' || view === 'plan' ? 'on' : ''} onClick={() => go('workbooks')}>📓 Workbooks</button>
           <button className={view === 'zoom-recordings' ? 'on' : ''} onClick={() => go('zoom-recordings')}>▶ Recordings</button>
           <button onClick={onLogout}>↩ Log out</button>
