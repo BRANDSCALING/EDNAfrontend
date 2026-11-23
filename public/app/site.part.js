@@ -827,32 +827,93 @@
     }
   };
 
-  /* ---------- the full Frame as a read view of the one-step decision ---------- */
+  /* ---------- the full Frame as a read view of a real decision ----------
+   * The preview switches to its designed read view (BS-AI-003-R1 item 6); we run after
+   * it, in bubble phase, and fill that view with the real decision: one record, two
+   * views (BS-AI-003 §5 rule of 19 Nov). Reached from the one-step frame (expand0,
+   * the active decision) and from the log (o3reopen, that row's decision). The one
+   * live control here, "Ask the other mentor to read it", goes to the backend like
+   * every other mentor call; the prototype's claude.use path never runs in production. */
   var FF_WIRED = false;
+  var FF_ID = null;    /* the decision the read view is showing */
+  var FF_SIDE = 'arch';
+  var FF_BUSY = false;
+  function setMentor2(side) {
+    FF_SIDE = side;
+    if ($('m2img')) {
+      $('m2img').src = side === 'arch' ? 'assets/ai_architect_approved.gif' : 'assets/ai_alchemist_approved.gif';
+      $('m2img').alt = side === 'arch' ? 'AI Architect' : 'AI Alchemist';
+    }
+    if ($('m2name')) $('m2name').textContent = side === 'arch' ? 'AI Architect' : 'AI Alchemist';
+    if ($('other2')) $('other2').textContent = 'Ask ' + (side === 'arch' ? 'AI Alchemist' : 'AI Architect') + ' to read it';
+    var mp = document.querySelector('.mentorpanel'); if (mp) mp.classList.toggle('alch', side === 'alch');
+  }
+  function say2(role, text) {
+    var th = $('thread'); if (!th) return null;
+    var d = document.createElement('div'); d.className = 'msg ' + role + ' t19'; d.textContent = text;
+    th.appendChild(d); th.scrollTop = th.scrollHeight; return d;
+  }
+  function fillFullFrame(id) {
+    FF_ID = id || null;
+    if (!FF_ID) return;
+    api('/decisions/' + FF_ID).then(function (res) {
+      if (res.__status !== 200) { FF_ID = null; return; }
+      var d2 = $('d2'); if (d2) d2.value = res.decision ? res.decision.text : '';
+      /* the five read-only boxes after the decision, in Frame order */
+      var tas = Array.prototype.filter.call(document.querySelectorAll('textarea'), function (t) {
+        return t !== d2 && t.readOnly && t.getBoundingClientRect().height > 0;
+      });
+      var byBox = { box1: [], box2: [], box3: [], end: [], box4: [] };
+      (res.entries || []).forEach(function (en) { if (byBox[en.box]) byBox[en.box].push(en.text); });
+      ['box1', 'box2', 'box3', 'end', 'box4'].forEach(function (b, i) {
+        if (tas[i]) tas[i].value = byBox[b].join('\n\n');
+      });
+      /* the preview builds the rows from its own order switch, which defaults to Logic;
+         relabel them from the decision's real order (23 Nov) */
+      var first = res.decision && res.decision.order === 'feeling_first' ? 'feeling' : 'logic';
+      var second = first === 'logic' ? 'feeling' : 'logic';
+      var loops = { box1: first, box2: second, box3: first, end: first };
+      if ($('f2order')) $('f2order').textContent = first === 'logic'
+        ? 'Logic → Feeling → Logic · AI Architect' : 'Feeling → Logic → Feeling · AI Alchemist';
+      document.querySelectorAll('#seq2 .srow').forEach(function (row) {
+        var ta = row.querySelector('textarea'); if (!ta) return;
+        var lp = loops[ta.dataset.box]; if (!lp) return;
+        row.classList.remove('logic', 'feeling'); row.classList.add(lp);
+        var w = row.querySelector('.tag .w'); if (w) w.textContent = lp === 'logic' ? 'Logic' : 'Feeling';
+        if (ta.dataset.box === 'end') { var n = row.querySelector('.tag .n'); if (n) n.textContent = 'End with ' + (lp === 'logic' ? 'Logic' : 'Feeling'); }
+      });
+      setMentor2(first === 'feeling' ? 'alch' : 'arch');
+    });
+  }
   function wireFullFrame() {
     var ex = $('expand0'); if (!ex) return;
     ex.style.display = '';
     if (FF_WIRED) return;
     FF_WIRED = true;
-    /* the preview switches to its designed read view (BS-AI-003-R1 item 6); we run after
-       it, in bubble phase, and fill that view with the real decision: one record, two
-       views (BS-AI-003 §5 rule of 19 Nov) */
     document.addEventListener('click', function (e) {
-      var hit = e.target.closest && e.target.closest('#expand0');
-      if (!hit || !S.id) return;
-      api('/decisions/' + S.id).then(function (res) {
-        if (res.__status !== 200) return;
-        var d2 = $('d2'); if (d2) d2.value = res.decision ? res.decision.text : '';
-        /* the five read-only boxes after the decision, in Frame order */
-        var tas = Array.prototype.filter.call(document.querySelectorAll('textarea'), function (t) {
-          return t !== d2 && t.readOnly && t.getBoundingClientRect().height > 0;
-        });
-        var byBox = { box1: [], box2: [], box3: [], end: [], box4: [] };
-        (res.entries || []).forEach(function (en) { if (byBox[en.box]) byBox[en.box].push(en.text); });
-        ['box1', 'box2', 'box3', 'end', 'box4'].forEach(function (b, i) {
-          if (tas[i]) tas[i].value = byBox[b].join('\n\n');
-        });
-      });
+      if (e.target.closest && e.target.closest('#expand0')) { if (S.id) fillFullFrame(S.id); else FF_ID = null; return; }
+      if (e.target.closest && e.target.closest('#o3reopen')) {
+        var v = REVIEW_ROW;
+        if (v && v.raw && v.raw.decision_id) fillFullFrame(v.raw.decision_id); else FF_ID = null;
+      }
+    });
+    /* replace the prototype's other-mentor handler with the backend call */
+    rebind('other2', function () {
+      if (FF_BUSY) return;
+      if (!FF_ID) { say2('mentor', 'Nothing to read yet. Make a decision first, then open the full Frame.'); return; }
+      var other = FF_SIDE === 'arch' ? 'alchemist' : 'architect';
+      say2('user', 'Read the same boxes from your loop.');
+      var th = say2('mentor', '');
+      if (th) th.innerHTML = window.thinkHTML ? window.thinkHTML('Reading your boxes') : '…';
+      FF_BUSY = true;
+      api('/decisions/' + FF_ID + '/mentor', { method: 'POST', body: { event: 'other_read', mentor: other } })
+        .then(function (res) {
+          FF_BUSY = false;
+          if (res.__status !== 200) { if (th) th.textContent = res.message || 'Your mentor is not available right now.'; return; }
+          setMentor2(other === 'architect' ? 'arch' : 'alch');
+          if (th) th.textContent = res.response.reply || '';
+          if (res.response.warning && res.response.warning.gap) say2('warn', 'Warning · ' + res.response.warning.box + ': ' + res.response.warning.gap);
+        }).catch(function () { FF_BUSY = false; if (th) th.textContent = 'Your mentor is not available right now.'; });
     });
   }
 
@@ -1069,6 +1130,12 @@
             '<label class="order ind" data-first="logic"><input type="radio" name="o0"><span class="t19"><span class="b ind">Begin with Logic</span><br><span class="t13 sec">Logic → Feeling → Logic · AI Architect</span></span></label>' +
             '<label class="order red" data-first="feeling"><input type="radio" name="o0"><span class="t19"><span class="b" style="color:var(--red-d1)">Begin with Feeling</span><br><span class="t13 sec">Feeling → Logic → Feeling · AI Alchemist</span></span></label>';
         }
+        /* the picker lives in the step-1 panel, which is still hidden at this point, so a
+           person with no confirmed loop saw nothing happen; bring it into the question
+           panel beside Start (23 Nov) */
+        var sb = $('start0');
+        if (sb && sb.closest('.btnrow') && !$('l0').contains(op)) sb.closest('.btnrow').insertAdjacentElement('beforebegin', op);
+        if ($('mline0')) $('mline0').textContent = 'Your Dominant loop is not confirmed yet: choose the order for this decision, then press Start.';
         say('Choose the order to begin with: Logic first or Feeling first.');
         return;
       }
