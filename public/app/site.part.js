@@ -140,6 +140,11 @@
       var items = d.items || []; var n = items.length;
       var bell = $('bellN'); if (bell) { bell.textContent = String(n); bell.classList.toggle('zero', n === 0); }
       var needN = $('needN'); if (needN) { needN.textContent = String(n); needN.classList.toggle('hide', n === 0); }
+      /* the rooms badges ship as preview examples ("1"); show the real rooms-waiting count */
+      var roomsN = items.filter(function (r) { return r.room_id; }).length;
+      ['roomsBadge', 'roomsBadgeT'].forEach(function (id) {
+        var b = $(id); if (b) { b.textContent = String(roomsN); b.classList.toggle('zero', roomsN === 0); }
+      });
       var box = $('needs0'); if (!box) return;
       if (!n) {
         box.innerHTML = '<div class="empty"><b>Nothing waiting.</b> Rooms that need your input and reviews that are due appear here, and reach you as a notification.</div>';
@@ -735,6 +740,16 @@
     if (what === 'topup') return; /* credit.part opens the top-up sheet; tuGo lands on the guard above */
     e.preventDefault(); e.stopImmediatePropagation();
     location.href = what === 'entry' ? '/home/#membership' : 'https://go.brandscaling.co.uk/checkout-page-quiz-report';
+  }, true);
+  /* The rooms gate (Rooms open with Entry · Join / Invite with Entry / Decide with others):
+     the preview's own capture handler routes these to its checkout screen before the handler
+     above can run, and every checkout-screen call lands on the report checkout — the wrong
+     product for a membership gate. A window-capture listener runs first (23 Nov). */
+  window.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('#newRoom, #r4invite, #ctaRoom');
+    if (!b || !b.dataset || b.dataset.buy !== 'entry') return;
+    e.preventDefault(); e.stopPropagation();
+    location.href = '/home/#membership';
   }, true);
 
   /* an invite (#invite=token link, or a Needs you row): the consent list, then join and open */
