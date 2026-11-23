@@ -154,7 +154,7 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
             {edna !== null && !edna.taken && (
               <>
                 <p className="bs-empty-copy">
-                  You haven't taken the E-DNA assessment yet. It's free, takes about 25 minutes, and
+                  You haven't taken the E-DNA assessment yet. It's free, takes about 30 minutes, and
                   shows you how you naturally make decisions.
                 </p>
                 <button className="bs-btn bs-btn-energy" onClick={openAssessment}>
