@@ -91,12 +91,14 @@ export function AuthScreens({ onAuthenticate, onCancel, initialMode = 'login' }:
           const name = (error as any).name || (error as any).code || '';
           const msg = error.message || 'Registration failed';
           if (name === 'UsernameExistsException' || msg.toLowerCase().includes('already') || msg.toLowerCase().includes('exists')) {
-            /* The account may be a half-finished registration: a resend succeeds only then. */
-            if (await recoverUnconfirmed('This email already started registration. We have emailed you a new 6-digit code — enter it below to finish.')) {
-              setIsLoading(false); return;
-            }
-            setError('This email is already registered. Please sign in instead.');
-            setTimeout(() => { setMode('login'); setError(''); }, 2500);
+            /* An existing account goes straight to sign-in — resending a code here let a
+               member "register" over a confirmed account and then fail with the new
+               password (Fiza, 23 Nov 2026). A half-finished registration still recovers:
+               sign-in answers UserNotConfirmedException and the login path resends the
+               code from there. */
+            setError('');
+            setNotice('You already have an account with this email. Sign in below — or use "Forgot password?" if you do not remember your password.');
+            setMode('login');
           } else setError(msg);
           setIsLoading(false); return;
         }
