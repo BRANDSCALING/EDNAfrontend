@@ -8,6 +8,17 @@
  */
 import { useState } from 'react';
 import { authHelpers } from '../utils/auth/cognito';
+import { EDNA_API_BASE } from '../utils/edna';
+
+/** The Welcome email leaves the moment the code is accepted, not on the first sign-in
+ *  (Munawar, 23 Nov 2026). Fire-and-forget: the sign-up sweep is the safety net. */
+const announceRegistered = (email: string) => {
+  fetch(`${EDNA_API_BASE}/api/user/registered`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email.trim().toLowerCase() }),
+  }).catch(() => {});
+};
 
 interface AuthScreensProps {
   onAuthenticate: (user: { email: string; name: string }) => void;
@@ -117,6 +128,7 @@ export function AuthScreens({ onAuthenticate, onCancel, initialMode = 'login' }:
           }
           setError(error.message || 'That code was not accepted. Check it and try again.'); setIsLoading(false); return;
         }
+        announceRegistered(formData.email);
         if (!formData.password) {
           /* reached from the forgot-password recovery: confirmed, but no password typed */
           setNotice('Your account is confirmed. Sign in — or use "Forgot password?" if you do not remember your password.');
