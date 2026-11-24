@@ -231,10 +231,16 @@ export default function App() {
     showShortResultsRef.current = showShortResults;
   }, [showShortResults]);
 
+  // An invitation link opened while signed out shows the sign-in page, not the public homepage
+  const [inviteLink, setInviteLink] = useState<string | null>(() => {
+    try { return new URLSearchParams(window.location.search).get('invite'); } catch { return null; }
+  });
+
   // Deep links into a Decision Intelligence tab: /?di=make|log|rooms|reports|workbooks|edna
   // (&room=ID opens one room). /app on its own and joined invites land here (24 Nov).
   useEffect(() => {
     if (!isAuthenticated) return;
+    setInviteLink(null);
     const q = new URLSearchParams(window.location.search);
     let d = q.get('di');
     /* an invite link opened while signed out: after sign-in, Decision rooms runs the join */
@@ -306,6 +312,11 @@ export default function App() {
       if (q.get('signin') === '1') {
         if (q.get('mode') === 'register') setAuthMode('register');
         setShowAuth(true);
+      }
+      /* a room invitation (/?invite=TOKEN, 24 Nov): kept through sign-in; Decision rooms joins it */
+      const inv = q.get('invite');
+      if (inv && /^[A-Za-z0-9_-]+$/.test(inv)) {
+        try { localStorage.setItem('bs_pending_invite', inv); } catch { /* storage blocked */ }
       }
     }
 
@@ -1125,12 +1136,13 @@ export default function App() {
     return <EdnaRedirect />;
   }
 
-  if (showAuth) {
+  if (showAuth || (inviteLink && !isAuthenticated)) {
     return (
       <AuthScreens
         onAuthenticate={handleAuthenticate}
         onCancel={() => {
           setShowAuth(false);
+          setInviteLink(null);
           setAuthMode('login'); // Reset to login mode when canceling
         }}
         initialMode={authMode}

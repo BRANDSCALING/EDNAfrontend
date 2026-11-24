@@ -68,8 +68,9 @@
       '.bs-embed .app{display:block!important}' +
       '.bs-embed .side,.bs-embed .topbar,.bs-embed .tabbar,.bs-embed .navbar,.bs-embed .home-ind{display:none!important}' +
       /* Make a decision: the one-step column was sized for the app's own 1280px frame; inside
-         the wider dashboard it uses the width like the other DI screens (Munawar, 24 Nov) */
-      '.bs-embed .lcol{max-width:1180px!important}';
+         the dashboard it spans the page like the other DI screens, aligned with the header and
+         footer (Munawar, 24 Nov: a part-width card read as cut off) */
+      '.bs-embed .lcol{max-width:none!important}';
     document.head.appendChild(est);
     /* links that leave the app (the E-DNA, checkout, membership) open in the whole window */
     document.addEventListener('click', function (e) {
@@ -1026,7 +1027,7 @@
         api('/rooms/' + id + '/invites', { method: 'POST', body: { email: email, role: role() } }).then(function (res) {
           if (res.__status !== 201) { invSaid(res.message || 'Could not create the invitation. Try again.'); return; }
           var a = panel.querySelector('a');
-          var url = location.origin + '/app/index.html#invite=' + res.invite.token;
+          var url = location.origin + '/?invite=' + res.invite.token; /* the dashboard's invite route (24 Nov) */
           a.textContent = url; a.href = url; a.dataset.real = '1';
           done(url);
         });
@@ -1904,8 +1905,14 @@
     document.querySelectorAll('.who .chip.type, [id^="typeChip"]').forEach(function (c) { c.textContent = 'E-DNA not yet taken'; });
   }
   (function () {
-    var SCR = { 5: 'make', 2: 'make', 3: 'log', 12: 'log', 4: 'rooms', 7: 'reports', 8: 'workbooks', 6: 'edna' };
-    var NUM = { make: 5, log: 3, rooms: 4, reports: 7, workbooks: 8, edna: 6 };
+    var SCR = { 5: 'make', 2: 'make', 3: 'log', 12: 'log', 4: 'rooms', 7: 'reports', 8: 'workbooks', 6: 'edna', 14: 'scaling' };
+    var NUM = { make: 5, log: 3, rooms: 4, reports: 7, workbooks: 8, edna: 6, scaling: 14 };
+    /* "Back to Home" buttons (data-go="1") mean the dashboard's Overview when embedded */
+    if (EMBED) document.addEventListener('click', function (e) {
+      var b = e.target.closest && e.target.closest('[data-go="1"]'); if (!b) return;
+      e.preventDefault(); e.stopImmediatePropagation();
+      try { parent.postMessage({ bsGo: 'overview' }, location.origin); } catch (x) { /* parent gone */ }
+    }, true);
     var cur = window.BS_SCREEN;
     var READY = false; /* the page's own last line shows Home; the embed's first screen comes after it */
     try {

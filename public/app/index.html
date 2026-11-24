@@ -4,6 +4,23 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Brandscaling — Decision Intelligence</title>
+<script>
+/* production: one dashboard (24 Nov). Opened on its own (not inside the dashboard), this page
+   forwards before drawing anything: invite links to the dashboard's invite route, room links
+   to Decision rooms, anything else to Make a decision. Review links still run here. */
+(function () {
+  try {
+    if (new URLSearchParams(location.search).get('embed') === '1') return;
+    if (/^(127\.0\.0\.1|localhost)$/.test(location.hostname)) return;
+    var h = location.hash;
+    var inv = h.match(/[#&]invite=([A-Za-z0-9_-]+)/);
+    if (inv) { location.replace('/?invite=' + inv[1]); return; }
+    var room = h.match(/[#&]room=([\w-]+)/);
+    if (room) { location.replace('/?di=rooms&room=' + room[1]); return; }
+    if (!/[#&]review=/.test(h)) location.replace('/?di=make');
+  } catch (e) { /* the script-level redirects in site.part.js still apply */ }
+})();
+</script>
 <style>
   /* production (site.part.js loads last): the preview-only chrome must never paint,
      not even for the first frame, so it is hidden here statically rather than from the

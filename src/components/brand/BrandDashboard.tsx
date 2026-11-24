@@ -19,8 +19,8 @@ import { ZoomRecordings } from '../ZoomRecordings';
    Overview with its six tabs. Each tab is a screen of the DI app at /app, drawn inside this
    dashboard in an iframe (?embed=1 hides the app's own sidebar), the same way the E-DNA
    report is embedded — a repositioning, not a rebuild. */
-export type DiView = 'di-make' | 'di-log' | 'di-rooms' | 'di-reports' | 'di-workbooks' | 'di-edna';
-export const DI_VIEWS: DiView[] = ['di-make', 'di-log', 'di-rooms', 'di-reports', 'di-workbooks', 'di-edna'];
+export type DiView = 'di-make' | 'di-log' | 'di-rooms' | 'di-reports' | 'di-workbooks' | 'di-edna' | 'di-scaling';
+export const DI_VIEWS: DiView[] = ['di-make', 'di-log', 'di-rooms', 'di-reports', 'di-workbooks', 'di-edna', 'di-scaling'];
 const DI_TABS: [DiView, string][] = [
   ['di-make', 'Make a decision'], ['di-log', 'Decision log'], ['di-rooms', 'Decision rooms'],
   ['di-reports', 'My reports'], ['di-workbooks', 'My workbooks'], ['di-edna', 'My E-DNA'],
@@ -134,6 +134,12 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
           {diOpen && DI_TABS.map(([v, label]) => (
             <button key={v} className={'bs-sub' + (view === v || (v === 'di-reports' && isReport) ? ' on' : '')} onClick={() => go(v)}>{label}</button>
           ))}
+          {/* Infinite Scaling, under Decision Intelligence as in Fariza's approved app design; it
+              opens the app's approved placeholder page (screen 14) */}
+          <button className={'bs-soon' + (view === 'di-scaling' ? ' on' : '')} onClick={() => go('di-scaling')}>
+            <span>≡ Infinite Scaling</span>
+            <span className="bs-soon-chip">Launching 19 January 2027</span>
+          </button>
           {/* "My E-DNA profile" and "Workbooks" are hidden (Munawar, 24 Nov): the reports open from
               DI · My reports and the workbooks are DI · My workbooks */}
           <button className={view === 'chat' ? 'on' : ''} onClick={() => go('chat')}>💬 AI mentors</button>
