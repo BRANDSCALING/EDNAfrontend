@@ -170,6 +170,12 @@ button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 button:disabled { background: var(--line); color: var(--disabled); cursor: default; box-shadow: none; }
 button.back { background: var(--bg); color: var(--back, var(--action)); border: 2px solid var(--back, var(--action)); box-shadow: 0 4px 10px rgba(11,11,11,0.10); }
 button.back:hover:not(:disabled) { background: var(--selected); color: var(--selected-fg); }
+/* production (24 Nov): a text-link button and the detailed-report gate's button rows. linkish
+   was used without a style, so it fell back to the 3-D button — big grey slabs on the dark theme */
+button.linkish { background: none; color: var(--action); padding: 0; border: 0; border-radius: 0; box-shadow: none; font-size: var(--s3); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+button.linkish:hover:not(:disabled) { background: none; color: var(--action-hover); }
+button.linkish:active:not(:disabled) { box-shadow: none; transform: none; }
+.bs-gate-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
 .note { font-size: var(--s3); color: var(--fg2); border-top: 1px solid var(--line); padding-top: 16px; }
 /* Settings */
 .settings { display: grid; gap: 16px; }

@@ -379,8 +379,9 @@
     var wrap = document.querySelector('#screen .wrap');
     if (!wrap || document.getElementById('rpToggle')) return;
     var advOn = (s !== 'report');
-    var base = 'padding:8px 18px;border-radius:999px;border:1px solid #c9c2d8;background:#fff;color:#42047D;font:inherit;cursor:pointer';
-    var on = 'padding:8px 18px;border-radius:999px;border:1px solid #42047D;background:#42047D;color:#fff;font:inherit;cursor:pointer';
+    /* theme colours, so the toggle follows light, dark and high contrast like the rest */
+    var base = 'padding:8px 18px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--action);font:inherit;font-weight:600;font-size:var(--s3);cursor:pointer;box-shadow:none';
+    var on = 'padding:8px 18px;border-radius:999px;border:1px solid var(--action);background:var(--action);color:var(--action-label);font:inherit;font-weight:600;font-size:var(--s3);cursor:pointer;box-shadow:none';
     var bar = document.createElement('div');
     bar.id = 'rpToggle';
     bar.style.cssText = 'display:flex;gap:8px;justify-content:center;margin:0 0 8px';
@@ -402,11 +403,17 @@
     el.innerHTML = '<div class="wrap" style="gap:24px">'
       + '<section class="panel"><h1>Your <span class="brand">detailed report</span> and workbook</h1>'
       + '<p>Every result explained: the scores behind it, your strengths and blind spots, the contexts in which you switch, and your plan. It comes with a free workbook built from your answers.</p>'
-      + '<p><a class="btn" href="' + CHECKOUT + '" target="_blank" rel="noopener">Get my detailed report (£99)</a></p>'
+      /* the approved E-DNA controls (24 Nov, dark-mode report): the £99 action is the main
+         button, the way back is the outline button, Check again is a small text link — before,
+         the classes btn/linkish had no styles, so the buy link read as plain text and three
+         small links rendered as big 3-D buttons, worst on the dark theme */
+      + '<div class="bs-gate-row"><button type="button" id="edna-buy">Get my detailed report (£99)</button></div>'
       + '<p class="small">Already purchased? It can take a minute to come through. <button type="button" id="edna-refresh" class="linkish">Check again</button></p>'
-      + '<p class="small"><button type="button" id="edna-back" class="linkish">Back to my report</button></p>'
-      + (EMBED ? '' : '<p class="small"><button type="button" id="edna-dash" class="linkish">My dashboard</button></p>')
+      + '<div class="bs-gate-row"><button type="button" id="edna-back" class="back">Back to my report</button>'
+      + (EMBED ? '' : '<button type="button" id="edna-dash" class="back">My dashboard</button>') + '</div>'
       + '</section></div>';
+    var buy = document.getElementById('edna-buy');
+    if (buy) buy.addEventListener('click', function () { window.open(CHECKOUT, '_blank', 'noopener'); });
     var rb = document.getElementById('edna-refresh');
     if (rb) rb.addEventListener('click', function () {
       fetchRemote().then(function () { renderGuarded(); });
