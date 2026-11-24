@@ -192,6 +192,9 @@
   color: var(--bs-action);
   box-shadow: inset 3px 0 0 var(--bs-action);
 }
+/* Decision Intelligence group and its six tabs (24 Nov huddle) */
+.bs-side button.bs-group .bs-chev { margin-left: auto; font-size: 12px; color: var(--bs-text-secondary); }
+.bs-side button.bs-sub { font-weight: 500; font-size: 14px; padding: 8px 14px 8px 40px; }
 .bs-side-foot {
   margin-top: auto; padding: 14px 10px 4px; border-top: 1px solid var(--bs-line);
   font: 500 12px/1.5 'Inter', sans-serif; color: var(--bs-text-secondary);

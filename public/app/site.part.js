@@ -34,9 +34,43 @@
       return { token: tok, sub: p.sub };
     } catch (e) { return null; }
   }
+  /* ---------- one dashboard (Fariza, #edna-app huddle 24 Nov): these screens are drawn
+     INSIDE the website dashboard, under Decision Intelligence (?embed=1&screen=make|log|
+     rooms|reports|workbooks|edna). /app on its own redirects into the dashboard, except
+     the email/invite deep links (#invite= #room= #review=), which still run here. ---------- */
+  var QS = new URLSearchParams(location.search);
+  var EMBED = QS.get('embed') === '1' && window.top !== window.self;
+  function topGo(u) { try { (EMBED ? window.top : window).location.href = u; } catch (e) { location.href = u; } }
+  /* the reports open in the dashboard's own report view when embedded */
+  function openReport() {
+    if (EMBED) { try { parent.postMessage({ bsGo: 'profile' }, location.origin); return; } catch (e) { /* fall through */ } }
+    location.href = '/edna/index.html';
+  }
   var sess = cognitoSession();
-  var localUid = LOCAL ? new URLSearchParams(location.search).get('uid') : null; /* local testing only */
-  if (!sess && !localUid) { location.replace('/?signin=1'); return; }
+  var localUid = LOCAL ? QS.get('uid') : null; /* local testing only */
+  if (!sess && !localUid) { topGo('/?signin=1'); return; }
+  if (!EMBED && !LOCAL) {
+    var roomLink = location.hash.match(/[#&]room=([\w-]+)/);
+    if (roomLink) { location.replace('/?di=rooms&room=' + roomLink[1]); return; }
+    if (!/[#&](invite|review)=/.test(location.hash)) { location.replace('/?di=make'); return; }
+  }
+  if (EMBED) {
+    document.documentElement.classList.add('bs-embed');
+    var est = document.createElement('style');
+    est.textContent = 'html.bs-embed,html.bs-embed body{background:#fff}' +
+      '.bs-embed .frame{width:100%!important;max-width:none!important;margin:0!important;border-radius:0!important;box-shadow:none!important;min-height:0!important}' +
+      '.bs-embed .app{display:block!important}' +
+      '.bs-embed .side,.bs-embed .topbar,.bs-embed .tabbar,.bs-embed .navbar,.bs-embed .home-ind{display:none!important}';
+    document.head.appendChild(est);
+    /* links that leave the app (the E-DNA, checkout, membership) open in the whole window */
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest && e.target.closest('a[href]');
+      if (!a) return;
+      var h = a.getAttribute('href') || '';
+      if (h.charAt(0) === '#' || /^javascript:/i.test(h) || a.target) return;
+      a.target = '_top';
+    }, true);
+  }
   function headers() {
     var h = { 'Content-Type': 'application/json' };
     if (sess) h.Authorization = 'Bearer ' + sess.token;
@@ -520,7 +554,7 @@
     if ($('r7b') && $('r7b').nextElementSibling) $('r7b').nextElementSibling.textContent = 'Seven parts, your results in words · free with the assessment · ' + fmtD(lastA.date);
     bBtns.forEach(function (b) {
       b.classList.remove('hide');
-      if (!b.dataset.bsWired) { b.dataset.bsWired = '1'; b.addEventListener('click', function () { location.href = '/edna/index.html'; }); }
+      if (!b.dataset.bsWired) { b.dataset.bsWired = '1'; b.addEventListener('click', function () { openReport(); }); }
     });
     if ($('r7earlier')) $('r7earlier').textContent = e.assessments.length > 1
       ? e.assessments.slice(0, -1).map(function (a) { return fmtD(a.date) + ' · ' + a.name; }).join(' · ')
@@ -535,9 +569,9 @@
     $('r7parts').innerHTML = rows.map(function (rw) {
       return '<div class="rrow' + (has ? '' : ' locked') + '"' + (has ? ' data-r7open="1" style="cursor:pointer"' : '') + '><span class="t13 sec" style="width:56px;flex:none">' + (rw[0] < 8 ? 'Part ' + rw[0] : 'Plus') + '</span><span class="t19">' + rw[1] + '</span><span class="t13 b">' + (has ? 'Open ›' : '🔒') + '</span></div>';
     }).join('');
-    var open = function () { location.href = '/edna/index.html'; };
+    var open = function () { openReport(); };
     var o = $('r7open'); if (o) o.addEventListener('click', open);
-    var b = $('r7buy'); if (b) b.addEventListener('click', function () { location.href = 'https://go.brandscaling.co.uk/checkout-page-quiz-report'; });
+    var b = $('r7buy'); if (b) b.addEventListener('click', function () { topGo('https://go.brandscaling.co.uk/checkout-page-quiz-report'); });
     document.querySelectorAll('#r7parts [data-r7open]').forEach(function (rw) { rw.addEventListener('click', open); });
   }
   function paintScreen8() {
@@ -717,7 +751,7 @@
       EDNA = e;
       if (!e.taken) {
         /* no result yet: the type chips must not claim one */
-        document.querySelectorAll('.who .chip.type').forEach(function (c) { c.textContent = 'E-DNA not yet taken'; });
+        notTakenChips();
       }
       repaintCurrent();
     });
@@ -898,55 +932,82 @@
       api('/rooms/' + r.id + '/rounds', { method: 'POST' }).then(function () { openLiveRoom(r.id, true); });
     });
   }
-  var INV_ROOM = null;
+  /* ---------- the invitation panel (24 Nov, second pass): it never shows the preview's
+     example address; in a room not yet saved it saves the room first, then invites ---------- */
+  var INV_ROOM = null;       /* the saved room the panel invites to; null while unsaved */
+  var INV_SAVING = false;    /* the panel itself is saving a new room: keep what was typed */
+  var NEWROOM_SAVE = null;   /* save(thenInvite, cb) of the new room on screen */
+  function invSaid(msg) {
+    var panel = $('invitePanel'); if (!panel) return;
+    var old = panel.querySelector('.invok'); if (old) old.remove();
+    panel.insertAdjacentHTML('beforeend', '<div class="invok t13" style="margin-top:8px"><b>' + msg + '</b></div>');
+  }
+  function nameFirst() {
+    var ta = document.querySelector('#modeABody textarea');
+    invSaid('Name the decision first, in the box below — then the invitation is created.');
+    if (!ta) return;
+    ta.focus();
+    ta.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    ta.style.outline = '2px solid var(--type, #B8202E)';
+    setTimeout(function () { ta.style.outline = ''; }, 2500);
+  }
+  function resetInvitePanel(panel) {
+    var a = panel.querySelector('a');
+    var line = a && a.parentNode;
+    if (line) line.innerHTML = 'Or share a link: <a href="#">Create invite link</a> · expires in 7 days';
+    var inp = panel.querySelector('input'); if (inp) inp.value = '';
+    var note = panel.querySelector('.invok'); if (note) note.remove();
+  }
   function wireInvite(roomId) {
     var panel = $('invitePanel'); if (!panel) return;
-    INV_ROOM = roomId;
-    if (panel.dataset.live !== roomId) {
-      panel.dataset.live = roomId;
-      /* a different room: clear the previous room's link and any note */
-      var line = panel.querySelector('a') && panel.querySelector('a').parentNode;
-      if (line) line.innerHTML = 'Or share a link: <a href="#">Create invite link</a> · expires in 7 days';
-      var inp = panel.querySelector('input'); if (inp) inp.value = '';
-      var note = panel.querySelector('.invok'); if (note) note.remove();
+    var key = roomId || 'new';
+    if (panel.dataset.live !== key) {
+      var keep = INV_SAVING && panel.dataset.live === 'new' && roomId; /* the panel's own save */
+      panel.dataset.live = key;
+      if (!keep) resetInvitePanel(panel);
     }
+    INV_ROOM = roomId || null;
     if (panel.dataset.wired) return;
     panel.dataset.wired = '1';
-    var said = function (msg) {
-      var old = panel.querySelector('.invok'); if (old) old.remove();
-      panel.insertAdjacentHTML('beforeend', '<div class="invok t13" style="margin-top:8px"><b>' + msg + '</b></div>');
+    var role = function () { return /read/i.test(panel.querySelector('select').value) ? 'read_only' : 'collaborator'; };
+    var ensureRoom = function (cb) {
+      if (INV_ROOM) { cb(INV_ROOM); return; }
+      if (!NEWROOM_SAVE) { invSaid('Open a room first.'); return; }
+      INV_SAVING = true;
+      var ok = NEWROOM_SAVE(true, function (id) { INV_ROOM = id; cb(id); setTimeout(function () { INV_SAVING = false; }, 3000); });
+      if (ok === false) INV_SAVING = false;
     };
-    var makeInvite = function (email, role, done) {
-      api('/rooms/' + INV_ROOM + '/invites', { method: 'POST', body: { email: email, role: role } }).then(function (res) {
-        if (res.__status !== 201) { said(res.message || 'Could not create the invitation. Try again.'); return; }
-        var a = panel.querySelector('a');
-        var url = location.origin + '/app/index.html#invite=' + res.invite.token;
-        a.textContent = url; a.href = url; a.dataset.real = '1';
-        done(url);
+    var makeInvite = function (email, done) {
+      ensureRoom(function (id) {
+        api('/rooms/' + id + '/invites', { method: 'POST', body: { email: email, role: role() } }).then(function (res) {
+          if (res.__status !== 201) { invSaid(res.message || 'Could not create the invitation. Try again.'); return; }
+          var a = panel.querySelector('a');
+          var url = location.origin + '/app/index.html#invite=' + res.invite.token;
+          a.textContent = url; a.href = url; a.dataset.real = '1';
+          done(url);
+        });
       });
     };
     var btn = panel.querySelector('button');
     var fresh = btn.cloneNode(true); btn.parentNode.replaceChild(fresh, btn);
     fresh.addEventListener('click', function () {
       var email = panel.querySelector('input').value.trim();
-      if (!email || email.indexOf('@') < 0) { said('Enter a full email address, or use the link below.'); return; }
-      var role = /read/i.test(panel.querySelector('select').value) ? 'read_only' : 'collaborator';
-      makeInvite(email, role, function (url) {
-        said('Invitation created for ' + email + '. Send them the link above — it opens the room after their consent.');
+      if (!email || email.indexOf('@') < 0) { invSaid('Enter a full email address, or create a link below.'); return; }
+      makeInvite(email, function () {
+        invSaid('Invitation created for ' + email + '. Send them the link above — it opens this room after they agree to share.');
       });
     });
-    /* the link: first click creates a real invite, later clicks copy it */
+    /* the link: the first click creates a real invite and copies it, later clicks copy it again */
     panel.addEventListener('click', function (e) {
       var a = e.target.closest && e.target.closest('a'); if (!a) return;
       e.preventDefault();
       var copy = function (url) {
         var p = navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject();
-        p.then(function () { said('Link copied. It expires in 7 days.'); },
-               function () { said('Copy the link above. It expires in 7 days.'); });
+        p.then(function () { invSaid('Link copied. Send it to the person you are inviting; it expires in 7 days.'); },
+               function () { invSaid('Copy the link above and send it; it expires in 7 days.'); });
       };
       if (a.dataset.real) { copy(a.href); return; }
-      var role = /read/i.test(panel.querySelector('select').value) ? 'read_only' : 'collaborator';
-      makeInvite(null, role, copy);
+      makeInvite(null, copy);
     });
   }
   var origOpenScreen4 = window.openScreen4;
@@ -962,21 +1023,47 @@
     e.stopPropagation();
     openLiveRoom(b.dataset.liveroom);
   }, true);
-  /* "+ New room": the blank state (BS-AI-003 §7.2), saved against the API */
+  /* "+ New room": the blank state (BS-AI-003 §7.2), saved against the API. Wired on EVERY
+     way a new room opens (the + New room button, Home's "Invite someone to a decision",
+     Start a decision room), and again when the kind changes, since that redraws the boxes. */
+  function ownerCircle() {
+    var pc = document.querySelector('#people .pcircle:not(.plus)');
+    if (!pc || !PROFILE) return;
+    var ini = (((PROFILE.first_name || ' ')[0] || '') + ((PROFILE.last_name || ' ')[0] || '')).trim().toUpperCase() || '—';
+    pc.innerHTML = PROFILE.photo_url ? '<img src="' + PROFILE.photo_url + '" alt="">' : ini;
+    var tip = pc.parentNode && pc.parentNode.querySelector('.ptip');
+    if (tip) tip.innerHTML = '<div class="nm">' + escT(((PROFILE.first_name || '') + ' ' + (PROFILE.last_name || '')).trim() || 'You') + ' <span class="t13 sec" style="font-weight:500">· Decision owner</span></div>';
+  }
+  var origOpenRoomNew = window.openRoomNew;
+  window.openRoomNew = function () {
+    if (origOpenRoomNew) origOpenRoomNew(); /* the approved blank layout */
+    LIVEROOM = null;
+    wireInvite(null);
+    ownerCircle();
+    wireNewRoom();
+  };
+  document.addEventListener('change', function (e) {
+    if (e.target && e.target.name === 'rkind' && !LIVEROOM) setTimeout(wireNewRoom, 0);
+  });
   (function () {
     var nb = $('newRoom'); if (!nb) return;
     var fresh = nb.cloneNode(true); nb.parentNode.replaceChild(fresh, nb);
     fresh.addEventListener('click', function () {
       if (fresh.dataset.buy) return; /* rooms gated below Entry: the buy path handles it */
-      if (window.openRoomNew) window.openRoomNew(); /* the approved blank layout */
-      var body = $('modeABody');
+      window.openRoomNew();
+    });
+  })();
+  function wireNewRoom() {
+    (function () {
+      var body = $('modeABody'); if (!body) return;
       var tas = body.querySelectorAll('textarea');
       var btns = [].slice.call(body.querySelectorAll('.btnrow button'));
       var orderPicked = null;
-      var save = function (thenInvite) {
+      var save = function (thenInvite, cb) {
         var text = tas[0] && tas[0].value.trim();
-        if (!text) { alert('Name the decision the room is for.'); return; }
-        var payload = { decision_text: text, kind: 'new' };
+        if (!text) { nameFirst(); return false; }
+        var kindSel = document.querySelector('input[name="rkind"]:checked');
+        var payload = { decision_text: text, kind: (kindSel && kindSel.value) || 'new' };
         if (orderPicked) payload.order = orderPicked;
         api('/rooms', { method: 'POST', body: payload }).then(function (res) {
           if (res.__status === 400 && res.error === 'order_required') {
@@ -989,33 +1076,37 @@
               ob.addEventListener('click', function () {
                 orderPicked = ob.dataset.rorder;
                 body.querySelectorAll('[data-rorder]').forEach(function (x) { x.classList.toggle('primary', x === ob); });
-                save(thenInvite);
+                save(thenInvite, cb);
               });
             });
+            invSaid('Choose the order to begin with (top of the Frame below), then the room is saved.');
             return;
           }
-          if (res.__status !== 201) { alert(res.message || ''); return; }
+          if (res.__status !== 201) { invSaid(res.message || 'Could not save the room. Try again.'); return; }
           var roomId = res.room.id;
           var box1 = tas[1] && tas[1].value.trim();
           var after = function () {
             openLiveRoom(roomId);
             if (thenInvite) setTimeout(function () { $('invitePanel').classList.remove('hide'); }, 500);
+            if (cb) cb(roomId);
           };
           if (box1) api('/rooms/' + roomId + '/boxes/box1', { method: 'PUT', body: { text: box1, loop: res.room.order === 'logic_first' ? 'logic' : 'feeling' } }).then(after);
           else after();
         });
+        return true;
       };
+      NEWROOM_SAVE = save;
       btns.forEach(function (b) {
         var clone = b.cloneNode(true); b.parentNode.replaceChild(clone, b);
         clone.addEventListener('click', function () { save(/invite/i.test(clone.textContent)); });
       });
-    });
-  })();
+    })();
+  }
   /* production: the preview's order screen (10) never shows; purchases go to the real
      checkout and memberships to the site's membership section */
   var origShowScreen = window.showScreen;
   window.showScreen = function (n, c) {
-    if (n === 10) { location.href = 'https://go.brandscaling.co.uk/checkout-page-quiz-report'; return; }
+    if (n === 10) { topGo('https://go.brandscaling.co.uk/checkout-page-quiz-report'); return; }
     return origShowScreen(n, c);
   };
   document.addEventListener('click', function (e) {
@@ -1024,7 +1115,7 @@
     var what = b.dataset.buy;
     if (what === 'topup') return; /* credit.part opens the top-up sheet; tuGo lands on the guard above */
     e.preventDefault(); e.stopImmediatePropagation();
-    location.href = what === 'entry' ? '/home/#membership' : 'https://go.brandscaling.co.uk/checkout-page-quiz-report';
+    topGo(what === 'entry' ? '/home/#membership' : 'https://go.brandscaling.co.uk/checkout-page-quiz-report');
   }, true);
   /* The rooms gate (Rooms open with Entry · Join / Invite with Entry / Decide with others):
      the preview's own capture handler routes these to its checkout screen before the handler
@@ -1034,24 +1125,24 @@
     var b = e.target.closest && e.target.closest('#newRoom, #r4invite, #ctaRoom');
     if (!b || !b.dataset || b.dataset.buy !== 'entry') return;
     e.preventDefault(); e.stopPropagation();
-    location.href = '/home/#membership';
+    topGo('/home/#membership');
   }, true);
-  /* Invite · up to 6: the preview never wired this button (24 Nov). In a live room it opens
-     the invitation panel; in an unsaved room it runs Save-and-invite so the room exists first. */
+  /* Invite · up to 6: opens the invitation panel. In a room not yet saved, the panel's
+     Send invitation / Create invite link save it first; with no decision named yet it says
+     so in the panel and points at the box (no pop-up). */
   window.addEventListener('click', function (e) {
     var b = e.target.closest && e.target.closest('#r4invite');
     if (!b) return;
     if (b.dataset && b.dataset.buy === 'entry') return; /* the gate above owns that case */
     e.preventDefault(); e.stopPropagation();
-    if (LIVEROOM) {
-      var panel = $('invitePanel');
-      panel.classList.remove('hide');
-      panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      return;
+    var panel = $('invitePanel');
+    panel.classList.remove('hide');
+    if (!LIVEROOM) {
+      var ta = document.querySelector('#modeABody textarea');
+      if (ta && !ta.value.trim()) { nameFirst(); return; }
+      invSaid('Type their email and press Send invitation, or create a link — the room is saved first.');
     }
-    var go = [].slice.call(document.querySelectorAll('#modeABody .btnrow button'))
-      .filter(function (x) { return /invite/i.test(x.textContent); })[0];
-    if (go) go.click(); else alert('Open a room first.');
+    panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, true);
 
   /* an invite (#invite=token link, or a Needs you row): the consent list, then join and open */
@@ -1064,6 +1155,8 @@
         if (res.joined || res.room_id) { /* already a member */ } else { alert(res.message || 'This invitation has expired.'); return; }
       }
       if (res.needs_edna) alert('Take your free E-DNA first: your loop and mentor come from it. The room is open to you meanwhile.');
+      /* joined from an emailed or shared link: continue in the dashboard, on this room */
+      if (!EMBED && !LOCAL && res.room_id) { topGo('/?di=rooms&room=' + res.room_id); return; }
       if (window.showScreen) window.showScreen(4);
       setTimeout(function () { if (res.room_id) openLiveRoom(res.room_id); patchNeedsYou(); }, 400);
     });
@@ -1364,7 +1457,7 @@
       try {
         Object.keys(localStorage).forEach(function (k) { if (k.indexOf('CognitoIdentityServiceProvider.') === 0) localStorage.removeItem(k); });
       } catch (e) {}
-      location.href = '/';
+      topGo('/');
     });
   };
 
@@ -1728,6 +1821,48 @@
         });
       }
     })();
+
+  /* ---------- every screen change: the type chips stay honest, and when embedded the
+     dashboard's sidebar follows (the preview's own navigation calls its local showScreen,
+     which always sets window.BS_SCREEN — so the hook sits on that) ---------- */
+  function notTakenChips() {
+    if (!EDNA || EDNA.taken) return;
+    /* the preview paints a type ("Mixed") on every screen; no result means no type (Fariza, 24 Nov) */
+    document.querySelectorAll('.who .chip.type, [id^="typeChip"]').forEach(function (c) { c.textContent = 'E-DNA not yet taken'; });
+  }
+  (function () {
+    var SCR = { 5: 'make', 2: 'make', 3: 'log', 12: 'log', 4: 'rooms', 7: 'reports', 8: 'workbooks', 6: 'edna' };
+    var NUM = { make: 5, log: 3, rooms: 4, reports: 7, workbooks: 8, edna: 6 };
+    var cur = window.BS_SCREEN;
+    var READY = false; /* the page's own last line shows Home; the embed's first screen comes after it */
+    try {
+      Object.defineProperty(window, 'BS_SCREEN', {
+        configurable: true,
+        get: function () { return cur; },
+        set: function (v) {
+          cur = v;
+          setTimeout(notTakenChips, 0);
+          if (!EMBED || !READY) return;
+          /* the app's Home is the dashboard's Overview; the preview's "start a decision" and
+             Back-to-start calls land on Make a decision instead */
+          if (v === 1) { setTimeout(function () { window.showScreen(5); }, 0); return; }
+          try { if (SCR[v]) parent.postMessage({ bsScreen: SCR[v] }, location.origin); } catch (e) { /* parent gone */ }
+        },
+      });
+    } catch (e) { /* older browsers: the chips still update on load */ }
+    if (!EMBED) return;
+    window.addEventListener('message', function (e) {
+      if (e.origin !== location.origin || !e.data || !e.data.bsShow) return;
+      var n = NUM[e.data.bsShow];
+      if (n && n !== cur) window.showScreen(n);
+    });
+    setTimeout(function () {
+      READY = true;
+      window.showScreen(NUM[QS.get('screen')] || 5);
+      var rm = QS.get('room');
+      if (rm) setTimeout(function () { openLiveRoom(rm); }, 900);
+    }, 0);
+  })();
 
   boot();
 })();

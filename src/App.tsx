@@ -28,7 +28,7 @@ import { OnboardingFlow } from './components/OnboardingFlow';
 // BrandHome (the interim Mockup-01 landing) was replaced by Fariza's approved homepage at
 // /home/ on 18 Nov 2026 (BS-WEB-012); BrandNav still serves the internal About/Courses shell.
 import { BrandNav } from './components/brand/BrandNav';
-import { BrandDashboard } from './components/brand/BrandDashboard';
+import { BrandDashboard, DI_VIEWS, type MemberView } from './components/brand/BrandDashboard';
 import { AuthScreens } from './components/AuthScreens';
 import { EmailVerificationPage } from './components/EmailVerificationPage';
 import { CompleteResultsPage } from './components/CompleteResultsPage';
@@ -230,6 +230,20 @@ export default function App() {
   useEffect(() => {
     showShortResultsRef.current = showShortResults;
   }, [showShortResults]);
+
+  // Deep links into a Decision Intelligence tab: /?di=make|log|rooms|reports|workbooks|edna
+  // (&room=ID opens one room). /app on its own and joined invites land here (24 Nov).
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const q = new URLSearchParams(window.location.search);
+    const d = q.get('di');
+    if (!d || !(DI_VIEWS as string[]).includes('di-' + d)) return;
+    const room = q.get('room');
+    if (room) { try { sessionStorage.setItem('bs_di_room', room); } catch { /* storage blocked */ } }
+    setCurrentView('dashboard');
+    setActiveDashboardView('di-' + d);
+    window.history.replaceState(null, '', window.location.pathname);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     // Restore pending quiz results from localStorage if they exist
@@ -628,15 +642,20 @@ export default function App() {
     const savedJustSignedUp = localStorage.getItem('justSignedUp') === 'true';
     const wasJustSignedUp = justSignedUp || savedJustSignedUp;
     
-    // One app, one dashboard (Fariza, 24 Nov huddle): new or returning, sign-in and
-    // sign-up both land on the app's Home at /app — the old React onboarding + quiz
-    // flow is retired (the E-DNA itself lives at /edna and prompts from inside the app).
     if (wasJustSignedUp) {
+      // Clear onboarding flag so user sees the onboarding flow
       localStorage.removeItem('edna-onboarding-completed');
       localStorage.removeItem('justSignedUp');
-      setAuthMode('login');
+      // Show onboarding flow first, then quiz
+      setShowOnboarding(true);
+      setAuthMode('login'); // Reset auth mode
+      return; // Exit early - don't load quiz results
+    } else {
+      // Immediately redirect to dashboard to avoid showing home page; sign-in lands on
+      // Overview, the dashboard's home tab (Munawar, 24 Nov)
+      setCurrentView('dashboard');
+      setActiveDashboardView('overview');
     }
-    setCurrentView('dashboard');
 
     if (userData.email) {
       let hasResults = false;
@@ -1175,17 +1194,27 @@ export default function App() {
   // profile" opens the new /edna report.
   if ((currentView === 'home' || currentView === 'dashboard' || currentView === 'courses') && isAuthenticated) {
     /* 'courses' (old pricing) is retired — old links land on the overview */
-    const memberView =
+    /* One dashboard (Fariza, 24 Nov huddle, second ruling): this dashboard is back as the
+       member area, with Decision Intelligence and its six tabs under Overview (DI_VIEWS). */
+    const memberView: MemberView =
       currentView === 'home' || currentView === 'courses' ? 'overview'
-      : (['profile', 'plan', 'workbooks', 'chat', 'zoom-recordings'].includes(activeDashboardView)
-          ? (activeDashboardView as 'profile' | 'plan' | 'workbooks' | 'chat' | 'zoom-recordings')
+      : ((['profile', 'plan', 'workbooks', 'chat', 'zoom-recordings', ...DI_VIEWS] as string[]).includes(activeDashboardView)
+          ? (activeDashboardView as MemberView)
           : 'overview');
-    /* One app, one dashboard (Fariza, 24 Nov huddle): the member area is the app at
-       /app. A signed-in member never sees the old dashboard; every route that reached
-       it lands on the app's Home instead. memberView kept for the gates' return. */
-    void memberView;
-    window.location.replace('/app/');
-    return null;
+    return (
+      <BrandDashboard
+        userName={user?.name || 'Member'}
+        view={memberView}
+        onOpenMemberView={(view) => {
+          if (view === 'overview') { setCurrentView('home'); return; }
+          /* 'profile' now opens INSIDE the shell (embedded report), like the other views */
+          setCurrentView('dashboard');
+          setActiveDashboardView(view);
+        }}
+        onViewChange={handleViewChange}
+        onLogout={handleLogout}
+      />
+    );
   }
 
   return (

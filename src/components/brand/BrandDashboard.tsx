@@ -7,7 +7,7 @@
  * E-DNA report" — read from the SAME backend record the iOS app and /edna write (utils/edna.ts).
  * The sidebar routes into the existing member views (profile, workbooks, AI mentor, recordings).
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { fetchEdnaState, type EdnaState } from '../../utils/edna';
 import { BrandWorkbooks } from './BrandWorkbooks';
 import { AIMentorHub } from '../AIMentorHub';
@@ -15,7 +15,18 @@ import { ZoomRecordings } from '../ZoomRecordings';
 // The old Courses/pricing page is retired (Fariza, 18 Nov 2026: "the old pricing is
 // redundant… it's all new"); membership lives on the homepage until her tier pages land.
 
-export type MemberView = 'overview' | 'profile' | 'plan' | 'workbooks' | 'chat' | 'zoom-recordings';
+/* One dashboard (Fariza, #edna-app huddle 24 Nov 2026): Decision Intelligence sits under
+   Overview with its six tabs. Each tab is a screen of the DI app at /app, drawn inside this
+   dashboard in an iframe (?embed=1 hides the app's own sidebar), the same way the E-DNA
+   report is embedded — a repositioning, not a rebuild. */
+export type DiView = 'di-make' | 'di-log' | 'di-rooms' | 'di-reports' | 'di-workbooks' | 'di-edna';
+export const DI_VIEWS: DiView[] = ['di-make', 'di-log', 'di-rooms', 'di-reports', 'di-workbooks', 'di-edna'];
+const DI_TABS: [DiView, string][] = [
+  ['di-make', 'Make a decision'], ['di-log', 'Decision log'], ['di-rooms', 'Decision rooms'],
+  ['di-reports', 'My reports'], ['di-workbooks', 'My workbooks'], ['di-edna', 'My E-DNA'],
+];
+
+export type MemberView = 'overview' | 'profile' | 'plan' | 'workbooks' | 'chat' | 'zoom-recordings' | DiView;
 
 interface BrandDashboardProps {
   userName: string;
@@ -32,6 +43,40 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
      (member feedback, 20 Nov 2026 — the scrollable tab strip read badly) */
   const [navOpen, setNavOpen] = useState(false);
   const go = (v: MemberView) => { setNavOpen(false); onOpenMemberView(v); };
+  const [diOpen, setDiOpen] = useState(true);
+  const isDi = (DI_VIEWS as string[]).includes(view);
+
+  /* the DI iframe loads once per visit to the DI section; switching tabs posts a message
+     so the app changes screen without reloading */
+  const diRef = useRef<HTMLIFrameElement>(null);
+  const diSrc = useRef<string | null>(null);
+  const diLoaded = useRef(false);
+  const viewRef = useRef(view);
+  viewRef.current = view;
+  if (isDi && !diSrc.current) {
+    let room: string | null = null;
+    try { room = sessionStorage.getItem('bs_di_room'); } catch { /* storage blocked */ }
+    diSrc.current = '/app/index.html?embed=1&screen=' + view.slice(3) + (room ? '&room=' + encodeURIComponent(room) : '');
+    diLoaded.current = false;
+  }
+  if (!isDi) diSrc.current = null;
+  useEffect(() => {
+    if (!isDi) return;
+    try { sessionStorage.removeItem('bs_di_room'); } catch { /* storage blocked */ }
+    if (diLoaded.current && diRef.current?.contentWindow) {
+      diRef.current.contentWindow.postMessage({ bsShow: view.slice(3) }, window.location.origin);
+    }
+  }, [view, isDi]);
+  useEffect(() => {
+    const onMsg = (e: MessageEvent) => {
+      if (e.origin !== window.location.origin || !e.data) return;
+      if (e.data.bsGo === 'overview') { onOpenMemberView('overview'); return; }
+      const next = e.data.bsScreen ? ('di-' + e.data.bsScreen) as DiView : null;
+      if (next && (DI_VIEWS as string[]).includes(next) && next !== viewRef.current) onOpenMemberView(next);
+    };
+    window.addEventListener('message', onMsg);
+    return () => window.removeEventListener('message', onMsg);
+  }, [onOpenMemberView]);
 
   useEffect(() => {
     let alive = true;
@@ -70,12 +115,18 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
         </div>
         <nav className="bs-side-menu">
           <button className={view === 'overview' ? 'on' : ''} onClick={() => go('overview')}>▦ Overview</button>
+          <button
+            className={'bs-group' + (isDi && !diOpen ? ' on' : '')}
+            aria-expanded={diOpen}
+            onClick={() => setDiOpen((o) => !o)}
+          >
+            ◑ Decision Intelligence <span className="bs-chev" aria-hidden="true">{diOpen ? '▾' : '▸'}</span>
+          </button>
+          {diOpen && DI_TABS.map(([v, label]) => (
+            <button key={v} className={'bs-sub' + (view === v ? ' on' : '')} onClick={() => go(v)}>{label}</button>
+          ))}
           <button className={view === 'profile' ? 'on' : ''} onClick={() => go('profile')}>◍ My E-DNA profile</button>
           <button className={view === 'chat' ? 'on' : ''} onClick={() => go('chat')}>💬 AI mentors</button>
-          {/* One Brandscaling app (Fariza, #edna-app 23 Nov 2026): Decision Intelligence joins the
-              dashboard menu in the iOS sidebar's position. Plain navigation, not an embed — /app
-              draws its own sidebar and shares the sign-in on this origin. */}
-          <button onClick={() => { window.location.href = '/app/'; }}>◑ Decision Intelligence</button>
           <button className={view === 'workbooks' || view === 'plan' ? 'on' : ''} onClick={() => go('workbooks')}>📓 Workbooks</button>
           {/* Recordings are Elite-only and no Elite members exist yet (Fariza, 24 Nov 2026);
               hidden until the Elite tier is live, when this gates on the member's tier. */}
@@ -92,6 +143,22 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
           {/* the approved /edna report, embedded so the member stays in the dashboard
               (Munawar, 18 Nov 2026); ?embed=1 hides the page's own header chrome */}
           <iframe src="/edna/index.html?embed=1" className="bs-edna-frame" title="Your E-DNA report" />
+        </main>
+      )}
+
+      {isDi && diSrc.current && (
+        <main className="bs-main">
+          <iframe
+            ref={diRef}
+            src={diSrc.current}
+            className="bs-edna-frame"
+            title="Decision Intelligence"
+            onLoad={() => {
+              diLoaded.current = true;
+              /* a tab clicked while the app was still loading */
+              diRef.current?.contentWindow?.postMessage({ bsShow: viewRef.current.slice(3) }, window.location.origin);
+            }}
+          />
         </main>
       )}
 

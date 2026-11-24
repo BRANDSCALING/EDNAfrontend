@@ -352,8 +352,8 @@
     var row = document.querySelector('#screen .actions');
     if (!row || row.querySelector('.bs-dash-btn')) return;
     var b = document.createElement('button');
-    b.type = 'button'; b.className = 'back bs-dash-btn'; b.textContent = 'Open the app';
-    b.addEventListener('click', function () { location.href = '/app/'; }); /* one app, one dashboard (24 Nov) */
+    b.type = 'button'; b.className = 'back bs-dash-btn'; b.textContent = 'My dashboard';
+    b.addEventListener('click', function () { location.href = '/'; }); /* the one dashboard (24 Nov huddle) */
     row.insertBefore(b, row.firstChild);
   }
 
