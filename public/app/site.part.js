@@ -971,7 +971,7 @@
         var ta = document.querySelector('#modeABody [data-rbox="' + box + '"]');
         if (!ta.value.trim()) return;
         api('/rooms/' + r.id + '/boxes/' + box, { method: 'PUT', body: { text: ta.value.trim(), loop: ta.dataset.rloop || null, round: r.round } })
-          .then(function (res) { if (res.__status === 200) openLiveRoom(r.id, true); else alert(res.message || ''); });
+          .then(function (res) { if (res.__status === 200) openLiveRoom(r.id, true); else bsNotice('Not saved', res.message || 'Try again.'); });
       });
     });
     document.querySelectorAll('#modeABody [data-raddentry]').forEach(function (b) {
@@ -980,14 +980,14 @@
         var ta = document.querySelector('#modeABody [data-rentry="' + box + '"]');
         if (!ta.value.trim()) return;
         api('/rooms/' + r.id + '/entries', { method: 'POST', body: { box: box, text: ta.value.trim() } })
-          .then(function (res) { if (res.__status === 201) openLiveRoom(r.id, true); else alert(res.message || ''); });
+          .then(function (res) { if (res.__status === 201) openLiveRoom(r.id, true); else bsNotice('Not added', res.message || 'Try again.'); });
       });
     });
     var cb = $('rcheckBtn');
     if (cb) cb.addEventListener('click', function () {
       cb.disabled = true; cb.textContent = 'Reading the room…';
       api('/rooms/' + r.id + '/check', { method: 'POST' }).then(function (res) {
-        if (res.__status !== 200) { alert(res.message || ''); cb.disabled = false; cb.textContent = 'Check my decision'; return; }
+        if (res.__status !== 200) { bsNotice('Check did not run', res.message || 'Try again.'); cb.disabled = false; cb.textContent = 'Check my decision'; return; }
         openLiveRoom(r.id, true); patchCredits(); patchLog();
       });
     });
@@ -1234,15 +1234,86 @@
   }, true);
 
   /* an invite (#invite=token link, or a Needs you row): the consent list, then join and open */
+  /* ---------- branded dialogs (24 Nov): the browser's own confirm()/alert() boxes are replaced
+     by a white card in the brand register — flat fills, no gradient, no glass ---------- */
+  function bsModalStyles() {
+    if ($('bsModalCss')) return;
+    var cs = document.createElement('style'); cs.id = 'bsModalCss';
+    cs.textContent =
+      '.bsm-ov{position:fixed;inset:0;background:rgba(11,11,11,.45);z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px}' +
+      '.bsm{background:#FFFFFF;border-radius:16px;box-shadow:0 20px 60px rgba(11,11,11,.22);width:100%;max-width:560px;max-height:90vh;overflow:auto;padding:28px;font-family:inherit;color:var(--black,#0B0B0B)}' +
+      '.bsm h2{font-size:24px;line-height:1.25;margin:4px 0 8px;font-weight:700;color:var(--type-text,var(--black,#0B0B0B))}' +
+      '.bsm .k{font-size:13px;color:#5C5C5C}.bsm p{margin:0 0 10px;font-size:15px;line-height:1.5}.bsm .s{font-size:13px;color:#5C5C5C}' +
+      '.bsm ul{margin:0 0 10px 18px;padding:0;font-size:14px;line-height:1.6}' +
+      '.bsm .agree{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid #DADADA;border-radius:10px;font-size:14px;cursor:pointer;margin-top:4px}' +
+      '.bsm .agree input{width:20px;height:20px;flex:none;margin:1px 0 0;accent-color:var(--type,#3D1A78)}' +
+      '.bsm .agree.need{border-color:#B8202E;box-shadow:0 0 0 2px rgba(184,32,46,.15)}' +
+      '.bsm .btns{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}' +
+      '.bsm .bp,.bsm .bs{font-family:inherit;font-weight:600;font-size:15px;line-height:1;padding:13px 20px;border-radius:10px;cursor:pointer}' +
+      '.bsm .bp{background:var(--type,#3D1A78);color:#FFFFFF;border:2px solid var(--type,#3D1A78)}' +
+      '.bsm .bs{background:#FFFFFF;color:var(--type,#3D1A78);border:2px solid var(--type,#3D1A78)}' +
+      '@media (max-width:520px){.bsm{padding:20px}.bsm .btns{flex-direction:column}.bsm .bp,.bsm .bs{width:100%}}';
+    document.head.appendChild(cs);
+  }
+  function bsModal(html, wire) {
+    bsModalStyles();
+    var ov = document.createElement('div'); ov.className = 'bsm-ov';
+    ov.innerHTML = '<div class="bsm" role="dialog" aria-modal="true">' + html + '</div>';
+    document.body.appendChild(ov);
+    var close = function () { if (ov.parentNode) ov.parentNode.removeChild(ov); };
+    wire(ov, close);
+    var first = ov.querySelector('input, button'); if (first) first.focus();
+  }
+  function bsNotice(title, text) {
+    return new Promise(function (resolve) {
+      bsModal('<h2>' + escT(title) + '</h2><p>' + escT(text) + '</p><div class="btns"><button type="button" class="bp" data-ok>OK</button></div>',
+        function (ov, close) { ov.querySelector('[data-ok]').addEventListener('click', function () { close(); resolve(); }); });
+    });
+  }
+  /* the approved "Join Dan's room?" consent card (screen 12, BS-AI-008 §5), with the real room */
+  function bsConsent(info) {
+    var who = escT(info.owner_name || 'The owner');
+    return new Promise(function (resolve) {
+      bsModal(
+        '<div class="k">Decision Room · joining</div>' +
+        '<h2>Join ' + who + '’s room?</h2>' +
+        '<p>“' + escT(info.decision_text) + '” · ' + who + ', owner · ' + (info.people || 1) + ' ' + ((info.people || 1) === 1 ? 'person' : 'people') + ' in the room</p>' +
+        '<p class="s">Joining shares the following with the people in this room, for this decision only:</p>' +
+        '<ul><li>your <b>name</b> and your photo or initials</li><li>your <b>core type or Mixed state</b></li><li>your <b>loop and your mentor</b></li>' +
+        '<li>your <b>progress</b> in the room</li><li>your <b>entries</b> in Box 2 and Box 3, with your name on each</li></ul>' +
+        '<p class="s">Not shared: your report, your workbook answers, your Decision log, anything from another room. If you leave, your entries stay in the room with your name, because the sequence must still read; you can ask ' + who + ' to delete them. Your consent is recorded for this room only.</p>' +
+        '<label class="agree"><input type="checkbox" data-agree><span>I agree to share these with the people in this room, for this decision only.</span></label>' +
+        '<div class="btns"><button type="button" class="bp" data-join>Join the room</button><button type="button" class="bs" data-not>Not now</button></div>',
+        function (ov, close) {
+          var box = ov.querySelector('[data-agree]'); var lab = ov.querySelector('.agree');
+          box.addEventListener('change', function () { lab.classList.remove('need'); });
+          ov.querySelector('[data-join]').addEventListener('click', function () {
+            if (!box.checked) { lab.classList.add('need'); return; }
+            close(); resolve(true);
+          });
+          ov.querySelector('[data-not]').addEventListener('click', function () { close(); resolve(false); });
+        });
+    });
+  }
   function joinInvite(token) {
-    var ok = confirm('Joining this room shares, for this decision only: your name, your core type or Mixed state, your loop and mentor, your progress, and your entries in Boxes 2 and 3 with the people in the room. Your report, log and other rooms are never shared. Join?');
-    if (!ok) { history.replaceState(null, '', location.pathname + location.search); return; }
+    var clearHash = function () { history.replaceState(null, '', location.pathname + location.search); };
+    api('/invites/' + token).then(function (info) {
+      if (info.__status !== 200) { clearHash(); bsNotice('Invitation not found', info.message || 'Ask the person who invited you for a new link.'); return; }
+      if (info.already_member && info.room_id) { clearHash(); if (window.showScreen) window.showScreen(4); setTimeout(function () { openLiveRoom(info.room_id); }, 400); return; }
+      if (info.expired) { clearHash(); bsNotice('This invitation has expired', 'Ask ' + (info.owner_name || 'the person who invited you') + ' for a new one.'); return; }
+      bsConsent(info).then(function (ok) {
+        if (!ok) { clearHash(); return; }
+        acceptInvite(token, clearHash);
+      });
+    });
+  }
+  function acceptInvite(token, clearHash) {
     api('/invites/' + token + '/accept', { method: 'POST', body: { consent: true } }).then(function (res) {
-      history.replaceState(null, '', location.pathname + location.search);
+      clearHash();
       if (res.__status !== 200 && res.__status !== 201) {
-        if (res.joined || res.room_id) { /* already a member */ } else { alert(res.message || 'This invitation has expired.'); return; }
+        if (res.joined || res.room_id) { /* already a member */ } else { bsNotice('Could not join', res.message || 'This invitation has expired.'); return; }
       }
-      if (res.needs_edna) alert('Take your free E-DNA first: your loop and mentor come from it. The room is open to you meanwhile.');
+      if (res.needs_edna) bsNotice('Take your free E-DNA first', 'Your loop and mentor come from it. The room is open to you meanwhile.');
       /* joined from an emailed or shared link: continue in the dashboard, on this room */
       if (!EMBED && !LOCAL && res.room_id) { topGo('/?di=rooms&room=' + res.room_id); return; }
       var onRooms = window.BS_SCREEN === 4;
@@ -1512,7 +1583,7 @@
           var url = cv.toDataURL('image/jpeg', 0.85);
           api('/profile/photo', { method: 'PUT', body: { data: url.split(',')[1], mime: 'image/jpeg' } }).then(function (res) {
             if (res.__status === 200) { PROFILE.photo_url = url; window.openScreen9(key); }
-            else alert(res.message || 'Could not save the photo.');
+            else bsNotice('Photo not saved', res.message || 'Could not save the photo.');
           });
         };
         img.src = URL.createObjectURL(f);
@@ -1526,9 +1597,9 @@
     var xc = $('st9csv');
     if (xc) xc.addEventListener('click', function () {
       api('/log').then(function (d) {
-        if (d.__status !== 200) { alert('Could not load your log.'); return; }
+        if (d.__status !== 200) { bsNotice('Export failed', 'Could not load your log.'); return; }
         var rows = d.rows || d.log || [];
-        if (!rows.length) { alert('Your log is empty.'); return; }
+        if (!rows.length) { bsNotice('Nothing to export', 'Your log is empty.'); return; }
         var cols = Object.keys(rows[0]);
         var cell = function (v) { return '"' + String(v == null ? '' : (typeof v === 'object' ? JSON.stringify(v) : v)).replace(/"/g, '""') + '"'; };
         var text = cols.join(',') + '\n' + rows.map(function (r) { return cols.map(function (c) { return cell(r[c]); }).join(','); }).join('\n');
