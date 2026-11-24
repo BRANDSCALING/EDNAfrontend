@@ -137,8 +137,9 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
           {/* Infinite Scaling, under Decision Intelligence as in Fariza's approved app design; it
               opens the app's approved placeholder page (screen 14) */}
           <button className={'bs-soon' + (view === 'di-scaling' ? ' on' : '')} onClick={() => go('di-scaling')}>
-            <span>≡ Infinite Scaling</span>
-            <span className="bs-soon-chip">Launching 19 January 2027</span>
+            <svg className="bs-soon-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 20h16M6 16h12M8 12h8M10 8h4" /></svg>
+            <span>Infinite Scaling</span>
+            <span className="bs-soon-chip">Soon</span>
           </button>
           {/* "My E-DNA profile" and "Workbooks" are hidden (Munawar, 24 Nov): the reports open from
               DI · My reports and the workbooks are DI · My workbooks */}
