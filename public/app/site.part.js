@@ -113,6 +113,9 @@
     /* real states (One more round, Not yet, Review due, Waiting on you) used the preview's amber
        .chip.ex, which production hides as the Example-data chip — so they rendered blank (24 Nov) */
     '.chip.exv{background:var(--amber-p3);color:var(--amber-d2)}' +
+    /* the one-step box reuses .lbox (the loop figure's box, white text); Logic and Feeling have
+       their own label colours, 'Your decision' (.w.dec) had none and showed white (24 Nov) */
+    '.w.dec{color:var(--black)}' +
     /* the workbook player (24 Nov): one column, so the exercises get the full width, and a
        wide table scrolls inside its own box instead of being cut off at the panel edge */
     '#wbView .grid-7-5{grid-template-columns:minmax(0,1fr)!important}' +
