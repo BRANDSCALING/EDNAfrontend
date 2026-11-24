@@ -1183,20 +1183,12 @@ export default function App() {
       : (['profile', 'plan', 'workbooks', 'chat', 'zoom-recordings'].includes(activeDashboardView)
           ? (activeDashboardView as 'profile' | 'plan' | 'workbooks' | 'chat' | 'zoom-recordings')
           : 'overview');
-    return (
-      <BrandDashboard
-        userName={user?.name || 'Member'}
-        view={memberView}
-        onOpenMemberView={(view) => {
-          if (view === 'overview') { setCurrentView('home'); return; }
-          /* 'profile' now opens INSIDE the shell (embedded report), like the other views */
-          setCurrentView('dashboard');
-          setActiveDashboardView(view);
-        }}
-        onViewChange={handleViewChange}
-        onLogout={handleLogout}
-      />
-    );
+    /* One app, one dashboard (Fariza, 24 Nov huddle): the member area is the app at
+       /app. A signed-in member never sees the old dashboard; every route that reached
+       it lands on the app's Home instead. memberView kept for the gates' return. */
+    void memberView;
+    window.location.replace('/app/');
+    return null;
   }
 
   return (
