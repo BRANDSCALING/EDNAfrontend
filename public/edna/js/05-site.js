@@ -371,6 +371,31 @@
     row.insertBefore(b, row.firstChild);
   }
 
+  /* The Basic / Advanced toggle at the top of the report screens (Fariza, 24 Nov).
+     "Advanced" lands on the Advanced Report pitch when not purchased; renderGuarded
+     already sends purchased people straight to the detailed report. */
+  function addReportToggle(s) {
+    if (s !== 'report' && s !== 'end' && s !== 'detailed' && s !== 'adapt') return;
+    var wrap = document.querySelector('#screen .wrap');
+    if (!wrap || document.getElementById('rpToggle')) return;
+    var advOn = (s !== 'report');
+    var base = 'padding:8px 18px;border-radius:999px;border:1px solid #c9c2d8;background:#fff;color:#42047D;font:inherit;cursor:pointer';
+    var on = 'padding:8px 18px;border-radius:999px;border:1px solid #42047D;background:#42047D;color:#fff;font:inherit;cursor:pointer';
+    var bar = document.createElement('div');
+    bar.id = 'rpToggle';
+    bar.style.cssText = 'display:flex;gap:8px;justify-content:center;margin:0 0 8px';
+    bar.innerHTML = '<button type="button" data-rt="basic" style="' + (advOn ? base : on) + '">Basic report</button>' +
+      '<button type="button" data-rt="adv" style="' + (advOn ? on : base) + '">Advanced report</button>';
+    wrap.insertBefore(bar, wrap.firstChild);
+    bar.addEventListener('click', function (e) {
+      var b = e.target.closest && e.target.closest('[data-rt]');
+      if (!b) return;
+      at = screens.indexOf(b.dataset.rt === 'adv' ? 'end' : 'report');
+      window.scrollTo({ top: 0 });
+      renderGuarded();
+    });
+  }
+
   function lockedScreen(which) {
     var el = document.getElementById('screen');
     document.getElementById('crumb').textContent = 'E-DNA · ' + (which === 'adapt' ? 'Your plan' : 'Detailed report');
@@ -478,6 +503,7 @@
     stripPreviewControls();
     addPdfButton(s);
     addDashboardButton(s);
+    addReportToggle(s);
     retargetForPurchased(s);
     if (s === 'finish' || s === 'report' || s === 'end') submitIfComplete();
     snapshot();

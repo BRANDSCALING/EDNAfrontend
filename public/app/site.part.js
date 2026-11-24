@@ -90,13 +90,20 @@
   function money(n) { return n == null ? '' : String(n); }
 
   function patchCredits() {
+    /* on failure, never leave the preview's example numbers or an out-of-credits claim
+       on screen (Fariza saw "used your 3 decisions" offline, 24 Nov): say we could not load */
+    function paint(html) {
+      ['credits', 'credits0'].forEach(function (id) { var el = $(id); if (el) el.innerHTML = html; });
+    }
     api('/credits').then(function (c) {
-      if (c.__status !== 200) return;
-      ['credits', 'credits0'].forEach(function (id) {
-        var el = $(id); if (!el) return;
-        el.innerHTML = '<div class="t13 sec">Your decisions</div><div class="t19 b">' + money(c.balance) +
-          ' left</div><div class="t13 sec">1 credit = one decision taken to Check</div>';
-      });
+      if (c.__status !== 200) {
+        paint('<div class="t13 sec">Your decisions</div><div class="t19 b">—</div><div class="t13 sec">Could not load right now. Check your connection and reload.</div>');
+        return;
+      }
+      paint('<div class="t13 sec">Your decisions</div><div class="t19 b">' + money(c.balance) +
+        ' left</div><div class="t13 sec">1 credit = one decision taken to Check</div>');
+    }).catch(function () {
+      paint('<div class="t13 sec">Your decisions</div><div class="t19 b">—</div><div class="t13 sec">Could not load right now. Check your connection and reload.</div>');
     });
   }
 
@@ -1030,9 +1037,8 @@
         '<span class="t13 sec" id="bsAttMsg" style="margin-left:8px"></span>' +
         '<input type="file" id="bsAttFile" accept="' + ATTACH_OK + '" style="display:none">';
       lb.appendChild(host);
-      $('bsAttBtn').addEventListener('click', function () { $('bsAttFile').click(); });
-      $('bsAttFile').addEventListener('change', function () {
-        var f = this.files && this.files[0]; this.value = ''; if (!f || !S.id) return;
+      function uploadAttachment(f) {
+        if (!f || !S.id) return;
         if (f.size > 10 * 1024 * 1024) { $('bsAttMsg').textContent = 'Over 10 MB. Make it smaller and try again.'; return; }
         $('bsAttMsg').textContent = 'Reading ' + f.name + '…';
         var rd = new FileReader();
@@ -1047,13 +1053,32 @@
           });
         };
         rd.readAsDataURL(f);
+      }
+      $('bsAttBtn').addEventListener('click', function () { $('bsAttFile').click(); });
+      $('bsAttFile').addEventListener('change', function () {
+        var f = this.files && this.files[0]; this.value = ''; uploadAttachment(f);
+      });
+      /* drag a file anywhere onto the box (Fariza, 24 Nov) */
+      ['dragover', 'dragenter'].forEach(function (ev) {
+        lb.addEventListener(ev, function (e) { e.preventDefault(); lb.style.outline = '2px dashed var(--indigo)'; });
+      });
+      ['dragleave', 'drop'].forEach(function (ev) {
+        lb.addEventListener(ev, function (e) { e.preventDefault(); lb.style.outline = ''; });
+      });
+      lb.addEventListener('drop', function (e) {
+        var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+        if (f) uploadAttachment(f);
       });
       $('bsAttList').addEventListener('click', function (e) {
         var c = e.target.closest && e.target.closest('[data-att-confirm]');
         if (c) {
+          var attName = c.dataset.attName || 'the document';
           api('/attachments/' + c.dataset.attConfirm + '/confirm', { method: 'POST' }).then(function () {
             $('bsAttMsg').textContent = 'In the box. Your mentor reads the extract with your own words.';
             listAttach();
+            /* the mentor engages with the document at once, instead of waiting for the
+               next box (Fariza, 24 Nov: attaching felt pointless when nothing used it) */
+            if (S.id && !S.busy) mentorEvent('replied', 'I attached ' + attName + '; its facts extract is now in the box. Work with it.');
           });
           return;
         }
@@ -1073,7 +1098,7 @@
           '<b>' + a.filename + '</b> · ' + Math.max(1, Math.round((a.size || 0) / 1024)) + ' KB' +
           (a.confirmed_at ? ' · <span class="chip type" style="display:inline-block">In the box</span>' : '') +
           '<div class="t13 sec" style="margin:4px 0;white-space:pre-wrap">' + (a.extract || '') + '</div>' +
-          (a.confirmed_at ? '' : '<div class="btnrow" style="margin:0"><button class="btn small primary" type="button" data-att-confirm="' + a.id + '">Confirm: put this in the box</button>' +
+          (a.confirmed_at ? '' : '<div class="btnrow" style="margin:0"><button class="btn small primary" type="button" data-att-confirm="' + a.id + '" data-att-name="' + String(a.filename || 'the document').replace(/"/g, '&quot;') + '">Confirm: put this in the box</button>' +
             '<button class="btn small secondary" type="button" data-att-del="' + a.id + '">Remove</button></div>') +
           '</div>';
       }).join('');

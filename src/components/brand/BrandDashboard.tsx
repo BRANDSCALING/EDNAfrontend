@@ -77,7 +77,11 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
               draws its own sidebar and shares the sign-in on this origin. */}
           <button onClick={() => { window.location.href = '/app/'; }}>◑ Decision Intelligence</button>
           <button className={view === 'workbooks' || view === 'plan' ? 'on' : ''} onClick={() => go('workbooks')}>📓 Workbooks</button>
-          <button className={view === 'zoom-recordings' ? 'on' : ''} onClick={() => go('zoom-recordings')}>▶ Recordings</button>
+          {/* Recordings are Elite-only and no Elite members exist yet (Fariza, 24 Nov 2026);
+              hidden until the Elite tier is live, when this gates on the member's tier. */}
+          {false && (
+            <button className={view === 'zoom-recordings' ? 'on' : ''} onClick={() => go('zoom-recordings')}>▶ Recordings</button>
+          )}
           <button onClick={onLogout}>↩ Log out</button>
         </nav>
         <div className="bs-side-foot">Decision Intelligence &amp; Infinite Scaling Mastery</div>
