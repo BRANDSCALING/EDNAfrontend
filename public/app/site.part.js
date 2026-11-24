@@ -683,21 +683,55 @@
       api('/rooms/' + r.id + '/rounds', { method: 'POST' }).then(function () { openLiveRoom(r.id, true); });
     });
   }
+  var INV_ROOM = null;
   function wireInvite(roomId) {
-    var panel = $('invitePanel'); if (!panel || panel.dataset.live === roomId) return;
-    panel.dataset.live = roomId;
+    var panel = $('invitePanel'); if (!panel) return;
+    INV_ROOM = roomId;
+    if (panel.dataset.live !== roomId) {
+      panel.dataset.live = roomId;
+      /* a different room: clear the previous room's link and any note */
+      var line = panel.querySelector('a') && panel.querySelector('a').parentNode;
+      if (line) line.innerHTML = 'Or share a link: <a href="#">Create invite link</a> · expires in 7 days';
+      var inp = panel.querySelector('input'); if (inp) inp.value = '';
+      var note = panel.querySelector('.invok'); if (note) note.remove();
+    }
+    if (panel.dataset.wired) return;
+    panel.dataset.wired = '1';
+    var said = function (msg) {
+      var old = panel.querySelector('.invok'); if (old) old.remove();
+      panel.insertAdjacentHTML('beforeend', '<div class="invok t13" style="margin-top:8px"><b>' + msg + '</b></div>');
+    };
+    var makeInvite = function (email, role, done) {
+      api('/rooms/' + INV_ROOM + '/invites', { method: 'POST', body: { email: email, role: role } }).then(function (res) {
+        if (res.__status !== 201) { said(res.message || 'Could not create the invitation. Try again.'); return; }
+        var a = panel.querySelector('a');
+        var url = location.origin + '/app/index.html#invite=' + res.invite.token;
+        a.textContent = url; a.href = url; a.dataset.real = '1';
+        done(url);
+      });
+    };
     var btn = panel.querySelector('button');
     var fresh = btn.cloneNode(true); btn.parentNode.replaceChild(fresh, btn);
     fresh.addEventListener('click', function () {
-      var email = panel.querySelector('input').value.trim() || null;
+      var email = panel.querySelector('input').value.trim();
+      if (!email || email.indexOf('@') < 0) { said('Enter a full email address, or use the link below.'); return; }
       var role = /read/i.test(panel.querySelector('select').value) ? 'read_only' : 'collaborator';
-      api('/rooms/' + roomId + '/invites', { method: 'POST', body: { email: email, role: role } }).then(function (res) {
-        if (res.__status !== 201) { alert(res.message || ''); return; }
-        var a = panel.querySelector('a');
-        var url = location.origin + '/app/index.html#invite=' + res.invite.token;
-        a.textContent = url; a.href = url;
-        panel.querySelector('.t13.sec:last-child').insertAdjacentHTML('beforeend', ' <b>· created, copy it now</b>');
+      makeInvite(email, role, function (url) {
+        said('Invitation created for ' + email + '. Send them the link above — it opens the room after their consent.');
       });
+    });
+    /* the link: first click creates a real invite, later clicks copy it */
+    panel.addEventListener('click', function (e) {
+      var a = e.target.closest && e.target.closest('a'); if (!a) return;
+      e.preventDefault();
+      var copy = function (url) {
+        var p = navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject();
+        p.then(function () { said('Link copied. It expires in 7 days.'); },
+               function () { said('Copy the link above. It expires in 7 days.'); });
+      };
+      if (a.dataset.real) { copy(a.href); return; }
+      var role = /read/i.test(panel.querySelector('select').value) ? 'read_only' : 'collaborator';
+      makeInvite(null, role, copy);
     });
   }
   var origOpenScreen4 = window.openScreen4;
@@ -786,6 +820,23 @@
     if (!b || !b.dataset || b.dataset.buy !== 'entry') return;
     e.preventDefault(); e.stopPropagation();
     location.href = '/home/#membership';
+  }, true);
+  /* Invite · up to 6: the preview never wired this button (24 Nov). In a live room it opens
+     the invitation panel; in an unsaved room it runs Save-and-invite so the room exists first. */
+  window.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('#r4invite');
+    if (!b) return;
+    if (b.dataset && b.dataset.buy === 'entry') return; /* the gate above owns that case */
+    e.preventDefault(); e.stopPropagation();
+    if (LIVEROOM) {
+      var panel = $('invitePanel');
+      panel.classList.remove('hide');
+      panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    var go = [].slice.call(document.querySelectorAll('#modeABody .btnrow button'))
+      .filter(function (x) { return /invite/i.test(x.textContent); })[0];
+    if (go) go.click(); else alert('Open a room first.');
   }, true);
 
   /* an invite (#invite=token link, or a Needs you row): the consent list, then join and open */
