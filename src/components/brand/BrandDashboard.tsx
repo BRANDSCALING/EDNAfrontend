@@ -45,6 +45,10 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
   const go = (v: MemberView) => { setNavOpen(false); onOpenMemberView(v); };
   const [diOpen, setDiOpen] = useState(true);
   const isDi = (DI_VIEWS as string[]).includes(view);
+  /* the E-DNA reports open from DI · My reports (the old "My E-DNA profile" tab is hidden,
+     Munawar 24 Nov), so the report view counts as part of My reports */
+  const isReport = view === 'profile' || view === 'plan';
+  const [reportKind, setReportKind] = useState<'basic' | 'detailed'>('basic');
 
   /* the DI iframe loads once per visit to the DI section; switching tabs posts a message
      so the app changes screen without reloading */
@@ -71,6 +75,11 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
     const onMsg = (e: MessageEvent) => {
       if (e.origin !== window.location.origin || !e.data) return;
       if (e.data.bsGo === 'overview') { onOpenMemberView('overview'); return; }
+      if (e.data.bsGo === 'profile') {
+        setReportKind(e.data.report === 'detailed' ? 'detailed' : 'basic');
+        onOpenMemberView('profile');
+        return;
+      }
       const next = e.data.bsScreen ? ('di-' + e.data.bsScreen) as DiView : null;
       if (next && (DI_VIEWS as string[]).includes(next) && next !== viewRef.current) onOpenMemberView(next);
     };
@@ -123,11 +132,11 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
             ◑ Decision Intelligence <span className="bs-chev" aria-hidden="true">{diOpen ? '▾' : '▸'}</span>
           </button>
           {diOpen && DI_TABS.map(([v, label]) => (
-            <button key={v} className={'bs-sub' + (view === v ? ' on' : '')} onClick={() => go(v)}>{label}</button>
+            <button key={v} className={'bs-sub' + (view === v || (v === 'di-reports' && isReport) ? ' on' : '')} onClick={() => go(v)}>{label}</button>
           ))}
-          <button className={view === 'profile' ? 'on' : ''} onClick={() => go('profile')}>◍ My E-DNA profile</button>
+          {/* "My E-DNA profile" and "Workbooks" are hidden (Munawar, 24 Nov): the reports open from
+              DI · My reports and the workbooks are DI · My workbooks */}
           <button className={view === 'chat' ? 'on' : ''} onClick={() => go('chat')}>💬 AI mentors</button>
-          <button className={view === 'workbooks' || view === 'plan' ? 'on' : ''} onClick={() => go('workbooks')}>📓 Workbooks</button>
           {/* Recordings are Elite-only and no Elite members exist yet (Fariza, 24 Nov 2026);
               hidden until the Elite tier is live, when this gates on the member's tier. */}
           {false && (
@@ -140,9 +149,16 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
 
       {view === 'profile' && (
         <main className="bs-main">
+          <button type="button" className="bs-backlink" onClick={() => go('di-reports')}>‹ My reports</button>
           {/* the approved /edna report, embedded so the member stays in the dashboard
-              (Munawar, 18 Nov 2026); ?embed=1 hides the page's own header chrome */}
-          <iframe src="/edna/index.html?embed=1" className="bs-edna-frame" title="Your E-DNA report" />
+              (Munawar, 18 Nov 2026); ?embed=1 hides the page's own header chrome.
+              #detailed opens the Advanced Report (from DI · My reports, 24 Nov) */}
+          <iframe
+            key={reportKind}
+            src={'/edna/index.html?embed=1' + (reportKind === 'detailed' ? '#detailed' : '')}
+            className="bs-edna-frame bs-edna-frame-back"
+            title="Your E-DNA report"
+          />
         </main>
       )}
 
@@ -153,6 +169,7 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
             src={diSrc.current}
             className="bs-edna-frame"
             title="Decision Intelligence"
+            allow="clipboard-write"
             onLoad={() => {
               diLoaded.current = true;
               /* a tab clicked while the app was still loading */
@@ -255,7 +272,7 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
                     {edna.alternateLoop}
                   </div>
                 )}
-                <button className="bs-btn bs-btn-action" onClick={() => onOpenMemberView('profile')} style={{ marginTop: 6 }}>
+                <button className="bs-btn bs-btn-action" onClick={() => { setReportKind('basic'); onOpenMemberView('profile'); }} style={{ marginTop: 6 }}>
                   View your E-DNA report
                 </button>
               </>
@@ -306,7 +323,7 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
               Your workbooks are built from your E-DNA: what to adapt, and what the app provides.
               {!edna?.taken && ' They unlock once you have taken the assessment.'}
             </p>
-            <button className="bs-btn bs-btn-outline" onClick={() => onOpenMemberView('workbooks')}>
+            <button className="bs-btn bs-btn-outline" onClick={() => onOpenMemberView('di-workbooks')}>
               Open your workbooks
             </button>
           </section>

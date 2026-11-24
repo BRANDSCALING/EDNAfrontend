@@ -236,7 +236,11 @@ export default function App() {
   useEffect(() => {
     if (!isAuthenticated) return;
     const q = new URLSearchParams(window.location.search);
-    const d = q.get('di');
+    let d = q.get('di');
+    /* an invite link opened while signed out: after sign-in, Decision rooms runs the join */
+    let pendingInvite = false;
+    try { pendingInvite = !!localStorage.getItem('bs_pending_invite'); } catch { /* storage blocked */ }
+    if (!d && pendingInvite) d = 'rooms';
     if (!d || !(DI_VIEWS as string[]).includes('di-' + d)) return;
     const room = q.get('room');
     if (room) { try { sessionStorage.setItem('bs_di_room', room); } catch { /* storage blocked */ } }
@@ -654,7 +658,9 @@ export default function App() {
       // Immediately redirect to dashboard to avoid showing home page; sign-in lands on
       // Overview, the dashboard's home tab (Munawar, 24 Nov)
       setCurrentView('dashboard');
-      setActiveDashboardView('overview');
+      let pendingInvite = false;
+      try { pendingInvite = !!localStorage.getItem('bs_pending_invite'); } catch { /* storage blocked */ }
+      setActiveDashboardView(pendingInvite ? 'di-rooms' : 'overview');
     }
 
     if (userData.email) {

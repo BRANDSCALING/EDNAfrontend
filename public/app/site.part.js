@@ -41,14 +41,20 @@
   var QS = new URLSearchParams(location.search);
   var EMBED = QS.get('embed') === '1' && window.top !== window.self;
   function topGo(u) { try { (EMBED ? window.top : window).location.href = u; } catch (e) { location.href = u; } }
-  /* the reports open in the dashboard's own report view when embedded */
-  function openReport() {
-    if (EMBED) { try { parent.postMessage({ bsGo: 'profile' }, location.origin); return; } catch (e) { /* fall through */ } }
-    location.href = '/edna/index.html';
+  /* the reports open in the dashboard's own report view when embedded ('basic' or 'detailed') */
+  function openReport(which) {
+    if (EMBED) { try { parent.postMessage({ bsGo: 'profile', report: which || 'basic' }, location.origin); return; } catch (e) { /* fall through */ } }
+    location.href = '/edna/index.html' + (which === 'detailed' ? '#detailed' : '');
   }
   var sess = cognitoSession();
   var localUid = LOCAL ? QS.get('uid') : null; /* local testing only */
-  if (!sess && !localUid) { topGo('/?signin=1'); return; }
+  if (!sess && !localUid) {
+    /* an invite link opened while signed out: keep the invitation through sign-in; the
+       dashboard opens Decision rooms afterwards and the join runs there */
+    var pendInv = location.hash.match(/[#&]invite=([A-Za-z0-9_-]+)/);
+    if (pendInv) { try { localStorage.setItem('bs_pending_invite', pendInv[1]); } catch (e) { /* storage blocked */ } }
+    topGo('/?signin=1'); return;
+  }
   if (!EMBED && !LOCAL) {
     var roomLink = location.hash.match(/[#&]room=([\w-]+)/);
     if (roomLink) { location.replace('/?di=rooms&room=' + roomLink[1]); return; }
@@ -60,7 +66,10 @@
     est.textContent = 'html.bs-embed,html.bs-embed body{background:#fff}' +
       '.bs-embed .frame{width:100%!important;max-width:none!important;margin:0!important;border-radius:0!important;box-shadow:none!important;min-height:0!important}' +
       '.bs-embed .app{display:block!important}' +
-      '.bs-embed .side,.bs-embed .topbar,.bs-embed .tabbar,.bs-embed .navbar,.bs-embed .home-ind{display:none!important}';
+      '.bs-embed .side,.bs-embed .topbar,.bs-embed .tabbar,.bs-embed .navbar,.bs-embed .home-ind{display:none!important}' +
+      /* Make a decision: the one-step column was sized for the app's own 1280px frame; inside
+         the wider dashboard it uses the width like the other DI screens (Munawar, 24 Nov) */
+      '.bs-embed .lcol{max-width:1180px!important}';
     document.head.appendChild(est);
     /* links that leave the app (the E-DNA, checkout, membership) open in the whole window */
     document.addEventListener('click', function (e) {
@@ -97,7 +106,17 @@
     '#frameNote{display:none}.notes{display:none!important}' +
     /* the set-your-password banner is the preview's example state (A3); everyone on /app signed in
        with a real password, and the report-gate flow that creates password-less accounts is not built yet */
-    '#homeBanners .gban:not(.warn){display:none!important}';
+    '#homeBanners .gban:not(.warn){display:none!important}' +
+    /* the workbook player (24 Nov): one column, so the exercises get the full width, and a
+       wide table scrolls inside its own box instead of being cut off at the panel edge */
+    '#wbView .grid-7-5{grid-template-columns:minmax(0,1fr)!important}' +
+    '#wbView .grid-7-5>*{min-width:0}' +
+    '#wbView .panel{overflow:visible;min-width:0}' +
+    '.bs-wbt{overflow-x:auto;margin:10px 0;-webkit-overflow-scrolling:touch}' +
+    '.bs-wbt table{width:100%;min-width:560px;table-layout:auto;margin:0}' +
+    '.bs-wbt td,.bs-wbt th{vertical-align:top;white-space:normal}' +
+    '.bs-wbt td input{min-width:150px;box-sizing:border-box}' +
+    '#wbSections input[type="text"],#wbSections textarea{box-sizing:border-box;max-width:100%}';
   document.head.appendChild(st);
 
   /* ---------- platform by viewport (BS-AI-003 §2.4) ---------- */
@@ -501,12 +520,26 @@
     if ($('r7earlier')) $('r7earlier').textContent = '';
     if ($('wbCards')) $('wbCards').innerHTML = '<div class="empty t13 sec">Loading…</div>';
   }
+  /* the Consent and history line shipped with the preview's sample date (3 November 2026) */
+  function consentLine(text) {
+    var h = $('e6c'); var row = h && h.closest('.lrow');
+    var el = row && [].slice.call(row.querySelectorAll('.t13.sec')).filter(function (x) { return /consent|Part 5/i.test(x.textContent) || x.dataset.bsConsent; })[0];
+    if (el) { el.dataset.bsConsent = '1'; el.textContent = text; }
+  }
   function paintScreen6() {
     var e = EDNA; if (!e) return;
+    if (!e.taken) consentLine('Part 5 comparison: asked during your assessment.');
+    else {
+      var lastD = e.assessments && e.assessments.length ? new Date(e.assessments[e.assessments.length - 1].date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+      consentLine(e.p5 && e.p5.consent ? 'Part 5 comparison: consent given' + (lastD ? ' ' + lastD : '') : 'Part 5 comparison: consent not given. Your adaptation levels still show in your report.');
+    }
     var hb = [$('e6basic'), $('e6detail'), $('e6retake')];
     if (!e.taken) {
       hb.forEach(function (b) { if (b) b.classList.add('hide'); });
       if ($('e6h')) $('e6h').textContent = 'Not taken yet';
+      /* no result, no type: the preview's "Part 1 showed you are Mixed…" line and loop figure go */
+      ['e6result', 'e6stress', 'e6retakeNote'].forEach(function (id) { if ($(id)) $(id).textContent = ''; });
+      if ($('loopFig6')) $('loopFig6').innerHTML = '';
       if ($('parts6')) $('parts6').innerHTML = takePanel('Your results appear here part by part once you finish. The assessment is free and your basic report comes with it.');
       if ($('e6meta')) $('e6meta').textContent = 'No assessment yet';
       return;
@@ -518,6 +551,17 @@
       : window.loopFigure('logic', true) + '<div style="height:8px"></div>' + window.loopFigure('feeling', true);
     $('e6retakeNote').textContent = e.retake;
     $('e6detail').textContent = e.purchased ? 'Open your Advanced Report' : 'Get your Advanced Report · £99';
+    /* these three shipped as preview chrome with no handlers (Munawar, 24 Nov) */
+    var wire = function (b, fn) { if (b && !b.dataset.bsWired) { b.dataset.bsWired = '1'; b.addEventListener('click', fn); } };
+    wire($('e6basic'), function () { openReport('basic'); });
+    wire($('e6detail'), function () {
+      if (EDNA && EDNA.purchased) openReport('detailed');
+      else topGo('https://go.brandscaling.co.uk/checkout-page-quiz-report');
+    });
+    /* a retake opens only after Workbook 1 and 10 logged decisions; the note beside it says so.
+       Until /edna has a retake entry the button explains rather than pretends */
+    var rt = $('e6retake');
+    if (rt) { rt.disabled = true; rt.title = e.retake || 'Retake opens after Workbook 1 and 10 logged decisions.'; rt.style.opacity = '.55'; rt.style.cursor = 'not-allowed'; }
     var mixed = e.light;
     var parts = [
       [2, (e.p2.result || '—') + (e.p2.second ? '<div class="t13 sec">close second: ' + e.p2.second + '</div>' : ''), mixed ? 'Mixed results have no subtype until the retake; a likely subtype is shown.' : 'How you execute: the subtype inside your core type.'],
@@ -554,7 +598,7 @@
     if ($('r7b') && $('r7b').nextElementSibling) $('r7b').nextElementSibling.textContent = 'Seven parts, your results in words · free with the assessment · ' + fmtD(lastA.date);
     bBtns.forEach(function (b) {
       b.classList.remove('hide');
-      if (!b.dataset.bsWired) { b.dataset.bsWired = '1'; b.addEventListener('click', function () { openReport(); }); }
+      if (!b.dataset.bsWired) { b.dataset.bsWired = '1'; b.addEventListener('click', function () { openReport('basic'); }); }
     });
     if ($('r7earlier')) $('r7earlier').textContent = e.assessments.length > 1
       ? e.assessments.slice(0, -1).map(function (a) { return fmtD(a.date) + ' · ' + a.name; }).join(' · ')
@@ -569,7 +613,7 @@
     $('r7parts').innerHTML = rows.map(function (rw) {
       return '<div class="rrow' + (has ? '' : ' locked') + '"' + (has ? ' data-r7open="1" style="cursor:pointer"' : '') + '><span class="t13 sec" style="width:56px;flex:none">' + (rw[0] < 8 ? 'Part ' + rw[0] : 'Plus') + '</span><span class="t19">' + rw[1] + '</span><span class="t13 b">' + (has ? 'Open ›' : '🔒') + '</span></div>';
     }).join('');
-    var open = function () { openReport(); };
+    var open = function () { openReport('detailed'); };
     var o = $('r7open'); if (o) o.addEventListener('click', open);
     var b = $('r7buy'); if (b) b.addEventListener('click', function () { topGo('https://go.brandscaling.co.uk/checkout-page-quiz-report'); });
     document.querySelectorAll('#r7parts [data-r7open]').forEach(function (rw) { rw.addEventListener('click', open); });
@@ -666,7 +710,7 @@
           return '<td class="t13">' + runsHTML(cell.runs, cell.text) + '</td>';
         }).join('') + '</tr>';
       }).join('');
-      return '<table class="logtable t13" style="margin:10px 0;width:100%">' + (head ? '<thead><tr>' + head + '</tr></thead>' : '') + '<tbody>' + body + '</tbody></table>';
+      return '<div class="bs-wbt"><table class="logtable t13">' + (head ? '<thead><tr>' + head + '</tr></thead>' : '') + '<tbody>' + body + '</tbody></table></div>';
     }
     return b.text ? '<div class="t13" style="margin:6px 0">' + escT(b.text) + '</div>' : '';
   }
@@ -1016,7 +1060,31 @@
     LIVEROOM = null;
     if ($('rooms')) $('rooms').innerHTML = '<div class="empty t13 sec">Loading…</div>'; /* not the preview's example rooms */
     api('/rooms').then(function (d) { if (d.__status === 200) paintRoomsList(d.rooms || []); });
+    paintWaiting();
   };
+  /* "Waiting for you" (24 Nov): room invitations and rooms waiting on the person. They lived
+     in Home's Needs you, which the dashboard does not show, so they sit atop Decision rooms. */
+  function paintWaiting() {
+    var list = $('rooms'); if (!list) return;
+    var host = $('bsWaiting');
+    if (!host) { list.insertAdjacentHTML('beforebegin', '<div id="bsWaiting"></div>'); host = $('bsWaiting'); }
+    api('/needs-you').then(function (d) {
+      if (d.__status !== 200) return;
+      var items = (d.items || []).filter(function (r) { return (r.event === 'N1' && r.invite_token) || r.room_id; });
+      if (!items.length) { host.innerHTML = ''; return; }
+      host.innerHTML = '<div class="t13 sec b" style="margin:0 0 6px">Waiting for you</div>' + items.map(function (r, i) {
+        return '<div class="need" style="margin-bottom:8px"><div><span class="t13 k">' + escT(NYKIND[r.event] || r.event) + '</span> <span class="t19">' + escT(r.title) +
+          '</span><div class="t13 sec">' + escT(r.line || '') + '</div></div>' +
+          '<button class="btn small primary" type="button" data-wt="' + i + '">' + escT(r.action || (r.invite_token ? 'Join' : 'Open')) + '</button></div>';
+      }).join('');
+      host.onclick = function (e) {
+        var b = e.target.closest && e.target.closest('[data-wt]'); if (!b) return;
+        var r = items[parseInt(b.dataset.wt, 10)]; if (!r) return;
+        if (r.event === 'N1' && r.invite_token) { joinInvite(r.invite_token); return; }
+        if (r.room_id) openLiveRoom(r.room_id);
+      };
+    });
+  }
   document.addEventListener('click', function (e) {
     var b = e.target.closest && e.target.closest('[data-liveroom]');
     if (!b) return;
@@ -1157,13 +1225,18 @@
       if (res.needs_edna) alert('Take your free E-DNA first: your loop and mentor come from it. The room is open to you meanwhile.');
       /* joined from an emailed or shared link: continue in the dashboard, on this room */
       if (!EMBED && !LOCAL && res.room_id) { topGo('/?di=rooms&room=' + res.room_id); return; }
-      if (window.showScreen) window.showScreen(4);
-      setTimeout(function () { if (res.room_id) openLiveRoom(res.room_id); patchNeedsYou(); }, 400);
+      var onRooms = window.BS_SCREEN === 4;
+      if (!onRooms && window.showScreen) window.showScreen(4);
+      setTimeout(function () { if (res.room_id) openLiveRoom(res.room_id); patchNeedsYou(); paintWaiting(); }, onRooms ? 0 : 400);
     });
   }
   (function () {
     var m = location.hash.match(/#invite=([A-Za-z0-9_-]+)/);
-    if (m) joinInvite(m[1]);
+    var tok = m ? m[1] : null;
+    if (!tok) { try { tok = localStorage.getItem('bs_pending_invite'); } catch (e) { /* storage blocked */ } }
+    if (!tok) return;
+    try { localStorage.removeItem('bs_pending_invite'); } catch (e) { /* storage blocked */ }
+    setTimeout(function () { joinInvite(tok); }, EMBED ? 300 : 0);
   })();
 
   /* ---------- Home · "How you decide" and the workbooks tile, from real data ---------- */
@@ -1856,12 +1929,16 @@
       var n = NUM[e.data.bsShow];
       if (n && n !== cur) window.showScreen(n);
     });
-    setTimeout(function () {
+    /* after DOMContentLoaded, which comes after the page's trailing showScreen(1) — a plain
+       setTimeout could run first when the parser yields between scripts (seen in testing) */
+    var firstScreen = function () {
       READY = true;
       window.showScreen(NUM[QS.get('screen')] || 5);
       var rm = QS.get('room');
       if (rm) setTimeout(function () { openLiveRoom(rm); }, 900);
-    }, 0);
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', firstScreen);
+    else setTimeout(firstScreen, 0);
   })();
 
   boot();
