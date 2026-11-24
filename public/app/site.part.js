@@ -108,6 +108,9 @@
     /* the set-your-password banner is the preview's example state (A3); everyone on /app signed in
        with a real password, and the report-gate flow that creates password-less accounts is not built yet */
     '#homeBanners .gban:not(.warn){display:none!important}' +
+    /* real states (One more round, Not yet, Review due, Waiting on you) used the preview's amber
+       .chip.ex, which production hides as the Example-data chip — so they rendered blank (24 Nov) */
+    '.chip.exv{background:var(--amber-p3);color:var(--amber-d2)}' +
     /* the workbook player (24 Nov): one column, so the exercises get the full width, and a
        wide table scrolls inside its own box instead of being cut off at the panel edge */
     '#wbView .grid-7-5{grid-template-columns:minmax(0,1fr)!important}' +
@@ -297,7 +300,7 @@
     if (!parts.length) parts.push('under a minute');
     return parts.join(' ');
   }
-  var STCHIP = { open: ['grey', 'In the Frame'], decided: ['type', 'Decided'], review: ['ex', 'Review due'], reviewed: ['type', 'Reviewed'] };
+  var STCHIP = { open: ['grey', 'In the Frame'], decided: ['type', 'Decided'], review: ['exv', 'Review due'], reviewed: ['type', 'Reviewed'] };
   function lpCell(v) {
     var LW = { L: 'Logic', F: 'Feeling' };
     if (!v.began) return '–';
@@ -358,12 +361,20 @@
           return '<div class="obox ' + cls + '"><div class="t13 sec"><b class="w">' + W + '</b> · ' + (lbl[names[e.box]] || e.box) + (e.round > 1 ? ' · round ' + e.round : '') + '</div><div class="t19">' + e.text + '</div></div>';
         }).join('');
       });
+    } else if (v.raw.room_id) {
+      /* a room decision: its boxes and everyone's entries live in the room (24 Nov) */
+      $('o3boxes').innerHTML = '<div class="t19 sec">Made in a Decision Room: the boxes and everyone’s entries are in the room.</div>';
     } else {
-      $('o3boxes').innerHTML = '<div class="t19 sec">Added by hand: no boxes. Open it in the Frame to check how it was made.</div>';
+      $('o3boxes').innerHTML = '<div class="t19 sec">Added by hand: no boxes.</div>';
+    }
+    var ro = $('o3reopen');
+    if (ro) {
+      ro.classList.toggle('hide', !v.raw.decision_id && !v.raw.room_id);
+      ro.textContent = v.raw.room_id ? 'Open the room' : 'Reopen in the Frame';
     }
     $('o3ready').innerHTML = v.read
-      ? '<div class="t19"><b>Rests on:</b> ' + (v.rests || '–') + '</div><div class="t19"><b>Read:</b> <span class="chip ' + (v.read.ready === 'Ready' ? 'type' : 'ex') + '" style="display:inline-block">' + v.read.ready + '</span></div>'
-      : '<div class="t19 sec">' + (v.st === 'open' ? 'Not yet checked. Reopen the Frame to finish it.' : 'Added by hand; no readiness read.') + '</div>';
+      ? '<div class="t19"><b>Rests on:</b> ' + (v.rests || '–') + '</div><div class="t19"><b>Read:</b> <span class="chip ' + (v.read.ready === 'Ready' ? 'type' : 'exv') + '" style="display:inline-block">' + v.read.ready + '</span></div>'
+      : '<div class="t19 sec">' + (v.st === 'open' ? 'Not yet checked. Reopen the Frame to finish it.' : v.raw.room_id ? 'No readiness read yet.' : 'Added by hand; no readiness read.') + '</div>';
     $('o3log').innerHTML = '<div class="t19">' + v.d + ' · ' + v.t + (v.began ? ' · began ' + (v.began === 'L' ? 'Logic' : 'Feeling') : '') + (v.fin ? ', finished ' + (v.fin === 'L' ? 'Logic' : 'Feeling') : '') + ' · ' + v.rounds + ' round' + (v.rounds > 1 ? 's' : '') + ' · ' + (v.warn ? v.warn + ' warning' : 'no warning') + (v.dec ? ' · decided: ' + v.dec : ' · not yet decided') + (v.rests ? ' · rests on ' + v.rests : '') + (v.rev ? ' · review ' + v.rev : '') + '</div>';
     var oc = v.raw.review_answers || null;
     $('o3review').innerHTML = v.raw.outcome
@@ -376,6 +387,14 @@
     if (sr) sr.addEventListener('click', function () { if (window.showScreen) window.showScreen(12); });
     o.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
+  /* "Open the room" on a room row: to the room itself, not the preview's empty full Frame */
+  window.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('#o3reopen'); if (!b) return;
+    var v = REVIEW_ROW; if (!v || !v.raw || !v.raw.room_id) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    if (window.showScreen) window.showScreen(4);
+    setTimeout(function () { openLiveRoom(v.raw.room_id); }, 300);
+  }, true);
   function refreshLogScreen() {
     Promise.all([api('/log?view=mine'), api('/log?view=room')]).then(function (res) {
       LOGCACHE.mine = (res[0].rows || []).map(toView);
@@ -841,7 +860,7 @@
     return '<div class="inp ' + loop + '"><div class="tag"><span class="w">' + label + '</span><span class="n">' + sub + '</span></div><div>' + inner + '</div></div>';
   }
   function roomStatus(r) {
-    var map = { open: ['grey', 'In the Frame'], waiting_owner: ['ex', 'Waiting on you'], waiting_room: ['grey', 'Waiting on the room'], ready: ['type', 'Ready'], decided: ['type', 'Decided'], reviewed: ['type', 'Reviewed'], closed: ['grey', 'Closed'] };
+    var map = { open: ['grey', 'In the Frame'], waiting_owner: ['exv', 'Waiting on you'], waiting_room: ['grey', 'Waiting on the room'], ready: ['type', 'Ready'], decided: ['type', 'Decided'], reviewed: ['type', 'Reviewed'], closed: ['grey', 'Closed'] };
     return map[r.status] || ['grey', r.status];
   }
   function paintRoomsList(rooms) {
@@ -937,7 +956,7 @@
       var rd = check.response.readiness;
       h += '<div class="xcheck"><div class="t13 sec b" style="margin-bottom:4px">Cross-check · ' + (check.mentor === 'architect' ? 'AI Architect' : 'AI Alchemist') + '</div>' +
         '<div class="t19"><b>Rests on:</b> ' + rd.rests_on + '</div><div class="t19"><b>Missing:</b> ' + rd.missing + '</div>' +
-        '<div class="t19"><b>Read:</b> <span class="chip ' + (String(rd.read).indexOf('Ready') === 0 ? 'type' : 'ex') + '" style="display:inline-block">' + rd.read + '</span></div></div>';
+        '<div class="t19"><b>Read:</b> <span class="chip ' + (String(rd.read).indexOf('Ready') === 0 ? 'type' : 'exv') + '" style="display:inline-block">' + rd.read + '</span></div></div>';
     }
     if (owner && !sealed) {
       h += '<div class="btnrow" style="margin-top:14px"><button class="btn primary small" type="button" id="rcheckBtn">Check my decision</button><button class="btn secondary small" type="button" id="rroundBtn">Ask the room for one more round</button></div>';
@@ -1677,7 +1696,7 @@
       rd.innerHTML = '<div class="t13 sec b" style="margin-bottom:4px">Readiness read · ' + mentorName + '</div>' +
         '<div class="t19"><b>Rests on:</b> ' + r.readiness.rests_on + '</div>' +
         '<div class="t19"><b>Missing:</b> ' + r.readiness.missing + '</div>' +
-        '<div class="t19"><b>Read:</b> <span class="chip ' + (String(r.readiness.read).indexOf('Ready') === 0 ? 'type' : 'ex') + '" style="display:inline-block">' + r.readiness.read + '</span></div>';
+        '<div class="t19"><b>Read:</b> <span class="chip ' + (String(r.readiness.read).indexOf('Ready') === 0 ? 'type' : 'exv') + '" style="display:inline-block">' + r.readiness.read + '</span></div>';
     }
   }
   function doneCard(log) {
