@@ -397,6 +397,7 @@
     });
   }
 
+  var SCROLL_PART = (function () { var m = /^#detailed-([1-7])$/.exec(window.location.hash); return m ? Number(m[1]) : null; })();
   function lockedScreen(which) {
     var el = document.getElementById('screen');
     document.getElementById('crumb').textContent = 'E-DNA · ' + (which === 'adapt' ? 'Your plan' : 'Detailed report');
@@ -511,6 +512,12 @@
     addPdfButton(s);
     addDashboardButton(s);
     addReportToggle(s);
+    /* #detailed-N (DI · My reports, a part row: 24 Nov): open the Advanced Report at Part N */
+    if (s === 'detailed' && SCROLL_PART) {
+      var secs = document.querySelectorAll('#screen section.rd'); var tgt = secs[SCROLL_PART - 1];
+      SCROLL_PART = null;
+      if (tgt) setTimeout(function () { tgt.scrollIntoView({ block: 'start' }); }, 60);
+    }
     retargetForPurchased(s);
     if (s === 'finish' || s === 'report' || s === 'end') submitIfComplete();
     snapshot();
@@ -530,14 +537,14 @@
          'adapt' screen; renderGuarded shows the £99 gate until purchased, as on iOS.
          #detailed (the purchase email's button, 23 Nov 2026) opens the detailed report. */
       if (window.location.hash === '#plan') at = screens.indexOf('adapt');
-      if (window.location.hash === '#detailed') at = screens.indexOf('detailed');
+      if (window.location.hash === '#detailed' || SCROLL_PART) at = screens.indexOf('detailed');
       restored = true;
       renderGuarded();
     } else if (restoreLocal()) {
       /* #plan and #detailed work here too: a completed-but-locally-restored person still
          reaches them (the £99 gate shows until the purchase flag is confirmed remotely). */
       if (window.location.hash === '#plan' && screens[at] === 'report') at = screens.indexOf('adapt');
-      if (window.location.hash === '#detailed' && screens[at] === 'report') at = screens.indexOf('detailed');
+      if ((window.location.hash === '#detailed' || SCROLL_PART) && screens[at] === 'report') at = screens.indexOf('detailed');
       restored = true;
       renderGuarded();
       /* one send only: a queued payload retries; otherwise a complete run submits fresh */

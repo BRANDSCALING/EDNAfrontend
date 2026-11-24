@@ -42,9 +42,11 @@
   var EMBED = QS.get('embed') === '1' && window.top !== window.self;
   function topGo(u) { try { (EMBED ? window.top : window).location.href = u; } catch (e) { location.href = u; } }
   /* the reports open in the dashboard's own report view when embedded ('basic' or 'detailed') */
-  function openReport(which) {
-    if (EMBED) { try { parent.postMessage({ bsGo: 'profile', report: which || 'basic' }, location.origin); return; } catch (e) { /* fall through */ } }
-    location.href = '/edna/index.html' + (which === 'detailed' ? '#detailed' : '');
+  function openReport(which, part) {
+    /* which: basic | detailed | plan; part 1-7 opens the Advanced Report at that part (24 Nov) */
+    var hash = which === 'plan' ? '#plan' : which === 'detailed' ? (part ? '#detailed-' + part : '#detailed') : '';
+    if (EMBED) { try { parent.postMessage({ bsGo: 'profile', report: which || 'basic', hash: hash }, location.origin); return; } catch (e) { /* fall through */ } }
+    location.href = '/edna/index.html' + hash;
   }
   var sess = cognitoSession();
   var localUid = LOCAL ? QS.get('uid') : null; /* local testing only */
@@ -387,6 +389,41 @@
     if (sr) sr.addEventListener('click', function () { if (window.showScreen) window.showScreen(12); });
     o.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
+  /* "Reopen in the Frame" on a decision row (24 Nov): carry on in the one-step Frame where the
+     decision stopped — its boxes loaded, at the first empty box. A decided row is reopened first
+     (POST /reopen; a re-check is not charged again, BS-AI-007 §3). Before, it opened the full
+     Frame read view, which the dashboard then bounced to an empty Make a decision page. */
+  function resumeDecision(id, wasDecided) {
+    var load = function () {
+      api('/decisions/' + id).then(function (res) {
+        if (res.__status !== 200 || !res.decision) { bsNotice('Could not open it', res.message || 'Try again.'); return; }
+        var dd = res.decision;
+        S.id = dd.id; S.first = dd.order === 'logic_first' ? 'logic' : 'feeling';
+        S.started = dd.kind === 'started'; S.urgent = !!dd.urgent; S.rounds = dd.rounds || 1; S.busy = false;
+        S.entries = {};
+        (res.entries || []).slice().sort(function (a, b) { return (a.round || 1) - (b.round || 1); })
+          .forEach(function (en) { if (STEPS.indexOf(en.box) >= 0) S.entries[en.box] = en.text; });
+        var next = STEPS.filter(function (b) { return !S.entries[b]; })[0];
+        S.i = next ? STEPS.indexOf(next) : STEPS.length - 1;
+        if (window.showScreen) window.showScreen(5, 'resume');
+        setTimeout(function () {
+          ['ready0', 'log0', 'done0', 'doneCard'].forEach(function (x) { if ($(x)) $(x).classList.add('hide'); });
+          $('lbox').classList.remove('hide'); $('l0').classList.add('hide'); $('l1').classList.remove('hide');
+          $('l1dec').textContent = dd.text;
+          if ($('orderpick')) $('orderpick').classList.add('hide');
+          setMentor(S.first === 'logic' ? 'arch' : 'alch'); showBox();
+          mentorEvent('reopened', 'Reopened from the Decision log');
+        }, 80);
+      });
+    };
+    if (wasDecided) api('/decisions/' + id + '/reopen', { method: 'POST' }).then(load); else load();
+  }
+  window.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('#o3reopen'); if (!b) return;
+    var v = REVIEW_ROW; if (!v || !v.raw || !v.raw.decision_id || v.raw.room_id) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    resumeDecision(v.raw.decision_id, !!v.raw.decided_text);
+  }, true);
   /* "Open the room" on a room row: to the room itself, not the preview's empty full Frame */
   window.addEventListener('click', function (e) {
     var b = e.target.closest && e.target.closest('#o3reopen'); if (!b) return;
@@ -631,12 +668,17 @@
       : 'Seven parts and what to adapt · £99 · includes Workbook 1 and 10 decisions';
     var rows = PARTS.map(function (p, i) { return [i + 1, HEAD[i + 1] ? p + ' (' + HEAD[i + 1] + ')' : p]; }).concat([[8, 'What to adapt, and what the app provides']]);
     $('r7parts').innerHTML = rows.map(function (rw) {
-      return '<div class="rrow' + (has ? '' : ' locked') + '"' + (has ? ' data-r7open="1" style="cursor:pointer"' : '') + '><span class="t13 sec" style="width:56px;flex:none">' + (rw[0] < 8 ? 'Part ' + rw[0] : 'Plus') + '</span><span class="t19">' + rw[1] + '</span><span class="t13 b">' + (has ? 'Open ›' : '🔒') + '</span></div>';
+      return '<div class="rrow' + (has ? '' : ' locked') + '"' + (has ? ' data-r7open="' + rw[0] + '" style="cursor:pointer"' : '') + '><span class="t13 sec" style="width:56px;flex:none">' + (rw[0] < 8 ? 'Part ' + rw[0] : 'Plus') + '</span><span class="t19">' + rw[1] + '</span><span class="t13 b">' + (has ? 'Open ›' : '🔒') + '</span></div>';
     }).join('');
     var open = function () { openReport('detailed'); };
     var o = $('r7open'); if (o) o.addEventListener('click', open);
     var b = $('r7buy'); if (b) b.addEventListener('click', function () { topGo('https://go.brandscaling.co.uk/checkout-page-quiz-report'); });
-    document.querySelectorAll('#r7parts [data-r7open]').forEach(function (rw) { rw.addEventListener('click', open); });
+    document.querySelectorAll('#r7parts [data-r7open]').forEach(function (rw) {
+      rw.addEventListener('click', function () {
+        var n = Number(rw.dataset.r7open);
+        if (n === 8) openReport('plan'); else openReport('detailed', n);   /* the exact part (24 Nov) */
+      });
+    });
   }
   function paintScreen8() {
     if (EDNA && !EDNA.taken) {
@@ -1875,6 +1917,17 @@
           if (c.__status === 503) return unavailable();
           if (c.__status !== 200) { say(c.message || 'Something went wrong on our side.'); return; }
           showReply(c.response, c.mentor === 'architect' ? 'AI Architect' : 'AI Alchemist');
+          if (c.still_open) {
+            /* 'Not yet': the Frame is not finished, so no Done card — back to the box the
+               mentor names, the decision stays In the Frame, and Check runs again (24 Nov) */
+            $('done0').classList.add('hide');
+            var fb = c.response && c.response.focus_box;
+            var fi = STEPS.indexOf(fb);
+            S.i = fi >= 0 ? fi : 0; showBox();
+            var lc = $('log0'); if (lc) { lc.classList.remove('hide'); lc.innerHTML = '<div class="t13 sec b" style="margin-bottom:4px">Not yet decided</div><div class="t19">Your mentor’s read is Not yet, so this stays In the Frame. Fill the box it names, then Check again.</div>'; }
+            patchLog();
+            return;
+          }
           if (c.log) doneCard(c.log);
         }).catch(function () { S.busy = false; unavailable(); });
         return;
@@ -2021,10 +2074,14 @@
       });
     } catch (e) { /* older browsers: the chips still update on load */ }
     if (!EMBED) return;
+    /* screens that belong to a tab: the full Frame (2) is part of Make a decision, the review (12)
+       of the log. Without this the dashboard's echo of 'make' sent the full Frame and a reopened
+       decision back to an empty Make a decision page (24 Nov) */
+    var BELONGS = { make: [5, 2], log: [3, 12], rooms: [4], reports: [7], workbooks: [8], edna: [6], scaling: [14] };
     window.addEventListener('message', function (e) {
       if (e.origin !== location.origin || !e.data || !e.data.bsShow) return;
       var n = NUM[e.data.bsShow];
-      if (n && n !== cur) window.showScreen(n);
+      if (n && (BELONGS[e.data.bsShow] || [n]).indexOf(cur) < 0) window.showScreen(n);
     });
     /* after DOMContentLoaded, which comes after the page's trailing showScreen(1) — a plain
        setTimeout could run first when the parser yields between scripts (seen in testing) */

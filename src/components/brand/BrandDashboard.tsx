@@ -48,7 +48,8 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
   /* the E-DNA reports open from DI · My reports (the old "My E-DNA profile" tab is hidden,
      Munawar 24 Nov), so the report view counts as part of My reports */
   const isReport = view === 'profile' || view === 'plan';
-  const [reportKind, setReportKind] = useState<'basic' | 'detailed'>('basic');
+  /* the report page's hash: '' basic, '#detailed', '#detailed-N' (a part), '#plan' */
+  const [reportKind, setReportKind] = useState<string>('');
 
   /* the DI iframe loads once per visit to the DI section; switching tabs posts a message
      so the app changes screen without reloading */
@@ -76,7 +77,9 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
       if (e.origin !== window.location.origin || !e.data) return;
       if (e.data.bsGo === 'overview') { onOpenMemberView('overview'); return; }
       if (e.data.bsGo === 'profile') {
-        setReportKind(e.data.report === 'detailed' ? 'detailed' : 'basic');
+        const h = typeof e.data.hash === 'string' && /^(#detailed(-[1-7])?|#plan)?$/.test(e.data.hash)
+          ? e.data.hash : (e.data.report === 'detailed' ? '#detailed' : '');
+        setReportKind(h);
         onOpenMemberView('profile');
         return;
       }
@@ -143,7 +146,11 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
           </button>
           {/* "My E-DNA profile" and "Workbooks" are hidden (Munawar, 24 Nov): the reports open from
               DI · My reports and the workbooks are DI · My workbooks */}
-          <button className={view === 'chat' ? 'on' : ''} onClick={() => go('chat')}>💬 AI mentors</button>
+          {/* AI mentors: Coming soon, matching the Overview card (24 Nov) */}
+          <button className="bs-soon bs-soon-off" disabled aria-disabled="true">
+            <span>💬 AI mentors</span>
+            <span className="bs-soon-chip">Soon</span>
+          </button>
           {/* Recordings are Elite-only and no Elite members exist yet (Fariza, 24 Nov 2026);
               hidden until the Elite tier is live, when this gates on the member's tier. */}
           {false && (
@@ -162,7 +169,7 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
               #detailed opens the Advanced Report (from DI · My reports, 24 Nov) */}
           <iframe
             key={reportKind}
-            src={'/edna/index.html?embed=1' + (reportKind === 'detailed' ? '#detailed' : '')}
+            src={'/edna/index.html?embed=1' + reportKind}
             className="bs-edna-frame bs-edna-frame-back"
             title="Your E-DNA report"
           />
@@ -279,7 +286,7 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
                     {edna.alternateLoop}
                   </div>
                 )}
-                <button className="bs-btn bs-btn-action" onClick={() => { setReportKind('basic'); onOpenMemberView('profile'); }} style={{ marginTop: 6 }}>
+                <button className="bs-btn bs-btn-action" onClick={() => { setReportKind(''); onOpenMemberView('profile'); }} style={{ marginTop: 6 }}>
                   View your E-DNA report
                 </button>
               </>
@@ -319,8 +326,9 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
                 Alchemist in feeling and story. Your primary mentor is matched from your E-DNA.
               </p>
             )}
-            <button className="bs-btn bs-btn-outline" onClick={() => onOpenMemberView('chat')} style={{ marginTop: 6 }}>
-              Ask your mentors
+            {/* the mentors chat is not open yet (Munawar, 24 Nov): Coming soon, not a dead end */}
+            <button className="bs-btn bs-btn-outline bs-btn-soon" disabled aria-disabled="true" style={{ marginTop: 6 }}>
+              Coming soon
             </button>
           </section>
 
@@ -334,16 +342,8 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
               Open your workbooks
             </button>
           </section>
-
-          <section className="bs-card">
-            <div className="bs-card-head"><h2>Recordings</h2></div>
-            <p className="bs-empty-copy">
-              Deal Clinic and Mastermind Day recordings, synced as new sessions are published.
-            </p>
-            <button className="bs-btn bs-btn-outline" onClick={() => onOpenMemberView('zoom-recordings')}>
-              Watch recordings
-            </button>
-          </section>
+          {/* Recordings removed from the Overview (Munawar, 24 Nov; Elite-only, no Elite members
+              yet — Fariza 24 Nov). The view stays for when the tier is live. */}
         </div>
       </main>
       )}
