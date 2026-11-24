@@ -122,21 +122,45 @@
     api('/log').then(function (l) {
       if (l.__status !== 200) return;
       var rows = l.rows || [];
+      var none = '<tr><td colspan="4" class="t13 sec">No decisions yet. Your first one appears here.</td></tr>';
       var short = rows.slice(0, 3).map(function (r) {
         return '<tr class="' + (r.written_by === 'person' ? 'by-hand' : 'by-mentor') + '"><td>' +
           new Date(r.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + '</td><td>' +
           r.text + '</td><td>' + statusChip(r) + '</td></tr>';
       }).join('');
-      if ($('logRows0') && rows.length) $('logRows0').innerHTML = short;
+      if ($('logRows0')) $('logRows0').innerHTML = rows.length ? short : none;
       var full = rows.map(function (r) {
         return '<tr class="' + (r.written_by === 'person' ? 'by-hand' : 'by-mentor') + '"><td>' +
           new Date(r.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + '</td><td>' +
           r.text + '</td><td><span class="lp">' + loopArrow(r.began_loop, r.finished_loop) + '</span></td><td>' +
           statusChip(r) + '</td></tr>';
       }).join('');
-      if ($('logRows') && rows.length) $('logRows').innerHTML = full;
+      if ($('logRows')) $('logRows').innerHTML = rows.length ? full : none;
     });
     patchNeedsYou();
+  }
+
+  /* The preview paints its example data every time a screen opens (Sample Name, the
+     Manchester room, the £750 day-rate rows); the real data then replaces it when the
+     API answers, so for a moment members saw content that was not theirs and read it
+     as someone else's (Munawar, 24 Nov). Each screen wrapper now clears the examples
+     to a quiet loading state in the same paint, before anything asynchronous. */
+  function clearHomeExamples() {
+    ['name', 'name0'].forEach(function (id) {
+      var el = $(id); if (el) el.textContent = PROFILE && PROFILE.first_name ? PROFILE.first_name : '';
+    });
+    if (!PROFILE) {
+      document.querySelectorAll('#main0 .chip.type, #main1 .chip.type').forEach(function (c) { c.textContent = '…'; });
+    }
+    var hold = '<div class="empty t13 sec">Loading…</div>';
+    if ($('needs0')) $('needs0').innerHTML = hold;
+    if ($('howdecide0')) $('howdecide0').innerHTML = hold;
+    if ($('logRows0')) $('logRows0').innerHTML = '<tr><td colspan="3" class="t13 sec">Loading…</td></tr>';
+    var bell = $('bellN'); if (bell) { bell.textContent = '0'; bell.classList.add('zero'); }
+    ['credits', 'credits0'].forEach(function (id) {
+      var el = $(id);
+      if (el) el.innerHTML = '<div class="t13 sec">Your decisions</div><div class="t19 b">…</div><div class="t13 sec">1 credit = one decision taken to Check</div>';
+    });
   }
 
   /* ---------- Needs you + the bell (BS-AI-009 §5): live rows, cleared by the action ---------- */
@@ -308,6 +332,10 @@
   var origOpenScreen3 = window.openScreen3;
   window.openScreen3 = function (key) {
     if (origOpenScreen3) origOpenScreen3(key);
+    /* wipe the preview's example rows, counts and opened example row before the fetch */
+    if ($('rows3')) $('rows3').innerHTML = '<tr><td colspan="9" class="t13 sec">Loading…</td></tr>';
+    if ($('counts3')) $('counts3').innerHTML = '';
+    var o3 = $('open3'); if (o3) o3.classList.add('hide');
     refreshLogScreen();
   };
   /* my rows: capture phase so the preview's own row handler never fires */
@@ -676,6 +704,7 @@
   window.openScreen4 = function (key) {
     if (origOpenScreen4) origOpenScreen4(key);
     LIVEROOM = null;
+    if ($('rooms')) $('rooms').innerHTML = '<div class="empty t13 sec">Loading…</div>'; /* not the preview's example rooms */
     api('/rooms').then(function (d) { if (d.__status === 200) paintRoomsList(d.rooms || []); });
   };
   document.addEventListener('click', function (e) {
@@ -832,6 +861,7 @@
   var origOpenLaunch = window.openLaunch;
   window.openLaunch = function (key) {
     if (origOpenLaunch) origOpenLaunch(key);
+    clearHomeExamples();
     patchCredits(); patchLog(); patchHowYouDecide(); patchWbTile(); paintGuestBan();
     if (PROFILE && PROFILE.first_name) {
       ['name', 'name0'].forEach(function (id) { if ($(id)) $(id).textContent = PROFILE.first_name; });
