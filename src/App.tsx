@@ -628,18 +628,15 @@ export default function App() {
     const savedJustSignedUp = localStorage.getItem('justSignedUp') === 'true';
     const wasJustSignedUp = justSignedUp || savedJustSignedUp;
     
+    // One app, one dashboard (Fariza, 24 Nov huddle): new or returning, sign-in and
+    // sign-up both land on the app's Home at /app — the old React onboarding + quiz
+    // flow is retired (the E-DNA itself lives at /edna and prompts from inside the app).
     if (wasJustSignedUp) {
-      // Clear onboarding flag so user sees the onboarding flow
       localStorage.removeItem('edna-onboarding-completed');
       localStorage.removeItem('justSignedUp');
-      // Show onboarding flow first, then quiz
-      setShowOnboarding(true);
-      setAuthMode('login'); // Reset auth mode
-      return; // Exit early - don't load quiz results
-    } else {
-      // Immediately redirect to dashboard to avoid showing home page
-      setCurrentView('dashboard');
+      setAuthMode('login');
     }
+    setCurrentView('dashboard');
 
     if (userData.email) {
       let hasResults = false;

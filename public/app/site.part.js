@@ -444,8 +444,40 @@
     for (var i = 1; i <= 5; i++) h += '<i class="' + (i <= n ? 'f' : '') + '"></i>';
     return '<span class="bar5 ' + loop + '" aria-label="' + level + '">' + h + '</span>';
   }
+  function escT(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function takePanel(sub) {
+    return '<section class="glass panel"><div class="strip" aria-hidden="true"></div>' +
+      '<h2 class="t19 b" style="margin:0 0 6px">Your E-DNA has not been taken yet</h2>' +
+      '<div class="t13 sec" style="margin-bottom:12px">' + sub + '</div>' +
+      '<a class="btn primary small" href="/edna/index.html" style="display:inline-flex">Take your E-DNA · about 25 minutes</a></section>';
+  }
+  /* the preview paints example results into screens 6–8; blank them the moment a screen
+     opens, so nobody ever reads someone else's sample data (Mashab saw it — 24 Nov) */
+  function clearEdnaScreens() {
+    document.querySelectorAll('#main6 .chip.ex, #main7 .chip.ex, #main8 .chip.ex').forEach(function (c) { c.classList.add('hide'); });
+    if ($('parts6')) $('parts6').innerHTML = '<div class="empty t13 sec">Loading…</div>';
+    if ($('e6hist')) $('e6hist').innerHTML = '';
+    if ($('e6h')) $('e6h').textContent = '…';
+    if ($('e6stress')) $('e6stress').textContent = '';
+    if ($('loopFig6')) $('loopFig6').innerHTML = '';
+    if ($('e6meta')) $('e6meta').textContent = '';
+    if ($('e6retakeNote')) $('e6retakeNote').textContent = '';
+    if ($('r7parts')) $('r7parts').innerHTML = '<div class="empty t13 sec">Loading…</div>';
+    if ($('r7b') && $('r7b').nextElementSibling) $('r7b').nextElementSibling.textContent = 'Seven parts, your results in words · free with the assessment';
+    if ($('r7earlier')) $('r7earlier').textContent = '';
+    if ($('wbCards')) $('wbCards').innerHTML = '<div class="empty t13 sec">Loading…</div>';
+  }
   function paintScreen6() {
-    var e = EDNA; if (!e || !e.taken) return;
+    var e = EDNA; if (!e) return;
+    var hb = [$('e6basic'), $('e6detail'), $('e6retake')];
+    if (!e.taken) {
+      hb.forEach(function (b) { if (b) b.classList.add('hide'); });
+      if ($('e6h')) $('e6h').textContent = 'Not taken yet';
+      if ($('parts6')) $('parts6').innerHTML = takePanel('Your results appear here part by part once you finish. The assessment is free and your basic report comes with it.');
+      if ($('e6meta')) $('e6meta').textContent = 'No assessment yet';
+      return;
+    }
+    hb.forEach(function (b) { if (b) b.classList.remove('hide'); });
     $('e6h').textContent = e.name;
     $('e6stress').textContent = 'Part 1 stress result: ' + e.stress;
     $('loopFig6').innerHTML = e.first ? window.loopFigure(e.first, e.light)
@@ -466,12 +498,33 @@
       return '<section class="glass panel part" aria-label="Part ' + p[0] + '"><div class="strip" aria-hidden="true"></div><div class="pband"><span class="t13 sec">Part ' + p[0] + '</span><span class="t19 b">' + (HEAD[p[0]] || PARTS[p[0] - 1]) + '</span></div><div class="pbody">' + p[1] + '</div><div class="t13 sec" style="margin-top:8px">' + p[2] + '</div><a href="#" class="t13 b" data-go="7" style="display:inline-block;margin-top:8px">Open in your report ›</a></section>';
     }).join('');
     $('e6hist').innerHTML = e.assessments.map(function (a) {
-      return '<tr><td>' + new Date(a.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) + '</td><td>' + a.name + '</td><td>Basic' + (a.purchased ? ' · Advanced' : '') + '</td><td><a href="/edna/index.html">Open</a></td></tr>';
+      /* Open leads to My reports, where the documents live (Munawar, 24 Nov) */
+      return '<tr><td>' + new Date(a.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) + '</td><td>' + a.name + '</td><td>Basic' + (a.purchased ? ' · Advanced' : '') + '</td><td><a href="#" data-go="7">Open</a></td></tr>';
     }).join('');
     $('e6meta').textContent = 'Taken ' + new Date(e.assessments[e.assessments.length - 1].date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) + ' · ' + e.assessments.length + ' assessment' + (e.assessments.length > 1 ? 's' : '');
   }
   function paintScreen7() {
-    var e = EDNA; if (!e || !e.taken) return;
+    var e = EDNA; if (!e) return;
+    var fmtD = function (x) { return new Date(x).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }); };
+    var bCard = $('r7b') && $('r7b').closest('.panel');
+    var bBtns = bCard ? [].slice.call(bCard.querySelectorAll('.btnrow button')) : [];
+    if (!e.taken) {
+      bBtns.forEach(function (b) { b.classList.add('hide'); });
+      $('r7dbtn').innerHTML = '';
+      $('r7dsub').textContent = 'Seven parts and what to adapt · £99 · unlocks after your assessment';
+      $('r7parts').innerHTML = takePanel('Take the free assessment first; the basic report comes with it, and the Advanced Report can be added after.');
+      if ($('r7earlier')) $('r7earlier').textContent = 'None yet.';
+      return;
+    }
+    var lastA = e.assessments[e.assessments.length - 1];
+    if ($('r7b') && $('r7b').nextElementSibling) $('r7b').nextElementSibling.textContent = 'Seven parts, your results in words · free with the assessment · ' + fmtD(lastA.date);
+    bBtns.forEach(function (b) {
+      b.classList.remove('hide');
+      if (!b.dataset.bsWired) { b.dataset.bsWired = '1'; b.addEventListener('click', function () { location.href = '/edna/index.html'; }); }
+    });
+    if ($('r7earlier')) $('r7earlier').textContent = e.assessments.length > 1
+      ? e.assessments.slice(0, -1).map(function (a) { return fmtD(a.date) + ' · ' + a.name; }).join(' · ')
+      : 'None yet. Your first E-DNA was taken on ' + fmtD(e.assessments[0].date) + '.';
     var has = e.purchased;
     $('r7dbtn').innerHTML = has
       ? '<button class="btn primary small" type="button" id="r7open">Open</button>'
@@ -488,8 +541,13 @@
     document.querySelectorAll('#r7parts [data-r7open]').forEach(function (rw) { rw.addEventListener('click', open); });
   }
   function paintScreen8() {
+    if (EDNA && !EDNA.taken) {
+      $('wbCards').innerHTML = takePanel('Your three workbooks are built from your result, each in the version for your Part 1 outcome.');
+      $('wbList8').classList.remove('hide'); $('wbView').classList.add('hide');
+      return;
+    }
     if (!WBS || !WBS.workbooks) return;
-    var list = (WBS.workbooks || []).map(function (w) { return { n: w.workbook, title: w.title || w.name, completed: !!w.isCompleted, started: !!w.hasInstance, locked: false }; })
+    var list = (WBS.workbooks || []).map(function (w) { return { id: w.id, n: w.workbook, title: w.title || w.name, completed: !!w.isCompleted, started: !!w.hasInstance, locked: false }; })
       .concat((WBS.lockedWorkbooks || []).map(function (w) { return { n: w.workbook, title: w.title || w.name, locked: true, reason: w.reason || w.lockedReason || 'Locked' }; }));
     list.sort(function (a, b) { return (a.n || 9) - (b.n || 9); });
     if (!list.length) {
@@ -498,22 +556,179 @@
     }
     $('wbCards').innerHTML = list.map(function (w) {
       var status = w.locked ? 'Locked' : w.completed ? 'Completed' : w.started ? 'In progress' : 'Not started';
-      return '<div class="wbcard' + (w.locked ? ' locked' : '') + '"><div class="t13 sec">Workbook ' + (w.n || '') + '</div><div class="t19 b" style="margin:2px 0 6px">' + w.title + '</div><div class="t13 sec">' + (w.locked ? w.reason : 'In your version') + '</div><div class="lrow" style="margin:12px 0 0"><span class="chip ' + (status === 'In progress' ? 'type' : 'grey') + '" style="display:inline-block">' + status + '</span>' + (w.locked ? '<span class="t13 b">🔒</span>' : '<button class="btn small ' + (status === 'In progress' ? 'primary' : 'secondary') + '" type="button" data-wb-live="1">' + (w.completed ? 'Open' : status === 'In progress' ? 'Continue' : 'Start') + '</button>') + '</div></div>';
+      return '<div class="wbcard' + (w.locked ? ' locked' : '') + '"><div class="t13 sec">Workbook ' + (w.n || '') + '</div><div class="t19 b" style="margin:2px 0 6px">' + w.title + '</div><div class="t13 sec">' + (w.locked ? w.reason : 'In your version') + '</div><div class="lrow" style="margin:12px 0 0"><span class="chip ' + (status === 'In progress' ? 'type' : 'grey') + '" style="display:inline-block">' + status + '</span>' + (w.locked ? '<span class="t13 b">🔒</span>' : '<button class="btn small ' + (status === 'In progress' ? 'primary' : 'secondary') + '" type="button" data-wb-live="' + w.id + '" data-wb-title="' + escT(w.title) + '">' + (w.completed ? 'Open' : status === 'In progress' ? 'Continue' : 'Start') + '</button>') + '</div></div>';
     }).join('');
     document.querySelectorAll('#wbCards [data-wb-live]').forEach(function (btn) {
-      btn.addEventListener('click', function () { location.href = '/'; }); /* the dashboard's workbooks view renders them */
+      btn.addEventListener('click', function () { openLiveWb(btn.dataset.wbLive, btn.dataset.wbTitle || ''); });
     });
     $('wbList8').classList.remove('hide'); $('wbView').classList.add('hide');
   }
+
+  /* ---------- the workbook player (24 Nov): the preview's Continue pointed at the retired
+     dashboard; this renders the person's real workbook from GET /api/user/workbooks/:id/instance
+     and autosaves answers, iOS-compatible (checkboxes comma-joined; a table = one JSON matrix) */
+  var WB_INST = null; var WB_TABLES = {}; var WB_SAVET = {};
+  function wbApiBase() { return (window.DI_API_BASE || (LOCAL ? 'http://127.0.0.1:8010' : 'https://qpbpbpiegm.us-east-1.awsapprunner.com')) + '/api/user/workbooks'; }
+  function wbHeaders() { var h = headers(); h['Content-Type'] = 'application/json'; return h; }
+  function runsHTML(runs, fallback) {
+    if (!runs || !runs.length) return escT(fallback || '');
+    return runs.map(function (r) {
+      var t = escT(r.text);
+      if (r.marks && r.marks.indexOf('bold') >= 0) t = '<b>' + t + '</b>';
+      if (r.marks && r.marks.indexOf('italic') >= 0) t = '<i>' + t + '</i>';
+      return t;
+    }).join('');
+  }
+  function wbSave(fieldKey, value) {
+    clearTimeout(WB_SAVET[fieldKey]);
+    WB_SAVET[fieldKey] = setTimeout(function () {
+      fetch(wbApiBase() + '/instances/' + WB_INST + '/answers', {
+        method: 'POST', headers: wbHeaders(), body: JSON.stringify({ fieldKey: fieldKey, value: value }),
+      }).then(function (r) {
+        var n = $('wbSavedNote'); if (!n) return;
+        n.textContent = r.ok ? 'Saved' : 'Not saved — try again';
+        if (r.ok) setTimeout(function () { if (n.textContent === 'Saved') n.textContent = ''; }, 1500);
+      }).catch(function () { var n = $('wbSavedNote'); if (n) n.textContent = 'Not saved — check your connection'; });
+    }, 600);
+  }
+  function wbBlock(b, answers, si, bi) {
+    var t = b.type;
+    if (t === 'heading_1') return '<h2 class="t19 b" style="margin:18px 0 6px">' + runsHTML(b.runs, b.text) + '</h2>';
+    if (t === 'heading_2') return '<div class="t19 b" style="margin:14px 0 4px">' + runsHTML(b.runs, b.text) + '</div>';
+    if (t === 'body') return '<div class="t13" style="margin:6px 0">' + runsHTML(b.runs, b.text) + '</div>';
+    if (t === 'list') return '<ul class="t13" style="margin:6px 0 6px 18px">' + (b.items || []).map(function (it) { return '<li style="margin:4px 0">' + runsHTML(it.runs, it.text) + '</li>'; }).join('') + '</ul>';
+    if (t === 'callout') return '<div class="t13" style="margin:10px 0;padding:10px 12px;border-left:3px solid var(--grey-p3,#c9c2d4);background:rgba(0,0,0,.035);border-radius:8px">' + runsHTML(b.runs, b.text) + '</div>';
+    if (t === 'question') {
+      var k = b.fieldKey || ('q-' + si + '-' + bi);
+      var v = answers[k] != null ? String(answers[k]) : '';
+      var q = '<div class="t13 b" style="margin:12px 0 4px">' + runsHTML(b.questionRuns, b.questionText) + '</div>';
+      if (b.questionType === 'long-text') return q + '<textarea class="t19" data-wbf="' + escT(k) + '" style="width:100%;min-height:90px">' + escT(v) + '</textarea>';
+      if (b.questionType === 'checkboxes' || b.questionType === 'single-choice') {
+        var radio = b.questionType === 'single-choice';
+        var chosen = v ? v.split(',') : [];
+        return q + (b.options || []).map(function (op) {
+          var on = radio ? v === op : chosen.indexOf(op) >= 0;
+          return '<label class="t13" style="display:flex;gap:8px;align-items:flex-start;margin:4px 0"><input type="' + (radio ? 'radio' : 'checkbox') + '" name="' + escT(k) + '" data-wbq="' + escT(k) + '" data-wbqt="' + b.questionType + '" value="' + escT(op) + '"' + (on ? ' checked' : '') + '><span>' + escT(op) + '</span></label>';
+        }).join('');
+      }
+      return q + '<input class="t19" type="text" data-wbf="' + escT(k) + '" value="' + escT(v) + '" style="width:100%">';
+    }
+    if (t === 'table') {
+      var cfg = b.tableConfig || {}; var rows = cfg.rows || [];
+      var inputs = cfg.columnInputs || null; var tk = b.fieldKey;
+      var saved = null;
+      if (inputs && tk) {
+        WB_TABLES[tk] = { rows: rows, inputs: inputs };
+        if (answers[tk]) { try { saved = JSON.parse(answers[tk]); } catch (e2) { saved = null; } }
+      }
+      var head = (cfg.headers || []).map(function (hc) { return '<th>' + runsHTML(hc.runs, hc.text) + '</th>'; }).join('');
+      var body = rows.map(function (row, ri) {
+        return '<tr>' + row.map(function (cell, ci) {
+          var ed = inputs && inputs[String(ci)];
+          if (ed && tk) {
+            var val = (saved && saved[ri] && saved[ri][ci] != null) ? saved[ri][ci] : (cell.text || '');
+            return '<td><input class="t13" type="text" data-wbt="' + escT(tk) + '" data-r="' + ri + '" data-c="' + ci + '" value="' + escT(val) + '" placeholder="' + escT(ed.placeholder || '') + '" style="width:100%"></td>';
+          }
+          return '<td class="t13">' + runsHTML(cell.runs, cell.text) + '</td>';
+        }).join('') + '</tr>';
+      }).join('');
+      return '<table class="logtable t13" style="margin:10px 0;width:100%">' + (head ? '<thead><tr>' + head + '</tr></thead>' : '') + '<tbody>' + body + '</tbody></table>';
+    }
+    return b.text ? '<div class="t13" style="margin:6px 0">' + escT(b.text) + '</div>' : '';
+  }
+  function wbTableMatrix(tk) {
+    var t = WB_TABLES[tk]; if (!t) return null;
+    var root = $('wbSections');
+    return t.rows.map(function (row, ri) {
+      return row.map(function (cell, ci) {
+        var inp = root.querySelector('[data-wbt="' + tk + '"][data-r="' + ri + '"][data-c="' + ci + '"]');
+        return inp ? inp.value : (cell.text || '');
+      });
+    });
+  }
+  function wireWbInputs() {
+    var root = $('wbSections'); if (!root || root.dataset.bsWired) return;
+    root.dataset.bsWired = '1';
+    root.addEventListener('input', function (e) {
+      var el = e.target; if (!el.dataset) return;
+      if (el.dataset.wbf) { wbSave(el.dataset.wbf, el.value); return; }
+      if (el.dataset.wbt) { var m = wbTableMatrix(el.dataset.wbt); if (m) wbSave(el.dataset.wbt, JSON.stringify(m)); }
+    });
+    root.addEventListener('change', function (e) {
+      var el = e.target; if (!el.dataset || !el.dataset.wbq) return;
+      var k = el.dataset.wbq;
+      if (el.dataset.wbqt === 'single-choice') { wbSave(k, el.value); return; }
+      var vals = [].slice.call(root.querySelectorAll('[data-wbq="' + k.replace(/"/g, '\\"') + '"]:checked')).map(function (x) { return x.value; }).sort();
+      wbSave(k, vals.join(','));
+    });
+  }
+  function openLiveWb(wbId, title) {
+    $('wbList8').classList.add('hide'); $('wbView').classList.remove('hide');
+    $('wbTitle').textContent = title || 'Workbook';
+    $('wbSections').innerHTML = '<div class="empty t13 sec">Loading your workbook…</div>';
+    WB_TABLES = {};
+    fetch(wbApiBase() + '/' + wbId + '/instance', { headers: headers() })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d || !d.success) { $('wbSections').innerHTML = '<div class="empty t13">' + escT((d && d.error) || 'Could not open this workbook.') + '</div>'; return; }
+        WB_INST = d.instance.id;
+        var st = d.workbook.structure;
+        if (typeof st === 'string') { try { st = JSON.parse(st); } catch (e) { st = null; } }
+        var answers = d.answers || {};
+        $('wbTitle').textContent = d.workbook.title || title;
+        if ($('wbPart')) $('wbPart').textContent = 'Your workbook · answers save as you type';
+        if ($('wbStatus')) $('wbStatus').textContent = d.instance.isCompleted ? 'Completed' : (d.answerCount ? 'In progress' : 'Started');
+        var h = (st && st.sections ? st.sections : []).map(function (sec, si) {
+          return '<div style="margin:0 0 10px">' + (sec.content || []).map(function (b, bi) { return wbBlock(b, answers, si, bi); }).join('') + '</div>';
+        }).join('');
+        h += '<div class="btnrow" style="margin-top:16px"><button class="btn small ' + (d.instance.isCompleted ? 'secondary' : 'primary') + '" type="button" id="wbComplete">' + (d.instance.isCompleted ? 'Completed ✓' : 'Mark this workbook complete') + '</button><span class="t13 sec" id="wbSavedNote" style="margin-left:8px"></span></div>';
+        $('wbSections').innerHTML = h;
+        wireWbInputs();
+        api('/log/summary').then(function (s2) {
+          if (s2.__status !== 200 || !$('wbCounts')) return;
+          var sm = s2.summary || {};
+          $('wbCounts').innerHTML = '<div class="count"><div class="t13 sec">Decisions logged</div><div class="n">' + (sm.decisions || 0) + '</div></div><div class="count"><div class="t13 sec">Loop held</div><div class="n">' + (sm.held || 0) + '</div></div>';
+        });
+        var ck = Object.keys(answers).filter(function (x) { return /commit/i.test(x); })[0];
+        if ($('wbCommit')) $('wbCommit').textContent = ck && answers[ck] ? String(answers[ck]) : '—';
+        var mc = $('wbComplete');
+        if (mc) mc.addEventListener('click', function () {
+          if (mc.textContent.indexOf('Completed') === 0) return;
+          fetch(wbApiBase() + '/instances/' + WB_INST + '/complete', { method: 'POST', headers: wbHeaders() })
+            .then(function (r) {
+              if (!r.ok) return;
+              mc.textContent = 'Completed ✓'; mc.className = 'btn small secondary';
+              if ($('wbStatus')) $('wbStatus').textContent = 'Completed';
+              WBS = null; loadEdnaScreens(); /* Workbook 3 may unlock */
+            });
+        });
+        document.getElementById('frame').scrollTop = 0;
+      }).catch(function () { $('wbSections').innerHTML = '<div class="empty t13">Could not open this workbook. Try again.</div>'; });
+  }
+  function repaintCurrent() {
+    var cur = window.BS_SCREEN;
+    if (cur === 6) paintScreen6();
+    if (cur === 7) paintScreen7();
+    if (cur === 8) paintScreen8();
+  }
   function loadEdnaScreens() {
-    api('/edna').then(function (e) { if (e.__status === 200) { EDNA = e; } });
+    api('/edna').then(function (e) {
+      if (e.__status !== 200) return;
+      EDNA = e;
+      if (!e.taken) {
+        /* no result yet: the type chips must not claim one */
+        document.querySelectorAll('.who .chip.type').forEach(function (c) { c.textContent = 'E-DNA not yet taken'; });
+      }
+      repaintCurrent();
+    });
     fetch((window.DI_API_BASE || (LOCAL ? 'http://127.0.0.1:8010' : 'https://qpbpbpiegm.us-east-1.awsapprunner.com')) + '/api/user/workbooks', { headers: headers() })
-      .then(function (r) { return r.json(); }).then(function (w) { WBS = w; patchWbTile(); }).catch(function () {});
+      .then(function (r) { return r.json(); }).then(function (w) { WBS = w; patchWbTile(); repaintCurrent(); }).catch(function () {});
   }
   ['openScreen6', 'openScreen7', 'openScreen8'].forEach(function (fn) {
     var orig = window[fn];
     window[fn] = function (key) {
       if (orig) orig(key);
+      clearEdnaScreens(); /* never show the preview's sample results */
       if (fn === 'openScreen6') paintScreen6();
       if (fn === 'openScreen7') paintScreen7();
       if (fn === 'openScreen8') paintScreen8();
@@ -1034,23 +1249,108 @@
     if (origOpenScreen9) origOpenScreen9(key);
     var main = document.querySelector('#main9 .setgrid');
     if (!main || !PROFILE) return;
+    document.querySelectorAll('#main9 .chip.ex').forEach(function (c) { c.classList.add('hide'); });
+    var ini = (((PROFILE.first_name || ' ')[0] || '') + ((PROFILE.last_name || ' ')[0] || '')).trim().toUpperCase() || '—';
     main.innerHTML =
-      '<section class="glass panel"><div class="strip" aria-hidden="true"></div><h2 class="t19 b" style="margin:0 0 6px">Profile</h2>' +
-      '<div class="t13 sec" style="margin-bottom:10px">Your name appears on your room circle and your entries.</div>' +
-      '<div class="lrow" style="gap:10px;flex-wrap:wrap"><input class="t19" id="st9first" type="text" placeholder="First name" value="' + (PROFILE.first_name || '') + '" style="max-width:220px">' +
-      '<input class="t19" id="st9last" type="text" placeholder="Last name" value="' + (PROFILE.last_name || '') + '" style="max-width:220px">' +
+      /* Profile: photo, names, email (PUT /profile, PUT /profile/photo) */
+      '<section class="glass panel"><div class="strip" aria-hidden="true"></div><h2 class="t19 b" style="margin:0 0 4px">Profile</h2>' +
+      '<div class="t13 sec" style="margin-bottom:12px">Your photo or initials are what people in a Decision Room see.</div>' +
+      '<div class="lrow" style="justify-content:flex-start;gap:14px;margin-bottom:12px"><div class="pcircle big" aria-hidden="true">' + (PROFILE.photo_url ? '<img src="' + PROFILE.photo_url + '" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover">' : escT(ini)) + '</div>' +
+      '<div class="btnrow" style="margin:0"><button class="btn secondary small" type="button" id="st9photo">Upload a photo</button>' + (PROFILE.photo_url ? '<button class="btn secondary small" type="button" id="st9photoRm">Remove photo</button>' : '') + '</div></div>' +
+      '<div class="lrow" style="gap:10px;flex-wrap:wrap;justify-content:flex-start"><input class="t19" id="st9first" type="text" placeholder="First name" value="' + escT(PROFILE.first_name || '') + '" style="max-width:200px">' +
+      '<input class="t19" id="st9last" type="text" placeholder="Last name" value="' + escT(PROFILE.last_name || '') + '" style="max-width:200px">' +
       '<button class="btn small primary" type="button" id="st9save">Save profile</button><span class="t13 sec" id="st9msg"></span></div>' +
-      '<div class="t13 sec" style="margin-top:10px">Account email: <b>' + (PROFILE.email || '—') + '</b></div></section>' +
-      '<section class="glass panel"><div class="strip" aria-hidden="true"></div><h2 class="t19 b" style="margin:0 0 6px">Membership and credits</h2>' +
-      '<div class="t19">Your decisions: <b>' + (PROFILE.credits || 0) + ' left</b></div>' +
-      '<div class="t13 sec" style="margin-top:6px">1 credit = one decision taken to Check. Credits come with the E-DNA Advanced Report (£99) and memberships; receipts arrive by email from the checkout.</div>' +
-      '<div class="btnrow" style="margin-top:10px"><a class="btn small secondary" href="https://go.brandscaling.co.uk/checkout-page-quiz-report">Top up</a></div></section>' +
-      '<section class="glass panel"><div class="strip" aria-hidden="true"></div><h2 class="t19 b" style="margin:0 0 6px">Screen settings</h2>' +
-      '<div class="t13 sec">Font, text size, spacing, motion and theme are set on the assessment and report pages and apply there.</div>' +
-      '<div class="btnrow" style="margin-top:10px"><a class="btn small secondary" href="/edna/index.html">Open my E-DNA pages</a></div></section>' +
-      '<section class="glass panel"><div class="strip" aria-hidden="true"></div><h2 class="t19 b" style="margin:0 0 6px">Account</h2>' +
-      '<div class="t13 sec" style="margin-bottom:10px">Signing out keeps everything saved.</div>' +
-      '<div class="btnrow"><button class="btn small secondary" type="button" id="st9signout">Sign out</button></div></section>';
+      '<div class="t13 sec" style="margin-top:10px">Account email: <b>' + escT(PROFILE.email || '—') + '</b>. Changing it needs a confirmation link — email support@brandscaling.co.uk for now.</div></section>' +
+      /* Membership and credits: GET /credits */
+      '<section class="glass panel"><div class="strip" aria-hidden="true"></div><div class="lrow" style="margin-bottom:4px"><h2 class="t19 b" style="margin:0">Membership and credits</h2><span class="chip type" style="display:inline-block">' + escT(PROFILE.tier || 'free') + '</span></div>' +
+      '<div class="t19">Your decisions: <b id="st9bal">' + (PROFILE.credits || 0) + ' left</b></div>' +
+      '<div class="t13 sec" style="margin:6px 0 10px">1 credit = one decision taken to Check with your mentor. Credits come with the E-DNA Advanced Report (£99) and memberships; receipts arrive by email from the checkout.</div>' +
+      '<div class="t13 sec b" style="margin:0 0 6px">Grants</div>' +
+      '<table class="logtable t13" aria-label="Credit grants"><thead><tr><th>Grant</th><th>Credits</th><th>Granted</th><th>Expires</th></tr></thead><tbody id="st9grants"><tr><td class="t13 sec" colspan="4">Loading…</td></tr></tbody></table>' +
+      '<div class="t13 sec b" style="margin:12px 0 6px">Credits used</div>' +
+      '<table class="logtable t13" aria-label="Credits used"><thead><tr><th>Date</th><th>Decision</th></tr></thead><tbody id="st9ledger"></tbody></table>' +
+      '<div class="btnrow" style="margin-top:12px"><a class="btn small secondary" href="https://go.brandscaling.co.uk/checkout-page-quiz-report">Top up</a></div></section>' +
+      /* Consent and sharing: Part 5 from /edna, rooms from /rooms */
+      '<section class="glass panel"><div class="strip" aria-hidden="true"></div><h2 class="t19 b" style="margin:0 0 4px">Consent and sharing</h2>' +
+      '<div class="t13 sec" style="margin-bottom:10px">What you have agreed to share, and where it applies.</div>' +
+      '<div class="crow"><div><div class="t13 b">Part 5 comparison in your E-DNA report</div><div class="t13 sec">' +
+      (EDNA && EDNA.taken ? (EDNA.p5 && EDNA.p5.consent ? 'Consent given during your assessment.' : 'Not given. Your adaptation levels still show in your report.') : 'Asked during the assessment.') + '</div></div></div>' +
+      '<div class="t13 sec b" style="margin:12px 0 6px">Decision rooms you share with</div>' +
+      '<div class="t13 sec" style="margin-bottom:8px">Joining a room shares your name, core type or Mixed state, loop and mentor, your progress and your entries with the people in that room, for that decision only.</div>' +
+      '<div id="st9rooms" class="t13 sec">Loading…</div></section>' +
+      /* Screen */
+      '<section class="glass panel"><div class="strip" aria-hidden="true"></div><h2 class="t19 b" style="margin:0 0 4px">Screen</h2>' +
+      '<div class="t13 sec" style="margin-bottom:10px">Font, text size, spacing, motion and theme are set on the assessment and report pages and apply there. They never change your questions, answers or results.</div>' +
+      '<div class="btnrow"><a class="btn small secondary" href="/edna/index.html">Open my E-DNA pages</a></div></section>' +
+      /* Security */
+      '<section class="glass panel"><div class="strip" aria-hidden="true"></div><h2 class="t19 b" style="margin:0 0 4px">Security</h2>' +
+      '<div class="crow"><div><div class="t13 b">Password</div><div class="t13 sec">Change it from the sign-in page: “Forgotten password” sends a reset link to your email.</div></div><a class="btn secondary small" href="/?signin=1">Sign-in page</a></div></section>' +
+      /* Account */
+      '<section class="glass panel span2"><div class="strip" aria-hidden="true"></div><h2 class="t19 b" style="margin:0 0 4px">Account</h2>' +
+      '<div class="t13 sec" style="margin-bottom:10px">Signed in as <b>' + escT(PROFILE.email || '—') + '</b>. Signing out keeps everything saved.</div>' +
+      '<div class="t13 sec b" style="margin:0 0 6px">Take a copy</div>' +
+      '<div class="crow"><div><div class="t13 b">Decision log</div><div class="t13 sec">Every row, as a CSV you can open in a spreadsheet</div></div><button class="btn secondary small" type="button" id="st9csv">Export · CSV</button></div>' +
+      '<div class="crow"><div><div class="t13 b">Reports</div><div class="t13 sec">Your basic and Advanced Reports, with PDF download</div></div><a class="btn secondary small" href="/edna/index.html">Open reports</a></div>' +
+      '<div class="btnrow" style="margin-top:12px"><button class="btn small secondary" type="button" id="st9signout">Sign out</button></div>' +
+      '<div class="t13 sec" style="margin-top:10px">To delete your account and its data, email support@brandscaling.co.uk from your account address.</div></section>';
+    /* fill the live tables */
+    api('/credits').then(function (d) {
+      if (d.__status !== 200) return;
+      var fmt = function (x) { return x ? new Date(x).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'; };
+      var SRC = { report_purchase: 'Advanced Report', purchase: 'Purchase', admin: 'Granted', signup: 'Welcome', open_all: 'Event' };
+      if (d.balance != null && $('st9bal')) $('st9bal').textContent = d.balance + ' left';
+      if ($('st9grants')) $('st9grants').innerHTML = (d.grants && d.grants.length) ? d.grants.map(function (g) {
+        return '<tr><td>' + escT(SRC[g.source] || g.source || '—') + '</td><td>' + (g.amount || 0) + '</td><td>' + fmt(g.granted_at) + '</td><td>' + fmt(g.expires_at) + '</td></tr>';
+      }).join('') : '<tr><td class="t13 sec" colspan="4">None yet. Credits come with the Advanced Report and memberships.</td></tr>';
+      if ($('st9ledger')) $('st9ledger').innerHTML = (d.ledger && d.ledger.length) ? d.ledger.slice(0, 20).map(function (l) {
+        return '<tr><td>' + fmt(l.created_at) + '</td><td>' + escT(l.decision_text || l.reason || '—') + '</td></tr>';
+      }).join('') : '<tr><td class="t13 sec" colspan="2">No credits used yet. Your first decision uses one at Check.</td></tr>';
+    });
+    api('/rooms').then(function (d) {
+      if (d.__status !== 200 || !$('st9rooms')) return;
+      var rs = d.rooms || [];
+      $('st9rooms').innerHTML = rs.length ? rs.map(function (r) {
+        return '<div class="crow"><div><div class="t13 b">' + escT(r.decision_text) + '</div><div class="t13 sec">' + new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ' · shared with this room only</div></div></div>';
+      }).join('') : 'You are not in any room yet. Consent is asked when you join one.';
+    });
+    var ph = $('st9photo');
+    if (ph) ph.addEventListener('click', function () {
+      var fi = document.createElement('input'); fi.type = 'file'; fi.accept = 'image/jpeg,image/png';
+      fi.addEventListener('change', function () {
+        var f = this.files && this.files[0]; if (!f) return;
+        var img = new Image();
+        img.onload = function () {
+          var side = Math.min(img.width, img.height);
+          var cv = document.createElement('canvas'); cv.width = 256; cv.height = 256;
+          cv.getContext('2d').drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, 256, 256);
+          var url = cv.toDataURL('image/jpeg', 0.85);
+          api('/profile/photo', { method: 'PUT', body: { data: url.split(',')[1], mime: 'image/jpeg' } }).then(function (res) {
+            if (res.__status === 200) { PROFILE.photo_url = url; window.openScreen9(key); }
+            else alert(res.message || 'Could not save the photo.');
+          });
+        };
+        img.src = URL.createObjectURL(f);
+      });
+      fi.click();
+    });
+    var prm = $('st9photoRm');
+    if (prm) prm.addEventListener('click', function () {
+      api('/profile/photo', { method: 'PUT', body: { data: null } }).then(function () { PROFILE.photo_url = null; window.openScreen9(key); });
+    });
+    var xc = $('st9csv');
+    if (xc) xc.addEventListener('click', function () {
+      api('/log').then(function (d) {
+        if (d.__status !== 200) { alert('Could not load your log.'); return; }
+        var rows = d.rows || d.log || [];
+        if (!rows.length) { alert('Your log is empty.'); return; }
+        var cols = Object.keys(rows[0]);
+        var cell = function (v) { return '"' + String(v == null ? '' : (typeof v === 'object' ? JSON.stringify(v) : v)).replace(/"/g, '""') + '"'; };
+        var text = cols.join(',') + '\n' + rows.map(function (r) { return cols.map(function (c) { return cell(r[c]); }).join(','); }).join('\n');
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([text], { type: 'text/csv' }));
+        a.download = 'decision-log.csv'; a.click();
+      });
+    });
     var sv = $('st9save');
     if (sv) sv.addEventListener('click', function () {
       api('/profile', { method: 'PUT', body: { first_name: $('st9first').value.trim(), last_name: $('st9last').value.trim() } })
