@@ -1027,6 +1027,26 @@
   /* ---------- attachments (BS-AI-004 step 5): PDF, Word, text, images · 10 MB · five
      per decision; the facts extract enters the box only when the person confirms it ---------- */
   var ATTACH_OK = 'application/pdf,.pdf,.doc,.docx,.txt,.csv,image/png,image/jpeg';
+  var PENDING_ATT = null; /* a file chosen on the question screen, attached right after Start */
+  function attUpload(f) {
+    if (!f || !S.id) return;
+    var msg = $('bsAttMsg');
+    if (f.size > 10 * 1024 * 1024) { if (msg) msg.textContent = 'Over 10 MB. Make it smaller and try again.'; return; }
+    if (msg) msg.textContent = 'Reading ' + f.name + '…';
+    var rd = new FileReader();
+    rd.onload = function () {
+      var b64 = String(rd.result).split(',')[1] || '';
+      api('/decisions/' + S.id + '/attachments', {
+        method: 'POST',
+        body: { box: STEPS[S.i], filename: f.name, mime: f.type || 'text/plain', data: b64 },
+      }).then(function (res) {
+        var m = $('bsAttMsg');
+        if (m) m.textContent = res.__status === 201 ? 'Read. Confirm the extract to put it in the box.' : (res.message || 'That did not work.');
+        listAttach();
+      });
+    };
+    rd.readAsDataURL(f);
+  }
   function paintAttach() {
     var lb = $('lbox'); if (!lb || !S.id) return;
     var host = $('bsAttach');
@@ -1037,26 +1057,9 @@
         '<span class="t13 sec" id="bsAttMsg" style="margin-left:8px"></span>' +
         '<input type="file" id="bsAttFile" accept="' + ATTACH_OK + '" style="display:none">';
       lb.appendChild(host);
-      function uploadAttachment(f) {
-        if (!f || !S.id) return;
-        if (f.size > 10 * 1024 * 1024) { $('bsAttMsg').textContent = 'Over 10 MB. Make it smaller and try again.'; return; }
-        $('bsAttMsg').textContent = 'Reading ' + f.name + '…';
-        var rd = new FileReader();
-        rd.onload = function () {
-          var b64 = String(rd.result).split(',')[1] || '';
-          api('/decisions/' + S.id + '/attachments', {
-            method: 'POST',
-            body: { box: STEPS[S.i], filename: f.name, mime: f.type || 'text/plain', data: b64 },
-          }).then(function (res) {
-            $('bsAttMsg').textContent = res.__status === 201 ? 'Read. Confirm the extract to put it in the box.' : (res.message || 'That did not work.');
-            listAttach();
-          });
-        };
-        rd.readAsDataURL(f);
-      }
       $('bsAttBtn').addEventListener('click', function () { $('bsAttFile').click(); });
       $('bsAttFile').addEventListener('change', function () {
-        var f = this.files && this.files[0]; this.value = ''; uploadAttachment(f);
+        var f = this.files && this.files[0]; this.value = ''; attUpload(f);
       });
       /* drag a file anywhere onto the box (Fariza, 24 Nov) */
       ['dragover', 'dragenter'].forEach(function (ev) {
@@ -1067,7 +1070,7 @@
       });
       lb.addEventListener('drop', function (e) {
         var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-        if (f) uploadAttachment(f);
+        if (f) attUpload(f);
       });
       $('bsAttList').addEventListener('click', function (e) {
         var c = e.target.closest && e.target.closest('[data-att-confirm]');
@@ -1187,6 +1190,10 @@
       $('l0').classList.add('hide'); $('l1').classList.remove('hide'); $('l1dec').textContent = d;
       $('orderpick').classList.add('hide');
       setMentor(S.first === 'logic' ? 'arch' : 'alch'); showBox();
+      if (PENDING_ATT) { /* a file picked on the question screen attaches to Box 1 now */
+        attUpload(PENDING_ATT); PENDING_ATT = null;
+        var n0 = $('bsAttNote0'); if (n0) n0.textContent = '';
+      }
       mentorEvent('start', 'Decision: ' + d);
     });
   }
@@ -1296,5 +1303,43 @@
       patchCredits(); patchLog(); loadEdnaScreens();
     });
   }
+    /* The question screen's "+ Attach document" shipped as preview chrome with no
+       handler (Munawar pressed it, nothing happened — 24 Nov). A decision must exist
+       before the backend can hold a file, so the pick is kept and attached to Box 1
+       the moment Start succeeds. Drag-and-drop onto the question box does the same. */
+    (function wireStartAttach() {
+      var plus = document.querySelector('#l0 .plus');
+      if (!plus || plus.dataset.bsWired) return;
+      var fresh = plus.cloneNode(true); plus.parentNode.replaceChild(fresh, plus);
+      fresh.dataset.bsWired = '1';
+      var fi = document.createElement('input');
+      fi.type = 'file'; fi.accept = ATTACH_OK; fi.style.display = 'none';
+      fresh.insertAdjacentElement('afterend', fi);
+      var note = document.createElement('span');
+      note.id = 'bsAttNote0'; note.className = 't13 sec'; note.style.marginLeft = '8px';
+      fi.insertAdjacentElement('afterend', note);
+      function hold(f) {
+        if (!f) return;
+        if (f.size > 10 * 1024 * 1024) { note.textContent = 'Over 10 MB. Make it smaller and try again.'; return; }
+        PENDING_ATT = f;
+        note.textContent = f.name + ' · attaches to Box 1 when you press Start.';
+      }
+      fresh.addEventListener('click', function (e) { e.preventDefault(); fi.click(); });
+      fi.addEventListener('change', function () { var f = this.files && this.files[0]; this.value = ''; hold(f); });
+      var dz = document.querySelector('#l0 .entry.dec') || $('l0');
+      if (dz) {
+        ['dragover', 'dragenter'].forEach(function (ev) {
+          dz.addEventListener(ev, function (e) { e.preventDefault(); dz.style.outline = '2px dashed var(--indigo)'; });
+        });
+        ['dragleave', 'drop'].forEach(function (ev) {
+          dz.addEventListener(ev, function (e) { e.preventDefault(); dz.style.outline = ''; });
+        });
+        dz.addEventListener('drop', function (e) {
+          var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+          hold(f);
+        });
+      }
+    })();
+
   boot();
 })();
