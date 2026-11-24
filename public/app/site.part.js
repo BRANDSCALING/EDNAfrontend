@@ -888,7 +888,14 @@
       var byBox = { box1: [], box2: [], box3: [], end: [], box4: [] };
       (res.entries || []).forEach(function (en) { if (byBox[en.box]) byBox[en.box].push(en.text); });
       ['box1', 'box2', 'box3', 'end', 'box4'].forEach(function (b, i) {
-        if (tas[i]) tas[i].value = byBox[b].join('\n\n');
+        if (!tas[i]) return;
+        tas[i].value = byBox[b].join('\n\n');
+        /* the read view's boxes are two rows tall; a long entry (a document extract) was
+           clipped with no visible scrollbar (Munawar, 24 Nov). Grow to the content, cap
+           at 320px, and let the rest scroll. */
+        tas[i].style.height = 'auto';
+        tas[i].style.height = Math.min(tas[i].scrollHeight + 4, 320) + 'px';
+        tas[i].style.overflowY = 'auto';
       });
       /* the preview builds the rows from its own order switch, which defaults to Logic;
          relabel them from the decision's real order (23 Nov) */
