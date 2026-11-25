@@ -1835,7 +1835,7 @@
       var rs = d.rooms || [];
       $('s9rooms').innerHTML = rs.map(function (r) {
         var own = r.my_role === 'decision_owner';
-        return '<div class="crow"><div><div class="t13 b">' + escT(r.decision_text) + '</div><div class="t13 sec">' + (own ? 'Owner' : 'Collaborator') + ' · since ' + fmt(r.created_at) + ' · for this decision only</div></div>' + (own ? '<span class="t13 sec">Owner</span>' : '') + '</div>';
+        return '<div class="crow"><div><div class="t13 b">' + escT(r.decision_text) + '</div><div class="t13 sec">' + (own ? 'Owner' : 'Collaborator') + ' · since ' + fmt(r.created_at) + ' · for this decision only</div></div>' + (own ? '<span class="t13 sec">Owner</span>' : '<button class="btn secondary small" type="button" data-leave="' + escT(r.id) + '">Leave room</button>') + '</div>';
       }).join('');
       $('s9roomsEmpty').classList.toggle('hide', rs.length > 0);
     });
@@ -1855,10 +1855,26 @@
   (function () {
     var m9 = $('main9'); if (!m9) return;
     m9.addEventListener('click', function (e) {
-      var t = e.target.closest && e.target.closest('#s9upload, #s9remove, #s9emailChange, #s9save, [data-set9], #s9pw, #s9everywhere, #s9signout, #s9delete, #s9csv, #s9pdf, #s9all');
+      var t = e.target.closest && e.target.closest('#s9upload, #s9remove, #s9emailChange, #s9save, [data-set9], [data-leave], #s9pw, #s9everywhere, #s9signout, #s9delete, #s9csv, #s9pdf, #s9all');
       if (!t) return;
       e.preventDefault(); e.stopPropagation();
       var id = t.id;
+      if (t.dataset && t.dataset.leave) {
+        /* POST /rooms/:id/leave: your entries stay in the room with your name (BS-AI-008 §5) */
+        var rid = t.dataset.leave; var title = (t.closest('.crow').querySelector('.t13.b') || {}).textContent || '';
+        bsModal('<h2>Leave this room?</h2><p>“' + escT(title) + '”. You stop seeing the room. The entries you added stay in it with your name; the owner can delete them if you ask.</p><div class="btns"><button type="button" class="bs" data-no>Stay</button><button type="button" class="bp" data-ok>Leave room</button></div>',
+          function (ov, close) {
+            ov.querySelector('[data-no]').addEventListener('click', close);
+            ov.querySelector('[data-ok]').addEventListener('click', function () {
+              api('/rooms/' + encodeURIComponent(rid) + '/leave', { method: 'POST' }).then(function (r) {
+                close();
+                if (r.__status !== 200) { bsNotice('Not left', r.message || 'Try again in a moment.'); return; }
+                window.openScreen9();
+              });
+            });
+          });
+        return;
+      }
       if (id === 's9upload') {
         var fi = document.createElement('input'); fi.type = 'file'; fi.accept = 'image/jpeg,image/png';
         fi.addEventListener('change', function () {
