@@ -229,3 +229,8 @@ input[type=range] { width: 100%; accent-color: var(--action); }
 }
 :root[data-theme="dark"] header img { background: #FFFFFF; padding: 6px 12px; border-radius: 10px !important; height: 56px; }
 :root[data-theme="dark"] .rp-root { border-radius: 16px; padding: 20px; }
+
+/* iPhone Safari zooms the page in when a field under 16px is tapped (25 Nov, mobile first) */
+@media (hover: none) and (pointer: coarse) {
+  input:not([type=range]):not([type=checkbox]):not([type=radio]), textarea, select { font-size: max(16px, 1em) !important; }
+}

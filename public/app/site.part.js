@@ -116,6 +116,10 @@
     /* the one-step box reuses .lbox (the loop figure's box, white text); Logic and Feeling have
        their own label colours, 'Your decision' (.w.dec) had none and showed white (24 Nov) */
     '.w.dec{color:var(--black)}' +
+    /* iPhone Safari zooms the whole page in when a field under 16px is tapped, and stays
+       zoomed (Mashab, 25 Nov: mobile first, iPhone first). The Frame boxes, replies and room
+       questions were 15px; on touch screens every field is at least 16px. */
+    '@media (hover:none) and (pointer:coarse){input:not([type=range]):not([type=checkbox]):not([type=radio]),textarea,select{font-size:16px!important}}' +
     /* the workbook player (24 Nov): one column, so the exercises get the full width, and a
        wide table scrolls inside its own box instead of being cut off at the panel edge */
     '#wbView .grid-7-5{grid-template-columns:minmax(0,1fr)!important}' +

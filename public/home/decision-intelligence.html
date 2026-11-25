@@ -431,7 +431,7 @@ footer a:hover{color:var(--link);text-decoration:underline}
 
 /* DI page, pass 2 */
 .wc.part{display:grid;gap:4px}
-.whys{grid-template-columns:1fr 1.3fr 1fr}
+@media (min-width:641px){.whys{grid-template-columns:1fr 1.3fr 1fr}} /* desktop only: on phones the seven parts swipe sideways */
 .whys .wc.part .n{font-family:var(--body);font-weight:600;font-size:16px;color:var(--text-2);line-height:1.3}
 .whys .pname{font-family:var(--display);font-weight:800;font-size:var(--s2);color:var(--action);line-height:1.15}
 .pname{font-size:14px;font-weight:600;color:var(--text-2);line-height:1.3}
