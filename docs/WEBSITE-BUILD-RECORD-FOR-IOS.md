@@ -89,6 +89,12 @@ must open the invitation in the app).
 - Reports keep their light design in every theme.
 
 ### 3.4 Home (25 Nov — the approved design's Home)
+**Payment failed banner (26 Nov):** while `/profile.subscription.state` is `payment_failed`,
+an amber banner under the header: "Payment failed · [date] · the card was declined", the
+day-3/day-7 retries and the next try, "your log, reports and workbooks stay open", and
+"Open Settings" (BS-AI-003 §9.10; BS-AI-009 A8 "a banner on Home and Settings"). "Update card"
+waits for GHL to send a card-update link.
+
 Cards, in order: header (Welcome back, name, type chip, bell) · **Make a decision** (decisions
 left, Make a decision, Invite someone to a decision) · **Your E-DNA profile** (core type,
 assessed date, Dominant and Alternate loop; View your E-DNA report, See my E-DNA; or "Take the
@@ -141,9 +147,9 @@ Munawar's request.
 | Payment details | "No card on file" (one-off buyers) or "Card held by the payment provider" (members); receipts (date, item) | `/purchases` (GHL `order.completed`), falling back to purchase grants |
 | Notifications | every row of the design (N1–N11, N13 only while finding the type, N14, N15) with its note; "—" where the design sends no email (N5, N8, N9); N11 and N15 always on; quiet hours and grouping shown off and locked until push exists | `/notification-prefs` |
 | Consent and sharing | Part 5 consent; rooms with role, Leave room | `/edna`, `/rooms`, `POST /rooms/:id/leave` |
-| Screen | font, text size, spacing, motion, theme, transparency — applied at once to the dashboard (and the sidebar), the E-DNA assessment and the reports, in this browser. Dark applies to the E-DNA and reports only: the dashboard has no dark design yet (flagged to Fariza) | `localStorage['edna-settings']`, the E-DNA's own key and values (`spacing: extra`) |
+| Screen | font, text size, spacing, motion, theme, transparency — applied at once to the dashboard (and the sidebar), the E-DNA assessment and the reports. **Kept on the account (26 Nov), so they follow the person to every browser and the iOS app**: the dashboard loads them from `/profile.screen` at start (the account's copy wins) and saves each change. Dark applies to the E-DNA and reports only: the dashboard has no dark design yet (flagged to Fariza) | `GET /profile` → `screen`; `PUT /profile/screen` `{screen:{font,size,spacing,motion,theme,transparency}}` (only the known values are kept); copied into `localStorage['edna-settings']`, the E-DNA's own key and values (`spacing: extra`) |
 | Security | Change password (renews the sign-in first; errors in red), signed-in devices, Sign out everywhere | Cognito `ChangePassword`, `GlobalSignOut`; `/devices` |
-| Account | Terms of Use → `/home/legal/terms-of-use.html`, Privacy Policy → `/home/legal/privacy-policy.html` (Munawar, 25 Nov), sign out, Delete my account (→ `/delete-account/`, an emailed request; there is no self-service deletion yet), Export CSV, reports PDF, Download my data (one JSON file) | — |
+| Account | Terms of Use → `/home/legal/terms-of-use.html`, Privacy Policy → `/home/legal/privacy-policy.html` (Munawar, 25 Nov), sign out, **Delete my account** (password + the word DELETE → 14-day wait, signed out everywhere; see §3.16), Export CSV, reports PDF, Download my data (one JSON file) | — |
 
 **Hidden on purpose (no real data behind them):** the card's last four digits and expiry, the
 billing address and "Update card" (GHL's webhooks do not carry them — asked of Fiza Ashraf,
@@ -186,6 +192,25 @@ billing address and "Update card" (GHL's webhooks do not carry them — asked of
 - **iOS:** cache the same reads per screen and refresh on appear; never show sample data and
   never blank a list to "Loading…" when you already have the last answer.
 
+### 3.16 Delete my account (26 Nov — BS-AI-003 §9.2, BS-AI-004 §3.4, BS-AI-009 A11)
+- Settings · Account → "Delete my account": what is removed and kept, the password (checked
+  by Cognito), and the word DELETE → `POST /api/di/account/delete` `{confirm:"DELETE"}` with a
+  verified ID token → the account is marked for deletion in **14 days**, the person is signed
+  out everywhere (`GlobalSignOut`) and told the date.
+- **Signing in during the 14 days cancels it**: `GET /profile` cancels when the token's
+  `auth_time` is after the request and returns `deletion_cancelled: true` (the dashboard says
+  so). `POST /account/delete/cancel` also cancels. **iOS must call `/api/di/profile` after
+  sign-in** for this to work.
+- After 14 days the scheduler (every 15 min) deletes: decisions, entries, mentor turns, log,
+  credits, attachments, notifications and preferences, devices, terms records, E-DNA progress
+  and results, the user row, and the Cognito sign-in (needs `cognito-idp:AdminDeleteUser` on
+  the App Runner role; without it the sign-in stays and the log says so). Rooms the person
+  owned are closed; their entries in other people's rooms stay with their name
+  (`room_member.left_name`). Receipts stay with GHL. Safety records (`safety_event`) are kept
+  until a retention rule exists.
+- GHL: `account.delete_requested` (deletion_date) and `account.deleted` are queued for W15;
+  they wait in the outbox until Fiza builds W15 and they are added to `GHL_SENDABLE_EVENTS`.
+
 ### 3.14 Phones (iPhone first — Mashab, 25 Nov)
 - Every web change is checked at 320, 375, 390, 430 px in Safari's engine and on the iOS
   Simulator.
@@ -221,7 +246,8 @@ billing address and "Update card" (GHL's webhooks do not carry them — asked of
 `0002` Decision Intelligence tables · `0003` notifications, attachments, GHL outbox/inbound ·
 `0004` credit grant source `assessment` · `0005` `edna_progress` · **`0006` users.phone, country,
 time_zone, business_name; auth_device index (25 Nov, applied)** · **`0007` users.subscription_state,
-_state_at, _ends_at, _next_retry (25 Nov, backend cef96c0, applied)**. Migrations are applied through
+_state_at, _ends_at, _next_retry (25 Nov, backend cef96c0, applied)** · **`0008` users.screen_settings,
+delete_requested_at, delete_after; room_member.left_name (26 Nov, backend 0f25df3, applied)**. Migrations are applied through
 the secret-gated runners in `diMigrateRoutes.js` because the database is only reachable from AWS.
 
 ## 6 · Rulings that shape behaviour (dated)
@@ -248,9 +274,12 @@ the secret-gated runners in `diMigrateRoutes.js` because the database is only re
   rooms need the E-DNA first; today someone without a result is treated as Mixed. Waiting.
 - After the event: set `DI_OPEN_ALL=false`; remove `MENTOR_INSTRUCTION_VERSION` if no longer
   needed.
-- Account deletion on the website goes to `/delete-account/` (request by email). The iOS
-  `DELETE /me` removes quiz data and the user row but not the DI tables (decisions, log, rooms,
-  credits) — fix before relying on it.
+- The iOS app's old `DELETE /me` (instant, removes quiz data and the user row but not the DI
+  tables) should be replaced by the §3.16 flow (`POST /api/di/account/delete`).
+- `terms_acceptance` cannot be recorded yet: every legal page reads "Effective: [date]. Last
+  updated: [date]", so there is no version to record, and no sign-up or report-gate tick
+  agrees to the Terms (sign-up asks only "I'm over 18"). Needs the documents' versions/dates
+  (Fariza / legal) before it is built.
 - **Change email (built 25 Nov, switched ON 25 Nov).** Settings · Profile follows the design: new
   address + current password (checked through the dashboard's Cognito library) → Cognito
   `UpdateUserAttributes` emails a 6-digit code to the new address → `VerifyUserAttribute` →
@@ -269,7 +298,7 @@ the secret-gated runners in `diMigrateRoutes.js` because the database is only re
   `.btnrow .btn.primary`); fixed, Save works again. Still to do: tell the
   old address (N15) and update the GHL contact's email. **iOS:** same calls (the iOS app uses
   the same pool), same endpoint.
-- `terms_acceptance` is never written; the report gate and checkout should record acceptance.
+- `terms_acceptance` is never written: blocked on the legal documents' versions (see above).
 - **Room invitation email (N1), 25 Nov.** Fiza Ashraf built the GHL trigger for invitations
   (`GHL_ROOMS_WEBHOOK_URL`, default in `notificationService.js`). `room.invited` is now
   sendable and goes there with: `email`, `bs_user_id` (members), `first_name`, `site`,

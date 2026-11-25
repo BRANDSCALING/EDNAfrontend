@@ -1496,6 +1496,23 @@
     if (h) h.insertAdjacentElement('afterend', el); else home.insertBefore(el, home.firstChild);
   }
 
+  /* Home · Payment failed banner (BS-AI-003 §9.10; BS-AI-009 A8 "a banner on Home and
+     Settings"): shown while GHL's last word on the membership is payment_failed. "Update card"
+     needs a link from GHL that does not exist yet, so the banner opens Settings instead. */
+  function paintPayBan() {
+    var home = $('main0'); if (!home || !PROFILE) return;
+    var old = $('bsPayBan'); if (old) old.remove();
+    var sb = PROFILE.subscription;
+    if (!sb || sb.state !== 'payment_failed') return;
+    var dd = function (x) { return new Date(x).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' }); };
+    var el = document.createElement('div'); el.id = 'bsPayBan'; el.setAttribute('role', 'status');
+    el.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 14px;margin-bottom:14px;border-radius:12px;background:var(--amber-p3,#FFF4E1);border:1px solid var(--amber-d2,#78500C)';
+    el.innerHTML = '<div><div class="t13 b">Payment failed' + (sb.since ? ' · ' + dd(sb.since) : '') + ' · the card was declined</div><div class="t13 sec">We try the card again on day 3 and day 7' + (sb.next_retry ? ' (next try ' + dd(sb.next_retry) + ')' : '') + '. Your log, reports and workbooks stay open.</div></div><div class="btnrow" style="margin:0"><button class="btn small secondary" type="button" id="bsPayBanGo">Open Settings</button></div>';
+    var h = home.querySelector('.hdr');
+    if (h) h.insertAdjacentElement('afterend', el); else home.insertBefore(el, home.firstChild);
+    $('bsPayBanGo').addEventListener('click', function () { if (window.showScreen) window.showScreen(9); });
+  }
+
   /* ---------- Home · "Your E-DNA profile" (Munawar, 25 Nov): the card the old dashboard
      Overview had, carried into the approved Home screen and drawn in its own panel style:
      core type, Dominant and Alternate loop, the assessment date, and the report ---------- */
@@ -1542,7 +1559,7 @@
   window.openLaunch = function (key) {
     if (origOpenLaunch) origOpenLaunch(key);
     clearHomeExamples();
-    patchCredits(); patchLog(); patchHowYouDecide(); patchWbTile(); paintGuestBan(); paintEdnaCard();
+    patchCredits(); patchLog(); patchHowYouDecide(); patchWbTile(); paintGuestBan(); paintPayBan(); paintEdnaCard();
     if (PROFILE && PROFILE.first_name) {
       ['name', 'name0'].forEach(function (id) { if ($(id)) $(id).textContent = PROFILE.first_name; });
     }
@@ -1881,7 +1898,7 @@
     $('s9rooms').innerHTML = '<div class="t13 sec">…</div>';
 
     /* Screen: the same settings the E-DNA assessment and reports use (this browser) */
-    say(sec('s9s').querySelector('h2 + .t13.sec'), 'These change how the app, your E-DNA assessment and your reports look in this browser, never your questions, answers or results.');
+    say(sec('s9s').querySelector('h2 + .t13.sec'), 'These change how the app, your E-DNA assessment and your reports look, never your questions, answers or results. They carry across your devices.');
     var es = ednaSettings();
     var cur9 = { font: es.font || 'inter', size: es.size || 100, spacing: es.spacing === 'wide' ? 'extra' : (es.spacing || 'standard'), motion: es.motion || 'standard', theme: es.theme || 'light', transparency: es.transparency || 'standard' };
     $('s9screen').innerHTML = SCREEN9.map(function (s, i) {
@@ -1910,7 +1927,7 @@
     if (copies[2]) { copies[2].querySelector('button').id = 's9pdf'; say(copies[2].querySelector('button'), 'Open · PDF'); say(copies[2].querySelector('.t13.sec'), 'Your basic and Advanced Reports; each has a PDF button'); }
     if (copies[3]) copies[3].querySelector('button').id = 's9all';
     var last = acct.querySelector(':scope > .t13.sec:last-child');
-    if (last) last.innerHTML = 'To delete your account and its data, use <a href="/delete-account/" target="_top">Delete my account</a>; we confirm by email before anything is removed. <a href="/home/legal/privacy-policy.html" target="_top">Privacy Policy</a> · <a href="/home/legal/terms-of-use.html" target="_top">Terms of Use</a>';
+    if (last) last.innerHTML = '<a href="#" id="s9delete2">Delete my account</a> asks for your password and the word DELETE. Your account is deleted 14 days later; signing in before then cancels it. <a href="/home/legal/privacy-policy.html" target="_top">Privacy Policy</a> · <a href="/home/legal/terms-of-use.html" target="_top">Terms of Use</a>';
 
     /* live tables */
     api('/credits').then(function (d) {
@@ -2063,7 +2080,7 @@
   (function () {
     var m9 = $('main9'); if (!m9) return;
     m9.addEventListener('click', function (e) {
-      var t = e.target.closest && e.target.closest('#s9upload, #s9remove, #s9emailChange, #s9emailSend, #s9codeOk, #s9codeAgain, #s9save, [data-set9], [data-leave], #s9pw, #s9everywhere, #s9signout, #s9delete, #s9csv, #s9pdf, #s9all');
+      var t = e.target.closest && e.target.closest('#s9upload, #s9remove, #s9emailChange, #s9emailSend, #s9codeOk, #s9codeAgain, #s9save, [data-set9], [data-leave], #s9pw, #s9everywhere, #s9signout, #s9delete, #s9delete2, #s9csv, #s9pdf, #s9all');
       if (!t) return;
       e.preventDefault(); e.stopPropagation();
       var id = t.id;
@@ -2126,6 +2143,7 @@
         try { localStorage.setItem('edna-settings', JSON.stringify(es)); } catch (x) { /* storage blocked */ }
         t.parentElement.querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b === t); b.setAttribute('aria-pressed', String(b === t)); });
         applyScreen();
+        api('/profile/screen', { method: 'PUT', keep: true, body: { screen: es } }); /* every device and the iOS app */
         return;
       }
       if (id === 's9pw') {
@@ -2171,7 +2189,50 @@
         return;
       }
       if (id === 's9signout') { signOutHere(); return; }
-      if (id === 's9delete') { topGo('/delete-account/'); return; }
+      if (id === 's9delete' || id === 's9delete2') {
+        /* Delete my account (BS-AI-003 §9.2; BS-AI-004 §3.4; BS-AI-009 A11): the password and
+           the word DELETE, then 14 days in which signing in cancels it; then everything goes,
+           except entries in other people's rooms (they stay with the name) and receipts */
+        bsModal('<h2>Delete your account?</h2>' +
+          '<p>Your E-DNA results and reports, your decisions and Decision log, your workbooks, credits and settings are deleted, on the website and in the iOS app. Rooms you own are closed. Entries you added to other people’s rooms stay there with your name. Receipts are kept, as the law requires.</p>' +
+          '<p><b>Nothing is deleted for 14 days.</b> When you confirm, you are signed out everywhere; signing in before then cancels it. If you want a copy first, use “Take a copy” in Settings.</p>' +
+          '<label class="t13 sec" for="bsDelPw">Your password</label><input class="inp" id="bsDelPw" type="password" autocomplete="current-password" style="width:100%;margin:4px 0 10px">' +
+          '<label class="t13 sec" for="bsDelWord">Type DELETE to confirm</label><input class="inp" id="bsDelWord" type="text" autocomplete="off" autocapitalize="characters" style="width:100%;margin:4px 0 10px">' +
+          '<p class="t13" id="bsDelMsg" role="alert" style="min-height:18px;margin:0 0 8px;color:#B8202E;font-weight:600"></p>' +
+          '<div class="btns"><button type="button" class="bs" data-no>Keep my account</button><button type="button" class="bp" data-ok>Delete my account</button></div>',
+          function (ov, close) {
+            ov.querySelector('[data-no]').addEventListener('click', close);
+            ov.querySelector('[data-ok]').addEventListener('click', function () {
+              var msg = ov.querySelector('#bsDelMsg'), btn = this;
+              var pw = ov.querySelector('#bsDelPw').value, word = ov.querySelector('#bsDelWord').value.trim();
+              if (!pw) { msg.textContent = 'Enter your password.'; return; }
+              if (word !== 'DELETE') { msg.textContent = 'Type DELETE, in capitals, to confirm.'; return; }
+              var auth = null; try { auth = window.top && window.top.bsAuth; } catch (e) { /* other origin */ }
+              if (!auth) { msg.textContent = 'Open Settings from your dashboard to delete your account.'; return; }
+              btn.disabled = true; msg.style.color = '#454545'; msg.textContent = 'Checking…';
+              var fail = function (t) { btn.disabled = false; msg.style.color = '#B8202E'; msg.textContent = t; };
+              auth.verifyPassword(pw).then(function (ok) {
+                if (!ok) { fail('Your password is not right.'); return; }
+                auth.refreshIdToken().then(function (idt) {
+                  if (!idt) { fail('Your sign-in has expired. Sign in again, then try once more.'); return; }
+                  fetch(API + '/account/delete', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + idt }, body: JSON.stringify({ confirm: 'DELETE' }) })
+                    .then(function (r) { return r.json().then(function (j) { j.__status = r.status; return j; }); })
+                    .then(function (j) {
+                      if (j.__status !== 200) { fail(j.message || 'Not done. Try again in a moment.'); return; }
+                      close();
+                      var on = new Date(j.deletion_after).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+                      bsNotice('Your account will be deleted on ' + on, 'You are now signed out everywhere. Signing in before ' + on + ' cancels the deletion.').then(function () {
+                        freshAccess().then(function (tok) {
+                          (tok ? cognitoCall('GlobalSignOut', { AccessToken: tok }) : Promise.resolve({})).then(signOutHere, signOutHere);
+                        });
+                      });
+                    }, function () { fail('Could not reach Brandscaling. Try again.'); });
+                });
+              }, function () { fail('Could not reach the sign-in service. Try again.'); });
+            });
+          });
+        return;
+      }
       if (id === 's9pdf') { openReport('basic'); return; }
       if (id === 's9csv') {
         api('/log', { fresh: true }).then(function (d) {
@@ -2497,6 +2558,17 @@
         return;
       }
       PROFILE = p;
+      /* Screen settings follow the account (25 Nov): the account's copy wins; a browser that
+         has settings while the account has none saves them to the account */
+      try {
+        if (p.screen && typeof p.screen === 'object') {
+          var loc = ednaSettings(); Object.keys(p.screen).forEach(function (k) { loc[k] = p.screen[k]; });
+          localStorage.setItem('edna-settings', JSON.stringify(loc)); applyScreen();
+        } else if (localStorage.getItem('edna-settings')) {
+          api('/profile/screen', { method: 'PUT', keep: true, body: { screen: ednaSettings() } });
+        }
+      } catch (e) { /* storage blocked */ }
+      if (p.deletion_cancelled) bsNotice('Deletion cancelled', 'You signed in again, so your account will not be deleted. Everything stays as it was.');
       var key = KEYMAP[p.type_key] || 'mixed';
       clickBar('data-type', key);
       clickBar('data-acct', p.first_open ? 'new' : 'est');
