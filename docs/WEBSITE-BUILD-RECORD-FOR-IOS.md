@@ -230,14 +230,13 @@ the secret-gated runners in `diMigrateRoutes.js` because the database is only re
   approved nine panels with real data.
 
 ## 7 · Open questions and known gaps
-- **The request limit is shared by everyone (found 25 Nov, fix waiting for approval).** The
-  backend's rate limiter counts every request against App Runner's proxy address, so all
-  members together get 500 requests per 15 minutes (`RATE_LIMIT_MAX_REQUESTS`); after that
-  every member gets 429 "Too many requests" (screens stuck on "Loading…", "mentor not
-  available") until the window passes. Logged as `ERR_ERL_UNEXPECTED_X_FORWARDED_FOR`. The
-  prepared fix (backend `src/middleware/rateLimiter.js`, not yet pushed) keys the limit by
-  each visitor's address and allows 2000 per visitor per 15 minutes. **iOS** traffic shares
-  the same limiter.
+- **Fixed 25 Nov (backend `be5da1d`): the request limit was shared by everyone.** The rate
+  limiter counted every request against App Runner's proxy address, so all members together
+  got 500 requests per 15 minutes and then 429 "Too many requests" (stuck "Loading…",
+  "mentor not available"). It now counts per visitor (the last `X-Forwarded-For` entry, which
+  App Runner appends; a forged earlier entry is ignored), 2000 per visitor per 15 minutes
+  (`RATE_LIMIT_MAX_PER_IP`; the old `RATE_LIMIT_MAX_REQUESTS` is no longer read). Each server
+  copy keeps its own count. **iOS** traffic goes through the same limiter.
 - **E-DNA before Decision Intelligence?** Asked Fariza on 25 Nov whether Make a decision and
   rooms need the E-DNA first; today someone without a result is treated as Mixed. Waiting.
 - After the event: set `DI_OPEN_ALL=false`; remove `MENTOR_INSTRUCTION_VERSION` if no longer
