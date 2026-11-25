@@ -244,7 +244,16 @@ the secret-gated runners in `diMigrateRoutes.js` because the database is only re
 - Account deletion on the website goes to `/delete-account/` (request by email). The iOS
   `DELETE /me` removes quiz data and the user row but not the DI tables (decisions, log, rooms,
   credits) — fix before relying on it.
-- Changing the sign-in email is manual (support).
+- **Change email (built 25 Nov, switched off).** Settings · Profile follows the design: new
+  address + current password (checked through the dashboard's Cognito library) → Cognito
+  `UpdateUserAttributes` emails a 6-digit code to the new address → `VerifyUserAttribute` →
+  a refreshed ID token carries the verified address → `POST /account/email-sync` copies it to
+  `users.email` (verified Cognito ID token only). The account id never changes, so all data
+  stays. Switched on by `EMAIL_CHANGE` in `site.part.js` **only after** the user pool's
+  "keep original attribute value active when an update is pending" is set for email;
+  without it Cognito changes the sign-in email before it is confirmed. Still to do: tell the
+  old address (N15) and update the GHL contact's email. **iOS:** same calls (the iOS app uses
+  the same pool), same endpoint.
 - `terms_acceptance` is never written; the report gate and checkout should record acceptance.
 - Room emails (N1–N14) need GHL workflows before they can be added to `GHL_SENDABLE_EVENTS`.
 - The apex domain `brandscaling.co.uk/<path>` 404s; needs forwarding fixed at the registrar.
