@@ -204,7 +204,8 @@ billing address and "Update card" (GHL's webhooks do not carry them — asked of
 - After 14 days the scheduler (every 15 min) deletes: decisions, entries, mentor turns, log,
   credits, attachments, notifications and preferences, devices, terms records, E-DNA progress
   and results, the user row, and the Cognito sign-in (needs `cognito-idp:AdminDeleteUser` on
-  the App Runner role; without it the sign-in stays and the log says so). Rooms the person
+  the App Runner role — granted 26 Nov as the inline policy `cognito-admin-delete-user`, this one
+  action on this pool only). Rooms the person
   owned are closed; their entries in other people's rooms stay with their name
   (`room_member.left_name`). Receipts stay with GHL. Safety records (`safety_event`) are kept
   until a retention rule exists.
