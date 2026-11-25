@@ -278,7 +278,9 @@ the secret-gated runners in `diMigrateRoutes.js` because the database is only re
   `expires_at`, `is_guest`, `invitee_type` (`member` · `guest`), `membership` (free · di ·
   entry…; `none` for a guest), `subscription_status` (active · payment_failed · cancelled ·
   none). Rows queued earlier with a relative link are skipped. Two sample payloads were sent
-  to the trigger on 25 Nov for mapping. Backend change written; **push pending Munawar's OK**.
+  to the trigger on 25 Nov for mapping, and three more (member · Entry member read-only ·
+  guest, decisions marked "TEST") after the backend change went live (cef96c0 → **28ec33c**,
+  deployed 25 Nov 20:15 PKT).
   A "Create invite link" (no email) sends nothing: the owner shares that link themselves.
 - The other room emails (N2 `room.input_needed`, N3 `room.new_input`, N4 `room.confirm`,
   `guest.day5`, `guest.day7`) still need their GHL workflows before they join
