@@ -116,6 +116,35 @@ export const authHelpers = {
   },
 
   /**
+   * Settings · Change email (25 Nov): confirms the person's current password before the
+   * address is changed. Same check as signIn, but it does not announce a new sign-in to the
+   * app (no SIGNED_IN event), so the page the person is on stays where it is.
+   */
+  verifyPassword(email: string, password: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      userFor(email).authenticateUser(
+        new AuthenticationDetails({ Username: email.trim().toLowerCase(), Password: password }),
+        { onSuccess: () => resolve(true), onFailure: () => resolve(false), newPasswordRequired: () => resolve(false) }
+      );
+    });
+  },
+
+  /** A fresh ID token from the refresh token, e.g. after the email attribute changed. */
+  refreshIdToken(): Promise<string | null> {
+    return new Promise((resolve) => {
+      const u = pool.getCurrentUser();
+      if (!u) return resolve(null);
+      u.getSession((err: Error | null, s: CognitoUserSession | null) => {
+        if (err || !s) return resolve(null);
+        u.refreshSession(s.getRefreshToken(), (e: Error | null, ns: CognitoUserSession | null) => {
+          if (e || !ns) return resolve(null);
+          resolve(ns.getIdToken().getJwtToken());
+        });
+      });
+    });
+  },
+
+  /**
    * Registers the user. Cognito then emails a 6-digit confirmation code: the UI must call
    * confirmSignUp(email, code) and then signIn again. `data.needsConfirmation` says so.
    */

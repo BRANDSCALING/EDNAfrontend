@@ -9,6 +9,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { fetchEdnaState, type EdnaState } from '../../utils/edna';
+import { authHelpers } from '../../utils/auth/cognito';
 import { BrandWorkbooks } from './BrandWorkbooks';
 import { AIMentorHub } from '../AIMentorHub';
 import { ZoomRecordings } from '../ZoomRecordings';
@@ -95,6 +96,18 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
     return () => window.removeEventListener('message', onMsg);
   }, [onOpenMemberView]);
 
+  /* Settings · Change email (25 Nov): the embedded app (same origin) checks the password and
+     refreshes the token through these, since the Cognito library lives in this bundle */
+  useEffect(() => {
+    (window as any).bsAuth = {
+      verifyPassword: async (pw: string) => {
+        const { session } = await authHelpers.getSession();
+        return session ? authHelpers.verifyPassword(session.user.email, pw) : false;
+      },
+      refreshIdToken: () => authHelpers.refreshIdToken(),
+    };
+    return () => { delete (window as any).bsAuth; };
+  }, []);
   useEffect(() => {
     let alive = true;
     fetchEdnaState().then((s) => { if (alive) setEdna(s); });

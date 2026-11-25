@@ -141,6 +141,21 @@
     /* Home's workbook rows: the status chip keeps one line and one column, whatever the
        title's length (Munawar, 25 Nov: "In progress" broke over two lines on Workbook 2) */
     '#wbList0 .wb>.chip{white-space:nowrap;flex:none}' +
+    /* Settings' tables (grants, credits used, receipts) stay tables on phones: the log's
+       phone layout turns rows into grids sized for the log's nine columns, which laid the
+       grant name and its numbers on top of each other (iPhone check, 25 Nov) */
+    '#main9 .logtable{display:table!important;width:100%;table-layout:fixed}' +
+    '#main9 .logtable th,#main9 .logtable td{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:break-word}' +
+    '#main9 .logtable th{overflow-wrap:normal}' +
+    '#main9 table[aria-label="Credit grants"] th:nth-child(1){width:34%}#main9 table[aria-label="Credit grants"] th:nth-child(2){width:19%}#main9 table[aria-label="Credit grants"] th:nth-child(3){width:24%}' +
+    '#main9 table[aria-label="Credits used"] th:nth-child(1){width:26%}#main9 table[aria-label="Credits used"] th:nth-child(3){width:17%}#main9 table[aria-label="Credits used"] th:nth-child(4){width:14%}' +
+    '#main9 table[aria-label="Receipts"] th:nth-child(1){width:34%}' +
+    '@media (max-width:480px){#main9 .logtable th,#main9 .logtable td{font-size:12px;padding:7px 4px}}' +
+    '#main9 .logtable thead{display:table-header-group!important}#main9 .logtable tbody{display:table-row-group!important}' +
+    '#main9 .logtable tr{display:table-row!important}' +
+    '#main9 .logtable th,#main9 .logtable td{display:table-cell!important;grid-column:auto!important;vertical-align:top;padding:8px 6px}' +
+    /* the email change box spans the form, not one narrow column (the design drew it in the grid) */
+    '#s9emailBox{grid-column:1/-1}' +
     /* iPhone Safari zooms the whole page in when a field under 16px is tapped, and stays
        zoomed (Mashab, 25 Nov: mobile first, iPhone first). The Frame boxes, replies and room
        questions were 15px; on touch screens every field is at least 16px. */
@@ -1630,6 +1645,11 @@
      (Part 5 consent), /rooms, /devices; password and sign-out-everywhere go to Cognito. */
   var SET9 = (function () { var g = document.querySelector('#main9 .setgrid'); return g ? g.innerHTML : ''; })();
   var SUPPORT = '<a href="/privacy-policy/#s19" target="_top">Brandscaling support</a>';
+  /* Change email (25 Nov). ON only once the Cognito pool keeps the original email active while
+     a change is pending (UserAttributeUpdateSettings: email). Without that setting Cognito
+     swaps the sign-in email at once, before the new address is confirmed, and a typo locks
+     the member out — so until then the button explains the support route instead. */
+  var EMAIL_CHANGE = false;
   var NEV = {
     N1: 'Invited to a room', N2: 'Your input is needed', N3: 'Waiting on you (owner)', N4: 'Confirm your decision or the rule',
     N5: 'Room decision written to your log', N6: 'Review due', N7: 'Review reminder', N10: 'Credits used up',
@@ -1704,7 +1724,15 @@
     $('s9tz').value = P.time_zone || '';
     $('s9biz').value = P.business_name || '';
     var pnote = sec('s9p').querySelector('div.t13.sec[style*="margin-top:8px"]');
-    if (pnote) pnote.innerHTML = 'Your initials come from your names. To change the email you sign in with, contact ' + SUPPORT + ' from your current address.';
+    if (pnote) pnote.innerHTML = EMAIL_CHANGE ? 'Your initials come from your names.' : 'Your initials come from your names. To change the email you sign in with, contact ' + SUPPORT + ' from your current address.';
+    /* the design's change-email box, in words that match what happens (a code, not a link) */
+    var eb = $('s9emailBox');
+    if (eb) {
+      $('s9emailSend').textContent = 'Send the code';
+      var en = eb.querySelector('#s9emailSend').closest('.btnrow').nextElementSibling;
+      if (en) en.textContent = 'We send a 6-digit code to the new address. Your email changes only when you enter it here, within 24 hours. Your account stays exactly as it is: your E-DNA, decisions, rooms and credits do not move or change. Only the address you sign in with changes, on the website and in the iOS app.';
+      $('s9emailSent').classList.add('hide');
+    }
     var psave = sec('s9p').querySelector('.btnrow .btn.primary');
     psave.id = 's9save';
     psave.insertAdjacentHTML('afterend', '<span class="t13 sec" id="s9msg" style="margin-left:8px"></span>');
@@ -1850,12 +1878,89 @@
     });
   };
 
+  /* Change email: password → Cognito sends a code to the new address → the code confirms it
+     → a fresh ID token carries the new, verified address → the backend copies it to the
+     member's row (/account/email-sync). The account id never changes. */
+  var EMAIL_PENDING = null;
+  function emailSay(t, bad) {
+    var m = $('s9emailMsg');
+    if (!m) { $('s9emailBox').insertAdjacentHTML('beforeend', '<div class="t13" id="s9emailMsg" style="margin-top:8px"></div>'); m = $('s9emailMsg'); }
+    m.textContent = t; m.style.color = bad ? 'var(--red, #C4122F)' : '';
+  }
+  function cognitoErr(r) {
+    var t = r.__type || '';
+    if (/AliasExists|UsernameExists/.test(t)) return 'Another account already uses that email.';
+    if (/CodeMismatch/.test(t)) return 'That code is not right. Check the email and try again.';
+    if (/ExpiredCode/.test(t)) return 'That code has expired. Press “Send the code again”.';
+    if (/LimitExceeded|TooManyRequests/.test(t)) return 'Too many tries. Wait a few minutes, then try again.';
+    if (/NotAuthorized/.test(t)) return 'Your sign-in has expired. Sign in again, then change your email.';
+    if (/InvalidParameter/.test(t)) return 'That does not look like an email address.';
+    return r.message || 'Not changed. Try again in a moment.';
+  }
+  function emailStep(which) {
+    var tok = cognitoTokens().access;
+    if (!tok) { emailSay('Your sign-in has expired. Sign in again, then change your email.', true); return; }
+    if (which === 's9emailSend') {
+      var ne = ($('s9emailNew').value || '').trim().toLowerCase(), pw = $('s9emailPw').value || '';
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ne)) { emailSay('Write the new email address in full.', true); return; }
+      if (ne === String(PROFILE.email || '').toLowerCase()) { emailSay('That is already your email.', true); return; }
+      if (!pw) { emailSay('Enter your password to confirm it is you.', true); return; }
+      var auth = window.top && window.top.bsAuth;
+      if (!auth) { emailSay('Open Settings from your dashboard to change your email.', true); return; }
+      emailSay('Checking…');
+      auth.verifyPassword(pw).then(function (ok) {
+        if (!ok) { emailSay('Your password is not right.', true); return; }
+        cognitoCall('UpdateUserAttributes', { AccessToken: cognitoTokens().access, UserAttributes: [{ Name: 'email', Value: ne }] }).then(function (r) {
+          if (!r.__ok) { emailSay(cognitoErr(r), true); return; }
+          EMAIL_PENDING = ne; $('s9emailPw').value = '';
+          if (!$('s9code')) {
+            $('s9emailBox').insertAdjacentHTML('beforeend',
+              '<label class="t13 sec" for="s9code" style="display:block;margin-top:12px">The 6-digit code we sent to <b id="s9codeTo"></b></label>' +
+              '<input class="inp" id="s9code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" style="margin-top:4px">' +
+              '<div class="btnrow" style="margin-top:8px"><button class="btn primary small" type="button" id="s9codeOk">Confirm my new email</button><button class="btn secondary small" type="button" id="s9codeAgain">Send the code again</button></div>');
+          }
+          $('s9codeTo').textContent = ne;
+          emailSay('Code sent. Check the inbox at the new address.');
+          $('s9code').focus();
+        }, function () { emailSay('Could not reach the sign-in service. Try again.', true); });
+      });
+      return;
+    }
+    if (which === 's9codeAgain') {
+      cognitoCall('GetUserAttributeVerificationCode', { AccessToken: tok, AttributeName: 'email' }).then(function (r) {
+        emailSay(r.__ok ? 'A new code is on its way.' : cognitoErr(r), !r.__ok);
+      });
+      return;
+    }
+    if (which === 's9codeOk') {
+      var code = ($('s9code').value || '').trim();
+      if (!/^\d{6}$/.test(code)) { emailSay('Enter the 6 digits from the email.', true); return; }
+      emailSay('Confirming…');
+      cognitoCall('VerifyUserAttribute', { AccessToken: tok, AttributeName: 'email', Code: code }).then(function (r) {
+        if (!r.__ok) { emailSay(cognitoErr(r), true); return; }
+        var auth = window.top && window.top.bsAuth;
+        (auth ? auth.refreshIdToken() : Promise.resolve(null)).then(function (idt) {
+          if (!idt) { emailSay('Your new email is confirmed. Sign out and in again to finish.', false); return; }
+          if (sess) sess.token = idt;
+          fetch(API + '/account/email-sync', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + idt } })
+            .then(function (res) { return res.json().then(function (j) { j.__status = res.status; return j; }); })
+            .then(function (j) {
+              if (j.__status !== 200) { emailSay(j.message || 'Confirmed, but our records did not update. Contact Brandscaling support.', true); return; }
+              PROFILE.email = j.email || EMAIL_PENDING; EMAIL_PENDING = null; READS = {};
+              window.openScreen9();
+              bsNotice('Email changed', 'You now sign in with ' + PROFILE.email + ', on the website and in the iOS app. Everything in your account stays as it was.');
+            }, function () { emailSay('Confirmed, but our records did not update. Try again in a moment.', true); });
+        });
+      }, function () { emailSay('Could not reach the sign-in service. Try again.', true); });
+    }
+  }
+
   /* Settings actions: one handler on the screen, which stops the design's own example
      handlers (upload, consent, screen toggles) from also running */
   (function () {
     var m9 = $('main9'); if (!m9) return;
     m9.addEventListener('click', function (e) {
-      var t = e.target.closest && e.target.closest('#s9upload, #s9remove, #s9emailChange, #s9save, [data-set9], [data-leave], #s9pw, #s9everywhere, #s9signout, #s9delete, #s9csv, #s9pdf, #s9all');
+      var t = e.target.closest && e.target.closest('#s9upload, #s9remove, #s9emailChange, #s9emailSend, #s9codeOk, #s9codeAgain, #s9save, [data-set9], [data-leave], #s9pw, #s9everywhere, #s9signout, #s9delete, #s9csv, #s9pdf, #s9all');
       if (!t) return;
       e.preventDefault(); e.stopPropagation();
       var id = t.id;
@@ -1895,7 +2000,12 @@
         fi.click(); return;
       }
       if (id === 's9remove') { api('/profile/photo', { method: 'PUT', body: { data: null } }).then(function () { PROFILE.photo_url = null; window.openScreen9(); }); return; }
-      if (id === 's9emailChange') { bsNotice('Change your email', 'Contact Brandscaling support from your current address with the new one (the address is under Contact Us in the Privacy Policy). We change it for the website and the iOS app together.'); return; }
+      if (id === 's9emailChange') {
+        if (!EMAIL_CHANGE) { bsNotice('Change your email', 'Contact Brandscaling support from your current address with the new one (the address is under Contact Us in the Privacy Policy). We change it for the website and the iOS app together.'); return; }
+        $('s9emailBox').classList.toggle('hide'); if (!$('s9emailBox').classList.contains('hide')) $('s9emailNew').focus();
+        return;
+      }
+      if (id === 's9emailSend' || id === 's9codeOk' || id === 's9codeAgain') { emailStep(id); return; }
       if (id === 's9save') {
         var body = { first_name: $('s9first').value.trim(), last_name: $('s9last').value.trim(), phone: $('s9phone').value.trim(), country: $('s9country').value, time_zone: $('s9tz').value, business_name: $('s9biz').value.trim() };
         $('s9msg').textContent = 'Saving…';
