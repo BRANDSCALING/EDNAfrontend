@@ -19,8 +19,8 @@ import { ZoomRecordings } from '../ZoomRecordings';
    Overview with its six tabs. Each tab is a screen of the DI app at /app, drawn inside this
    dashboard in an iframe (?embed=1 hides the app's own sidebar), the same way the E-DNA
    report is embedded — a repositioning, not a rebuild. */
-export type DiView = 'di-make' | 'di-log' | 'di-rooms' | 'di-reports' | 'di-workbooks' | 'di-edna' | 'di-scaling';
-export const DI_VIEWS: DiView[] = ['di-make', 'di-log', 'di-rooms', 'di-reports', 'di-workbooks', 'di-edna', 'di-scaling'];
+export type DiView = 'di-make' | 'di-log' | 'di-rooms' | 'di-reports' | 'di-workbooks' | 'di-edna' | 'di-scaling' | 'di-settings';
+export const DI_VIEWS: DiView[] = ['di-make', 'di-log', 'di-rooms', 'di-reports', 'di-workbooks', 'di-edna', 'di-scaling', 'di-settings'];
 const DI_TABS: [DiView, string][] = [
   ['di-make', 'Make a decision'], ['di-log', 'Decision log'], ['di-rooms', 'Decision rooms'],
   ['di-reports', 'My reports'], ['di-workbooks', 'My workbooks'], ['di-edna', 'My E-DNA'],
@@ -67,7 +67,8 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
     diSrc.current = '/app/index.html?embed=1&screen=' + screenOf(view) + (room ? '&room=' + encodeURIComponent(room) : '');
     diLoaded.current = false;
   }
-  if (!isDi) diSrc.current = null;
+  /* the app stays loaded (hidden) while a report or another page is open, so coming back
+     shows it at once instead of reloading it (25 Nov: the reload flashed a blank page) */
   useEffect(() => {
     if (!isDi) return;
     try { sessionStorage.removeItem('bs_di_room'); } catch { /* storage blocked */ }
@@ -151,6 +152,11 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
           {false && (
             <button className={view === 'zoom-recordings' ? 'on' : ''} onClick={() => go('zoom-recordings')}>▶ Recordings</button>
           )}
+          {/* Settings: the approved app design's nine panels, real data (25 Nov) */}
+          <button className={'bs-home' + (view === 'di-settings' ? ' on' : '')} onClick={() => go('di-settings')}>
+            <svg className="bs-home-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" /></svg>
+            <span>Settings</span>
+          </button>
           <button onClick={onLogout}>↩ Log out</button>
         </nav>
         <div className="bs-side-foot">Decision Intelligence &amp; Infinite Scaling Mastery</div>
@@ -171,8 +177,8 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
         </main>
       )}
 
-      {isDi && diSrc.current && (
-        <main className="bs-main">
+      {diSrc.current && (
+        <main className="bs-main" style={isDi ? undefined : { display: 'none' }}>
           <iframe
             ref={diRef}
             src={diSrc.current}

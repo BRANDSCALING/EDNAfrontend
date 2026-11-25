@@ -89,15 +89,37 @@
     else h['x-user-id'] = localUid;
     return h;
   }
+  /* Stale-while-revalidate for the screens' own reads (Munawar, 25 Nov): switching tabs wiped
+     each list to "Loading…" and refilled it half a second later, a visible flash on every
+     return. A read the member has already loaded now paints at once from the last answer
+     (in the same task, before the browser draws) and is refreshed in the background; the
+     callback runs again only if the answer changed. Any write empties the store, so the
+     member never sees their own data from before an action they just took. */
+  var READS = {};
+  var SWR = /^\/(log|log\/summary|needs-you|rooms|credits|edna|notification-prefs|devices|purchases)(\?[\w=&-]*)?$/;
   function api(path, opts) {
     opts = opts || {};
-    return fetch(API + path, {
-      method: opts.method || 'GET',
+    var method = opts.method || 'GET';
+    if (method !== 'GET' && !opts.keep) READS = {}; /* keep: a write that changes nothing shown */
+    var live = fetch(API + path, {
+      method: method,
       headers: headers(),
       body: opts.body ? JSON.stringify(opts.body) : undefined,
     }).then(function (res) {
       return res.json().then(function (j) { j.__status = res.status; return j; });
     });
+    if (method !== 'GET' || opts.fresh || !SWR.test(path)) return live;
+    live = live.then(function (j) { if (j.__status === 200) READS[path] = { j: j, s: JSON.stringify(j) }; return j; });
+    var hit = READS[path];
+    if (!hit) return live;
+    return {
+      then: function (cb, eb) {
+        var first;
+        try { first = cb ? cb(hit.j) : hit.j; } catch (e) { if (eb) eb(e); }
+        live.then(function (j) { if (cb && j.__status === 200 && JSON.stringify(j) !== hit.s) cb(j); }, function () { /* offline: keep what is shown */ });
+        return Promise.resolve(first);
+      },
+    };
   }
 
   /* ---------- strip the preview controls ---------- */
@@ -116,6 +138,9 @@
     /* the one-step box reuses .lbox (the loop figure's box, white text); Logic and Feeling have
        their own label colours, 'Your decision' (.w.dec) had none and showed white (24 Nov) */
     '.w.dec{color:var(--black)}' +
+    /* Home's workbook rows: the status chip keeps one line and one column, whatever the
+       title's length (Munawar, 25 Nov: "In progress" broke over two lines on Workbook 2) */
+    '#wbList0 .wb>.chip{white-space:nowrap;flex:none}' +
     /* iPhone Safari zooms the whole page in when a field under 16px is tapped, and stays
        zoomed (Mashab, 25 Nov: mobile first, iPhone first). The Frame boxes, replies and room
        questions were 15px; on touch screens every field is at least 16px. */
@@ -440,11 +465,16 @@
     setTimeout(function () { openLiveRoom(v.raw.room_id); }, 300);
   }, true);
   function refreshLogScreen() {
-    Promise.all([api('/log?view=mine'), api('/log?view=room')]).then(function (res) {
-      LOGCACHE.mine = (res[0].rows || []).map(toView);
-      LOGCACHE.room = (res[1].rows || []).map(toView);
+    /* two reads that may each answer twice (stored, then fresh): paint once both are in */
+    var got = {};
+    var both = function () {
+      if (!got.mine || !got.room) return;
+      LOGCACHE.mine = (got.mine.rows || []).map(toView);
+      LOGCACHE.room = (got.room.rows || []).map(toView);
       paintLogScreen();
-    });
+    };
+    api('/log?view=mine').then(function (r) { got.mine = r; both(); });
+    api('/log?view=room').then(function (r) { got.room = r; both(); });
   }
   var origOpenScreen3 = window.openScreen3;
   window.openScreen3 = function (key) {
@@ -855,6 +885,7 @@
   function repaintCurrent() {
     var cur = window.BS_SCREEN;
     if (cur === 1) paintEdnaCard();
+    if (cur === 9 && window.openScreen9) window.openScreen9(); /* Part 5 consent comes from /edna */
     if (cur === 6) paintScreen6();
     if (cur === 7) paintScreen7();
     if (cur === 8) paintScreen8();
@@ -1590,131 +1621,362 @@
     });
   }
 
-  /* ---------- Screen 9 · Settings: the real minimal panel (production replaces the
-     example panels wholesale; membership and payments stay with the checkout for now) */
-  var origOpenScreen9 = window.openScreen9;
-  window.openScreen9 = function (key) {
-    if (origOpenScreen9) origOpenScreen9(key);
-    var main = document.querySelector('#main9 .setgrid');
-    if (!main || !PROFILE) return;
-    document.querySelectorAll('#main9 .chip.ex').forEach(function (c) { c.classList.add('hide'); });
-    var ini = (((PROFILE.first_name || ' ')[0] || '') + ((PROFILE.last_name || ' ')[0] || '')).trim().toUpperCase() || '—';
-    main.innerHTML =
-      /* Profile: photo, names, email (PUT /profile, PUT /profile/photo) */
-      '<section class="glass panel"><div class="strip" aria-hidden="true"></div><h2 class="t19 b" style="margin:0 0 4px">Profile</h2>' +
-      '<div class="t13 sec" style="margin-bottom:12px">Your photo or initials are what people in a Decision Room see.</div>' +
-      '<div class="lrow" style="justify-content:flex-start;gap:14px;margin-bottom:12px"><div class="pcircle big" aria-hidden="true">' + (PROFILE.photo_url ? '<img src="' + PROFILE.photo_url + '" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover">' : escT(ini)) + '</div>' +
-      '<div class="btnrow" style="margin:0"><button class="btn secondary small" type="button" id="st9photo">Upload a photo</button>' + (PROFILE.photo_url ? '<button class="btn secondary small" type="button" id="st9photoRm">Remove photo</button>' : '') + '</div></div>' +
-      '<div class="lrow" style="gap:10px;flex-wrap:wrap;justify-content:flex-start"><input class="t19" id="st9first" type="text" placeholder="First name" value="' + escT(PROFILE.first_name || '') + '" style="max-width:200px">' +
-      '<input class="t19" id="st9last" type="text" placeholder="Last name" value="' + escT(PROFILE.last_name || '') + '" style="max-width:200px">' +
-      '<button class="btn small primary" type="button" id="st9save">Save profile</button><span class="t13 sec" id="st9msg"></span></div>' +
-      '<div class="t13 sec" style="margin-top:10px">Account email: <b>' + escT(PROFILE.email || '—') + '</b>. Changing it needs a confirmation link — email support@brandscaling.co.uk for now.</div></section>' +
-      /* Membership and credits: GET /credits */
-      '<section class="glass panel"><div class="strip" aria-hidden="true"></div><div class="lrow" style="margin-bottom:4px"><h2 class="t19 b" style="margin:0">Membership and credits</h2><span class="chip type" style="display:inline-block">' + escT(PROFILE.tier || 'free') + '</span></div>' +
-      '<div class="t19">Your decisions: <b id="st9bal">' + (PROFILE.credits || 0) + ' left</b></div>' +
-      '<div class="t13 sec" style="margin:6px 0 10px">1 credit = one decision taken to Check with your mentor. Credits come with the E-DNA Advanced Report (£99) and memberships; receipts arrive by email from the checkout.</div>' +
-      '<div class="t13 sec b" style="margin:0 0 6px">Grants</div>' +
-      '<table class="logtable t13" aria-label="Credit grants"><thead><tr><th>Grant</th><th>Credits</th><th>Granted</th><th>Expires</th></tr></thead><tbody id="st9grants"><tr><td class="t13 sec" colspan="4">Loading…</td></tr></tbody></table>' +
-      '<div class="t13 sec b" style="margin:12px 0 6px">Credits used</div>' +
-      '<table class="logtable t13" aria-label="Credits used"><thead><tr><th>Date</th><th>Decision</th></tr></thead><tbody id="st9ledger"></tbody></table>' +
-      '<div class="btnrow" style="margin-top:12px"><a class="btn small secondary" href="https://go.brandscaling.co.uk/checkout-page-quiz-report">Top up</a></div></section>' +
-      /* Consent and sharing: Part 5 from /edna, rooms from /rooms */
-      '<section class="glass panel"><div class="strip" aria-hidden="true"></div><h2 class="t19 b" style="margin:0 0 4px">Consent and sharing</h2>' +
-      '<div class="t13 sec" style="margin-bottom:10px">What you have agreed to share, and where it applies.</div>' +
-      '<div class="crow"><div><div class="t13 b">Part 5 comparison in your E-DNA report</div><div class="t13 sec">' +
-      (EDNA && EDNA.taken ? (EDNA.p5 && EDNA.p5.consent ? 'Consent given during your assessment.' : 'Not given. Your adaptation levels still show in your report.') : 'Asked during the assessment.') + '</div></div></div>' +
-      '<div class="t13 sec b" style="margin:12px 0 6px">Decision rooms you share with</div>' +
-      '<div class="t13 sec" style="margin-bottom:8px">Joining a room shares your name, core type or Mixed state, loop and mentor, your progress and your entries with the people in that room, for that decision only.</div>' +
-      '<div id="st9rooms" class="t13 sec">Loading…</div></section>' +
-      /* Screen */
-      '<section class="glass panel"><div class="strip" aria-hidden="true"></div><h2 class="t19 b" style="margin:0 0 4px">Screen</h2>' +
-      '<div class="t13 sec" style="margin-bottom:10px">Font, text size, spacing, motion and theme are set on the assessment and report pages and apply there. They never change your questions, answers or results.</div>' +
-      '<div class="btnrow"><a class="btn small secondary" href="/edna/index.html">Open my E-DNA pages</a></div></section>' +
-      /* Security */
-      '<section class="glass panel"><div class="strip" aria-hidden="true"></div><h2 class="t19 b" style="margin:0 0 4px">Security</h2>' +
-      '<div class="crow"><div><div class="t13 b">Password</div><div class="t13 sec">Change it from the sign-in page: “Forgotten password” sends a reset link to your email.</div></div><a class="btn secondary small" href="/?signin=1">Sign-in page</a></div></section>' +
-      /* Account */
-      '<section class="glass panel span2"><div class="strip" aria-hidden="true"></div><h2 class="t19 b" style="margin:0 0 4px">Account</h2>' +
-      '<div class="t13 sec" style="margin-bottom:10px">Signed in as <b>' + escT(PROFILE.email || '—') + '</b>. Signing out keeps everything saved.</div>' +
-      '<div class="t13 sec b" style="margin:0 0 6px">Take a copy</div>' +
-      '<div class="crow"><div><div class="t13 b">Decision log</div><div class="t13 sec">Every row, as a CSV you can open in a spreadsheet</div></div><button class="btn secondary small" type="button" id="st9csv">Export · CSV</button></div>' +
-      '<div class="crow"><div><div class="t13 b">Reports</div><div class="t13 sec">Your basic and Advanced Reports, with PDF download</div></div><a class="btn secondary small" href="/edna/index.html">Open reports</a></div>' +
-      '<div class="btnrow" style="margin-top:12px"><button class="btn small secondary" type="button" id="st9signout">Sign out</button></div>' +
-      '<div class="t13 sec" style="margin-top:10px">To delete your account and its data, email support@brandscaling.co.uk from your account address.</div></section>';
-    /* fill the live tables */
+  /* ---------- Screen 9 · Settings (Munawar, 25 Nov): the approved design's own nine panels,
+     filled from the member's real records. The design's markup is kept exactly; its example
+     values are replaced, and a row with nothing real behind it (a card on file, two-step
+     verification, quiet hours for push) is hidden rather than shown with sample data.
+     Sources: /profile (names, photo, phone, country, time zone, business, membership),
+     /credits (grants, ledger), /purchases (orders from GHL), /notification-prefs, /edna
+     (Part 5 consent), /rooms, /devices; password and sign-out-everywhere go to Cognito. */
+  var SET9 = (function () { var g = document.querySelector('#main9 .setgrid'); return g ? g.innerHTML : ''; })();
+  var SUPPORT = '<a href="/privacy-policy/#s19" target="_top">Brandscaling support</a>';
+  var NEV = {
+    N1: 'Invited to a room', N2: 'Your input is needed', N3: 'Waiting on you (owner)', N4: 'Confirm your decision or the rule',
+    N5: 'Room decision written to your log', N6: 'Review due', N7: 'Review reminder', N10: 'Credits used up',
+    N13: 'Ready to retake', N14: 'Removed from a room, or room closed',
+  };
+  var TIERNAME = { free: 'Free', di: '£99 · Decision Intelligence', entry: 'Entry', expert: 'Expert', elite: 'Elite', enterprise: 'Enterprise' };
+  var SCREEN9 = [
+    ['Font', 'font', [['inter', 'Inter'], ['verdana', 'Verdana'], ['arial', 'Arial']]],
+    ['Text size', 'size', [[100, '100%'], [125, '125%'], [150, '150%'], [200, '200%']]],
+    ['Spacing', 'spacing', [['standard', 'Standard'], ['wide', 'Extra line and letter spacing']]],
+    ['Motion', 'motion', [['standard', 'Standard'], ['reduced', 'Reduced']]],
+    ['Theme', 'theme', [['light', 'Light'], ['dark', 'Dark'], ['contrast', 'High contrast']]],
+    ['Transparency', 'transparency', [['standard', 'Standard'], ['reduced', 'Reduced']]],
+  ];
+  function ednaSettings() { try { return JSON.parse(localStorage.getItem('edna-settings') || '{}') || {}; } catch (e) { return {}; } }
+  function cognitoTokens() {
+    try {
+      var pfx = 'CognitoIdentityServiceProvider.' + CLIENT_ID, u = localStorage.getItem(pfx + '.LastAuthUser');
+      return u ? { access: localStorage.getItem(pfx + '.' + u + '.accessToken') } : {};
+    } catch (e) { return {}; }
+  }
+  function cognitoCall(target, body) {
+    return fetch('https://cognito-idp.us-east-1.amazonaws.com/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-amz-json-1.1', 'X-Amz-Target': 'AWSCognitoIdentityProviderService.' + target },
+      body: JSON.stringify(body),
+    }).then(function (r) { return r.json().then(function (j) { j.__ok = r.ok; return j; }, function () { return { __ok: r.ok }; }); });
+  }
+  function signOutHere() {
+    try { Object.keys(localStorage).forEach(function (k) { if (k.indexOf('CognitoIdentityServiceProvider.') === 0) localStorage.removeItem(k); }); } catch (e) { /* storage blocked */ }
+    topGo('/');
+  }
+  function thisDevice() {
+    var ua = navigator.userAgent || '';
+    var br = /Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) && !/Chromium/.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : 'Browser';
+    var os = /iPhone/.test(ua) ? 'iPhone' : /iPad/.test(ua) ? 'iPad' : /Android/.test(ua) ? 'Android' : /Mac OS X/.test(ua) ? 'Mac' : /Windows/.test(ua) ? 'Windows' : 'computer';
+    return br + ' on ' + os;
+  }
+  /* the website reports itself once per load, so the device list has something real */
+  setTimeout(function () { if (sess) api('/devices/seen', { method: 'POST', keep: true, body: { name: thisDevice(), platform: 'web' } }); }, 2500);
+
+  window.openScreen9 = function () {
+    var grid = document.querySelector('#main9 .setgrid');
+    if (!grid || !PROFILE || !SET9) return;
+    grid.innerHTML = SET9; /* the design, fresh */
+    var main = $('main9');
+    main.querySelectorAll('.chip.ex, .jbar').forEach(function (c) { c.classList.add('hide'); });
+    /* the header chip: the member's own type, as on every other screen */
+    var tk9 = KEYMAP[PROFILE.type_key] || 'mixed';
+    if ($('typeChip9')) $('typeChip9').textContent = EDNA && !EDNA.taken ? 'E-DNA not yet taken' : (window.BS_T && window.BS_T[tk9] ? window.BS_T[tk9].chip : $('typeChip9').textContent);
+    var fmt = function (x, long) { return x ? new Date(x).toLocaleDateString('en-GB', { day: 'numeric', month: long ? 'long' : 'short', year: 'numeric' }) : '—'; };
+    var sec = function (id) { var h = $(id); return h ? h.closest('section') : null; };
+    var say = function (el, t) { if (el) el.textContent = t; };
+    var P = PROFILE;
+
+    /* Profile */
+    var ini = (((P.first_name || ' ')[0] || '') + ((P.last_name || ' ')[0] || '')).trim().toUpperCase() || '—';
+    $('s9circle').innerHTML = P.photo_url ? '<img src="' + escT(P.photo_url) + '" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover">' : escT(ini);
+    $('s9remove').classList.toggle('hide', !P.photo_url);
+    say($('s9upload').parentElement.querySelector('.t13.sec'), 'JPEG or PNG. We crop it square and keep a small copy.');
+    $('s9first').value = P.first_name || ''; $('s9last').value = P.last_name || '';
+    $('s9email').value = P.email || '';
+    $('s9phone').value = P.phone || '';
+    var cs = $('s9country');
+    cs.innerHTML = ['', 'United Kingdom', 'United Arab Emirates', 'Other'].map(function (c) { return '<option value="' + c + '">' + (c || 'Choose') + '</option>'; }).join('');
+    cs.value = P.country || '';
+    var tzs = [['Europe/London', 'London (GMT)'], ['Asia/Dubai', 'Dubai (GMT+4)']];
+    var mine = ''; try { mine = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) { /* old browser */ }
+    if (mine && !tzs.some(function (t) { return t[0] === mine; })) tzs.push([mine, mine.replace(/_/g, ' ') + ' (this device)']);
+    if (P.time_zone && !tzs.some(function (t) { return t[0] === P.time_zone; })) tzs.push([P.time_zone, P.time_zone.replace(/_/g, ' ')]);
+    $('s9tz').innerHTML = '<option value="">Choose</option>' + tzs.map(function (t) { return '<option value="' + escT(t[0]) + '">' + escT(t[1]) + '</option>'; }).join('');
+    $('s9tz').value = P.time_zone || '';
+    $('s9biz').value = P.business_name || '';
+    var pnote = sec('s9p').querySelector('div.t13.sec[style*="margin-top:8px"]');
+    if (pnote) pnote.innerHTML = 'Your initials come from your names. To change the email you sign in with, contact ' + SUPPORT + ' from your current address.';
+    var psave = sec('s9p').querySelector('.btnrow .btn.primary');
+    psave.id = 's9save';
+    psave.insertAdjacentHTML('afterend', '<span class="t13 sec" id="s9msg" style="margin-left:8px"></span>');
+
+    /* Membership and credits */
+    var tier = P.membership || 'free';
+    $('s9tier').textContent = TIERNAME[tier] || tier;
+    $('s9credits').innerHTML = '<span><b>' + (P.credits || 0) + '</b> decisions left</span>';
+    $('s9grants').innerHTML = '<tr><td class="t13 sec" colspan="4">…</td></tr>';
+    $('s9topup').textContent = tier === 'free' ? 'Get the Advanced Report · £99' : 'Top up';
+    $('s9topup').dataset.buy = tier === 'free' ? 'report' : 'topup';
+    $('s9cancel').classList.add('hide');
+    say($('s9mnote'), tier === 'free' ? 'The E-DNA Advanced Report comes with 10 decisions and your three workbooks.' : 'When these are used, top-up packs carry you on. A membership adds a monthly allowance.');
+    $('s9tiers').innerHTML = tier === 'free' || tier === 'di'
+      ? '<div class="crow"><div><div class="t13 b">Memberships</div><div class="t13 sec">Entry, Expert and Elite: decision rooms, a monthly allowance and the Infinite Scaling layers</div></div><button class="btn secondary small" type="button" data-buy="entry">See memberships</button></div>'
+      : '<div class="t13 sec">You are on ' + escT(TIERNAME[tier] || tier) + '. To change your membership, contact ' + SUPPORT + '.</div>';
+
+    /* Subscription */
+    var member = ['free', 'di'].indexOf(tier) < 0;
+    $('s9substate').textContent = member ? 'Active' : 'No subscription';
+    $('s9substate').className = 'chip ' + (member ? 'type' : 'grey');
+    $('s9subrows').innerHTML = (member
+      ? [['Plan', TIERNAME[tier] || tier], ['Billing', 'Taken by our checkout; each payment’s receipt is emailed to you']]
+      : [['Plan', tier === 'di' ? 'E-DNA Advanced Report · one-off payment' : 'Free · the E-DNA assessment and your basic report'], ['Renews', 'Never · nothing is charged again']])
+      .map(function (r) { return '<div class="crow"><div><div class="t13 b">' + r[0] + '</div><div class="t13 sec">' + escT(r[1]) + '</div></div></div>'; }).join('');
+    $('s9subbtns').innerHTML = member ? '' : '<button class="btn primary small" type="button" data-buy="entry">See memberships</button>';
+
+    /* Payment details: no card is stored by Brandscaling, so no card row */
+    var pay = sec('s9pay');
+    say(pay.querySelector('h2 + .t13.sec'), 'Payments are taken by our checkout. Brandscaling never holds your card details; your card stays with the payment provider.');
+    pay.querySelectorAll('.crow').forEach(function (r) { r.classList.add('hide'); });
+    var rth = pay.querySelector('table thead tr'); if (rth) rth.innerHTML = '<th>Date</th><th>Item</th>';
+    $('s9receipts').innerHTML = '<tr><td class="t13 sec" colspan="2">…</td></tr>';
+
+    /* Notifications: email per event (In the app is always on); push comes with the iOS app */
+    $('s9chan').textContent = 'In the app · Email (push messages come with the iOS app)';
+    $('s9rows').innerHTML = '<div class="t13 sec">…</div>';
+    var nopts = sec('s9n').querySelector('.nopts');
+    nopts.querySelectorAll('label.sw').forEach(function (l) { l.classList.add('hide'); });
+    nopts.querySelector('.t13.sec').innerHTML = 'Email goes to your account email, <b>' + escT(P.email || '') + '</b>. Security and legal notices are always on.';
+
+    /* Consent and sharing */
+    var given = EDNA && EDNA.taken && EDNA.p5 && EDNA.p5.consent;
+    say($('s9p5'), !EDNA || !EDNA.taken ? 'Asked during the assessment, in Part 5.' : given ? 'Consent given during your assessment.' : 'Not given. Your own Part 5 result still shows in your report.');
+    $('s9p5btn').classList.add('hide');
+    $('s9rooms').innerHTML = '<div class="t13 sec">…</div>';
+
+    /* Screen: the same settings the E-DNA assessment and reports use (this browser) */
+    say(sec('s9s').querySelector('h2 + .t13.sec'), 'These change how your E-DNA assessment and reports look in this browser, never your questions, answers or results.');
+    var es = ednaSettings();
+    var cur9 = { font: es.font || 'inter', size: es.size || 100, spacing: es.spacing || 'standard', motion: es.motion || 'standard', theme: es.theme || 'light', transparency: es.transparency || 'standard' };
+    $('s9screen').innerHTML = SCREEN9.map(function (s, i) {
+      return '<div class="srow9"><span class="t13 b" id="ss' + i + '">' + s[0] + '</span><div class="sset" role="radiogroup" aria-labelledby="ss' + i + '">' +
+        s[2].map(function (o) { var on = String(cur9[s[1]]) === String(o[0]); return '<button type="button" data-set9="' + s[1] + '" data-v="' + o[0] + '" class="' + (on ? 'on' : '') + '" aria-pressed="' + on + '">' + o[1] + '</button>'; }).join('') +
+        '</div></div>';
+    }).join('');
+
+    /* Security */
+    var secu = sec('s9sec');
+    say(secu.querySelector('h2 + .t13.sec'), 'Your password is the same for the website and the iOS app. Changing it asks for your current one.');
+    var rows = secu.querySelectorAll('.crow');
+    if (rows[0]) { say(rows[0].querySelector('.t13.sec'), 'Change it here, or use “Forgotten password” on the sign-in page.'); rows[0].querySelector('button').id = 's9pw'; }
+    if (rows[1]) rows[1].classList.add('hide'); /* two-step verification is not switched on for the sign-in service */
+    $('s9devices').innerHTML = '<div class="t13 sec">…</div>';
+    var allBtn = secu.querySelector('.btnrow .btn'); if (allBtn) { allBtn.id = 's9everywhere'; allBtn.textContent = 'Sign out everywhere'; }
+
+    /* Account */
+    var acct = sec('s9a');
+    var terms = acct.querySelector('.crow');
+    if (terms) terms.innerHTML = '<div><div class="t13 b">Terms</div><div class="t13 sec">Your account is held under the <a href="/terms-of-service/" target="_top">Terms of Use</a> and the <a href="/privacy-policy/" target="_top">Privacy Policy</a>.</div></div>';
+    var acctLine = $('s9acctEmail').parentElement;
+    acctLine.innerHTML = 'Signed in as <b>' + escT(P.email || '') + '</b>. Signing out keeps everything saved.';
+    var copies = acct.querySelectorAll('.crow');
+    if (copies[1]) copies[1].querySelector('button').id = 's9csv';
+    if (copies[2]) { copies[2].querySelector('button').id = 's9pdf'; say(copies[2].querySelector('button'), 'Open · PDF'); say(copies[2].querySelector('.t13.sec'), 'Your basic and Advanced Reports; each has a PDF button'); }
+    if (copies[3]) copies[3].querySelector('button').id = 's9all';
+    var last = acct.querySelector(':scope > .t13.sec:last-child');
+    if (last) last.innerHTML = 'To delete your account and its data, use <a href="/delete-account/" target="_top">Delete my account</a>; we confirm by email before anything is removed. <a href="/privacy-policy/" target="_top">Privacy Policy</a> · <a href="/terms-of-service/" target="_top">Terms of Use</a>';
+
+    /* live tables */
     api('/credits').then(function (d) {
-      if (d.__status !== 200) return;
-      var fmt = function (x) { return x ? new Date(x).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'; };
-      var SRC = { report_purchase: 'Advanced Report', purchase: 'Purchase', admin: 'Granted', signup: 'Welcome', open_all: 'Event' };
-      if (d.balance != null && $('st9bal')) $('st9bal').textContent = d.balance + ' left';
-      if ($('st9grants')) $('st9grants').innerHTML = (d.grants && d.grants.length) ? d.grants.map(function (g) {
-        return '<tr><td>' + escT(SRC[g.source] || g.source || '—') + '</td><td>' + (g.amount || 0) + '</td><td>' + fmt(g.granted_at) + '</td><td>' + fmt(g.expires_at) + '</td></tr>';
-      }).join('') : '<tr><td class="t13 sec" colspan="4">None yet. Credits come with the Advanced Report and memberships.</td></tr>';
-      if ($('st9ledger')) $('st9ledger').innerHTML = (d.ledger && d.ledger.length) ? d.ledger.slice(0, 20).map(function (l) {
-        return '<tr><td>' + fmt(l.created_at) + '</td><td>' + escT(l.decision_text || l.reason || '—') + '</td></tr>';
-      }).join('') : '<tr><td class="t13 sec" colspan="2">No credits used yet. Your first decision uses one at Check.</td></tr>';
+      if (d.__status !== 200 || !$('s9grants')) return;
+      var SRC = { purchase_99: 'Advanced Report', pack: 'Top-up pack', tier: 'Membership', admin: 'Granted', assessment: 'With your assessment', report_purchase: 'Advanced Report' };
+      var bal = d.balance != null ? d.balance : (P.credits || 0);
+      var total = (d.grants || []).reduce(function (a, g) { return a + (g.amount || 0); }, 0);
+      $('s9credits').innerHTML = total
+        ? '<span><b>' + bal + ' of ' + total + '</b> decisions left</span><span class="bar"><span style="width:' + Math.max(0, Math.min(100, Math.round(100 * bal / total))) + '%"></span></span>'
+        : '<span><b>' + bal + '</b> decisions left</span>';
+      $('s9grants').innerHTML = (d.grants && d.grants.length) ? d.grants.map(function (g) {
+        return '<tr><td>' + escT(SRC[g.source] || g.source || '—') + '</td><td>' + (g.amount || 0) + '</td><td>' + fmt(g.granted_at) + '</td><td>' + (g.expires_at ? fmt(g.expires_at) : 'No expiry') + '</td></tr>';
+      }).join('') : '<tr><td class="t13 sec" colspan="4">None yet. Decisions come with the Advanced Report and memberships.</td></tr>';
+      var led = (d.ledger || []).slice(0, 20); var left = bal;
+      $('s9ledger').innerHTML = led.map(function (l) {
+        var used = l.amount || 1; var row = '<tr><td>' + fmt(l.created_at) + '</td><td>' + escT(l.decision_text || l.reason || '—') + '</td><td>' + used + '</td><td>' + left + '</td></tr>';
+        left += used; return row;
+      }).join('');
+      $('s9ledger').closest('table').classList.toggle('hide', !led.length);
+      $('s9ledgerEmpty').classList.toggle('hide', !!led.length);
+      /* receipts fall back to the purchase grants when GHL's order events are not on file */
+      api('/purchases').then(function (pu) {
+        if (!$('s9receipts')) return;
+        var list = (pu.__status === 200 && pu.purchases && pu.purchases.length) ? pu.purchases.map(function (p) {
+          var prod = String(p.product || '').toLowerCase();
+          return [p.received_at, prod.indexOf('pack') >= 0 || p.pack ? 'Top-up pack' + (p.pack ? ' · ' + p.pack + ' decisions' : '') : 'E-DNA Advanced Report'];
+        }) : (d.grants || []).filter(function (g) { return g.source === 'purchase_99' || g.source === 'pack' || g.source === 'report_purchase'; })
+          .map(function (g) { return [g.granted_at, g.source === 'pack' ? 'Top-up pack · ' + g.amount + ' decisions' : 'E-DNA Advanced Report']; });
+        $('s9receipts').innerHTML = list.map(function (r) { return '<tr><td>' + fmt(r[0]) + '</td><td>' + escT(r[1]) + '</td></tr>'; }).join('');
+        $('s9receipts').closest('table').classList.toggle('hide', !list.length);
+        $('s9receiptsEmpty').classList.toggle('hide', !!list.length);
+        say($('s9receiptsEmpty'), 'No payments yet.');
+      });
+    });
+    api('/notification-prefs').then(function (d) {
+      if (!$('s9rows')) return;
+      if (d.__status !== 200) { $('s9rows').innerHTML = '<div class="t13 sec">Could not load your switches. Try again in a moment.</div>'; return; }
+      var sw = function (ev, on, locked, label) {
+        return '<label class="sw"><input type="checkbox" role="switch" ' + (on ? 'checked ' : '') + (locked ? 'disabled ' : '') + 'aria-label="' + escT(label) + '" data-nev="' + ev + '"><span class="knob" aria-hidden="true"></span></label>';
+      };
+      $('s9rows').innerHTML = '<div class="nrow head"><span class="t13 sec b">Event</span><span class="t13 sec b">Email</span></div>' +
+        (d.prefs || []).filter(function (p) { return NEV[p.event]; }).map(function (p) {
+          return '<div class="nrow" data-push="' + (p.push ? 1 : 0) + '"><span><span class="t13">' + NEV[p.event] + '</span></span><span>' + sw(p.event, p.email, false, 'Email: ' + NEV[p.event]) + '</span></div>';
+        }).join('') +
+        '<div class="nrow"><span><span class="t13">Security and legal notices</span><span class="t13 sec note">Sign-in from a new device, email changed, terms changed. Cannot be switched off</span></span><span>' + sw('N15', true, true, 'Email: Security and legal notices') + '</span></div>';
+      $('s9rows').querySelectorAll('.nrow').forEach(function (r) { r.style.gridTemplateColumns = '1fr 64px'; });
     });
     api('/rooms').then(function (d) {
-      if (d.__status !== 200 || !$('st9rooms')) return;
+      if (d.__status !== 200 || !$('s9rooms')) return;
       var rs = d.rooms || [];
-      $('st9rooms').innerHTML = rs.length ? rs.map(function (r) {
-        return '<div class="crow"><div><div class="t13 b">' + escT(r.decision_text) + '</div><div class="t13 sec">' + new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ' · shared with this room only</div></div></div>';
-      }).join('') : 'You are not in any room yet. Consent is asked when you join one.';
+      $('s9rooms').innerHTML = rs.map(function (r) {
+        var own = r.my_role === 'decision_owner';
+        return '<div class="crow"><div><div class="t13 b">' + escT(r.decision_text) + '</div><div class="t13 sec">' + (own ? 'Owner' : 'Collaborator') + ' · since ' + fmt(r.created_at) + ' · for this decision only</div></div>' + (own ? '<span class="t13 sec">Owner</span>' : '') + '</div>';
+      }).join('');
+      $('s9roomsEmpty').classList.toggle('hide', rs.length > 0);
     });
-    var ph = $('st9photo');
-    if (ph) ph.addEventListener('click', function () {
-      var fi = document.createElement('input'); fi.type = 'file'; fi.accept = 'image/jpeg,image/png';
-      fi.addEventListener('change', function () {
-        var f = this.files && this.files[0]; if (!f) return;
-        var img = new Image();
-        img.onload = function () {
-          var side = Math.min(img.width, img.height);
-          var cv = document.createElement('canvas'); cv.width = 256; cv.height = 256;
-          cv.getContext('2d').drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, 256, 256);
-          var url = cv.toDataURL('image/jpeg', 0.85);
-          api('/profile/photo', { method: 'PUT', body: { data: url.split(',')[1], mime: 'image/jpeg' } }).then(function (res) {
-            if (res.__status === 200) { PROFILE.photo_url = url; window.openScreen9(key); }
-            else bsNotice('Photo not saved', res.message || 'Could not save the photo.');
-          });
-        };
-        img.src = URL.createObjectURL(f);
-      });
-      fi.click();
-    });
-    var prm = $('st9photoRm');
-    if (prm) prm.addEventListener('click', function () {
-      api('/profile/photo', { method: 'PUT', body: { data: null } }).then(function () { PROFILE.photo_url = null; window.openScreen9(key); });
-    });
-    var xc = $('st9csv');
-    if (xc) xc.addEventListener('click', function () {
-      api('/log').then(function (d) {
-        if (d.__status !== 200) { bsNotice('Export failed', 'Could not load your log.'); return; }
-        var rows = d.rows || d.log || [];
-        if (!rows.length) { bsNotice('Nothing to export', 'Your log is empty.'); return; }
-        var cols = Object.keys(rows[0]);
-        var cell = function (v) { return '"' + String(v == null ? '' : (typeof v === 'object' ? JSON.stringify(v) : v)).replace(/"/g, '""') + '"'; };
-        var text = cols.join(',') + '\n' + rows.map(function (r) { return cols.map(function (c) { return cell(r[c]); }).join(','); }).join('\n');
-        var a = document.createElement('a');
-        a.href = URL.createObjectURL(new Blob([text], { type: 'text/csv' }));
-        a.download = 'decision-log.csv'; a.click();
-      });
-    });
-    var sv = $('st9save');
-    if (sv) sv.addEventListener('click', function () {
-      api('/profile', { method: 'PUT', body: { first_name: $('st9first').value.trim(), last_name: $('st9last').value.trim() } })
-        .then(function (res) {
-          $('st9msg').textContent = res.__status === 200 ? 'Saved.' : (res.message || '');
-          if (res.__status === 200) { PROFILE.first_name = $('st9first').value.trim(); if ($('name')) $('name').textContent = PROFILE.first_name; }
-        });
-    });
-    var so = $('st9signout');
-    if (so) so.addEventListener('click', function () {
-      try {
-        Object.keys(localStorage).forEach(function (k) { if (k.indexOf('CognitoIdentityServiceProvider.') === 0) localStorage.removeItem(k); });
-      } catch (e) {}
-      topGo('/');
+    api('/devices').then(function (d) {
+      if (!$('s9devices')) return;
+      var here = thisDevice();
+      var ds = (d.__status === 200 && d.devices) || [];
+      $('s9devices').innerHTML = ds.length ? ds.map(function (x) {
+        var cur = x.device_name === here && x.platform === 'web';
+        return '<div class="crow"><div><div class="t13 b">' + (cur ? 'This device · ' : '') + escT(x.device_name || 'Device') + '</div><div class="t13 sec">' + (cur ? 'Signed in now' : 'Last seen ' + fmt(x.last_seen_at)) + '</div></div>' + (cur ? '<span class="chip type">Current</span>' : '') + '</div>';
+      }).join('') : '<div class="crow"><div><div class="t13 b">This device · ' + escT(here) + '</div><div class="t13 sec">Signed in now</div></div><span class="chip type">Current</span></div>';
     });
   };
+
+  /* Settings actions: one handler on the screen, which stops the design's own example
+     handlers (upload, consent, screen toggles) from also running */
+  (function () {
+    var m9 = $('main9'); if (!m9) return;
+    m9.addEventListener('click', function (e) {
+      var t = e.target.closest && e.target.closest('#s9upload, #s9remove, #s9emailChange, #s9save, [data-set9], #s9pw, #s9everywhere, #s9signout, #s9delete, #s9csv, #s9pdf, #s9all');
+      if (!t) return;
+      e.preventDefault(); e.stopPropagation();
+      var id = t.id;
+      if (id === 's9upload') {
+        var fi = document.createElement('input'); fi.type = 'file'; fi.accept = 'image/jpeg,image/png';
+        fi.addEventListener('change', function () {
+          var f = this.files && this.files[0]; if (!f) return;
+          var img = new Image();
+          img.onload = function () {
+            var side = Math.min(img.width, img.height);
+            var cv = document.createElement('canvas'); cv.width = 256; cv.height = 256;
+            cv.getContext('2d').drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, 256, 256);
+            var url = cv.toDataURL('image/jpeg', 0.85);
+            api('/profile/photo', { method: 'PUT', body: { data: url.split(',')[1], mime: 'image/jpeg' } }).then(function (res) {
+              if (res.__status === 200) { PROFILE.photo_url = url; window.openScreen9(); }
+              else bsNotice('Photo not saved', res.message || 'Could not save the photo.');
+            });
+          };
+          img.src = URL.createObjectURL(f);
+        });
+        fi.click(); return;
+      }
+      if (id === 's9remove') { api('/profile/photo', { method: 'PUT', body: { data: null } }).then(function () { PROFILE.photo_url = null; window.openScreen9(); }); return; }
+      if (id === 's9emailChange') { bsNotice('Change your email', 'Contact Brandscaling support from your current address with the new one (the address is under Contact Us in the Privacy Policy). We change it for the website and the iOS app together.'); return; }
+      if (id === 's9save') {
+        var body = { first_name: $('s9first').value.trim(), last_name: $('s9last').value.trim(), phone: $('s9phone').value.trim(), country: $('s9country').value, time_zone: $('s9tz').value, business_name: $('s9biz').value.trim() };
+        $('s9msg').textContent = 'Saving…';
+        api('/profile', { method: 'PUT', body: body }).then(function (res) {
+          if (res.__status !== 200) { $('s9msg').textContent = res.message || 'Not saved.'; return; }
+          Object.keys(body).forEach(function (k) { PROFILE[k] = body[k] || null; });
+          ['name', 'name0'].forEach(function (n) { if ($(n)) $(n).textContent = PROFILE.first_name || ''; });
+          window.openScreen9(); if ($('s9msg')) $('s9msg').textContent = 'Saved.';
+        });
+        return;
+      }
+      if (t.dataset && t.dataset.set9) {
+        var es = ednaSettings(); var k = t.dataset.set9; var v = t.dataset.v;
+        es[k] = k === 'size' ? Number(v) : v;
+        try { localStorage.setItem('edna-settings', JSON.stringify(es)); } catch (x) { /* storage blocked */ }
+        t.parentElement.querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b === t); b.setAttribute('aria-pressed', String(b === t)); });
+        return;
+      }
+      if (id === 's9pw') {
+        bsModal('<h2>Change your password</h2><p>At least 8 characters, with a number, a capital letter and a lower-case letter.</p>' +
+          '<label class="t13 sec" for="bsPwOld">Current password</label><input class="inp" id="bsPwOld" type="password" autocomplete="current-password" style="width:100%;margin:4px 0 10px">' +
+          '<label class="t13 sec" for="bsPwNew">New password</label><input class="inp" id="bsPwNew" type="password" autocomplete="new-password" style="width:100%;margin:4px 0 10px">' +
+          '<p class="t13" id="bsPwMsg" style="min-height:18px;margin:0 0 8px"></p>' +
+          '<div class="btns"><button type="button" class="bs" data-no>Cancel</button><button type="button" class="bp" data-ok>Change password</button></div>',
+          function (ov, close) {
+            ov.querySelector('[data-no]').addEventListener('click', close);
+            ov.querySelector('[data-ok]').addEventListener('click', function () {
+              var tok = cognitoTokens().access; var msg = ov.querySelector('#bsPwMsg');
+              if (!tok) { msg.textContent = 'Sign in again, then change it.'; return; }
+              msg.textContent = 'Changing…';
+              cognitoCall('ChangePassword', { AccessToken: tok, PreviousPassword: ov.querySelector('#bsPwOld').value, ProposedPassword: ov.querySelector('#bsPwNew').value }).then(function (r) {
+                if (r.__ok) { close(); bsNotice('Password changed', 'Use the new password next time you sign in, on the website and in the iOS app.'); return; }
+                msg.textContent = /NotAuthorized/.test(r.__type || '') ? 'Your current password is not right.' : /InvalidPassword/.test(r.__type || '') ? (r.message || 'That new password does not meet the rules.') : /LimitExceeded/.test(r.__type || '') ? 'Too many tries. Wait a few minutes.' : (r.message || 'Not changed. Try again.');
+              }, function () { msg.textContent = 'Could not reach the sign-in service. Try again.'; });
+            });
+          });
+        return;
+      }
+      if (id === 's9everywhere') {
+        bsModal('<h2>Sign out everywhere?</h2><p>This signs you out on every device, this one included, and in the iOS app. You sign in again with your email and password.</p><div class="btns"><button type="button" class="bs" data-no>Cancel</button><button type="button" class="bp" data-ok>Sign out everywhere</button></div>',
+          function (ov, close) {
+            ov.querySelector('[data-no]').addEventListener('click', close);
+            ov.querySelector('[data-ok]').addEventListener('click', function () {
+              var tok = cognitoTokens().access;
+              (tok ? cognitoCall('GlobalSignOut', { AccessToken: tok }) : Promise.resolve({})).then(signOutHere, signOutHere);
+            });
+          });
+        return;
+      }
+      if (id === 's9signout') { signOutHere(); return; }
+      if (id === 's9delete') { topGo('/delete-account/'); return; }
+      if (id === 's9pdf') { openReport('basic'); return; }
+      if (id === 's9csv') {
+        api('/log', { fresh: true }).then(function (d) {
+          if (d.__status !== 200) { bsNotice('Export failed', 'Could not load your log.'); return; }
+          var rows = d.rows || d.log || [];
+          if (!rows.length) { bsNotice('Nothing to export', 'Your log is empty.'); return; }
+          var cols = Object.keys(rows[0]);
+          var cell = function (v) { return '"' + String(v == null ? '' : (typeof v === 'object' ? JSON.stringify(v) : v)).replace(/"/g, '""') + '"'; };
+          var text = cols.join(',') + '\n' + rows.map(function (r) { return cols.map(function (c) { return cell(r[c]); }).join(','); }).join('\n');
+          var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/csv' })); a.download = 'decision-log.csv'; a.click();
+        });
+        return;
+      }
+      if (id === 's9all') {
+        t.disabled = true; var was = t.textContent; t.textContent = 'Preparing…';
+        var parts = ['/profile', '/edna', '/log?view=mine', '/log?view=room', '/rooms', '/credits', '/purchases', '/notification-prefs', '/devices'];
+        Promise.all(parts.map(function (p) { return api(p, { fresh: true }).then(function (j) { delete j.__status; return [p, j]; }, function () { return [p, null]; }); }))
+          .then(function (res) {
+            return fetch(wbApiBase(), { headers: headers() }).then(function (r) { return r.json(); }, function () { return null; }).then(function (w) {
+              var out = { exported_at: new Date().toISOString() };
+              res.forEach(function (r) { out[r[0].replace(/^\//, '').replace(/\?view=/, '_')] = r[1]; });
+              out.workbooks = w;
+              var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' }));
+              a.download = 'brandscaling-my-data.json'; a.click();
+            });
+          })
+          .then(function () { t.disabled = false; t.textContent = was; }, function () { t.disabled = false; t.textContent = was; bsNotice('Download failed', 'Try again in a moment.'); });
+        return;
+      }
+    });
+    /* the design's own "type a name, repaint the circle" handler is bound to the original
+       inputs only; keep the initials live on the restored ones */
+    m9.addEventListener('input', function (e) {
+      if (!e.target || (e.target.id !== 's9first' && e.target.id !== 's9last')) return;
+      if (PROFILE && PROFILE.photo_url) return;
+      var ini = ((($('s9first').value || ' ')[0] || '') + (($('s9last').value || ' ')[0] || '')).trim().toUpperCase() || '—';
+      $('s9circle').textContent = ini;
+    });
+    m9.addEventListener('change', function (e) {
+      var c = e.target && e.target.dataset && e.target.dataset.nev; if (!c || e.target.disabled) return;
+      var row = e.target.closest('.nrow');
+      api('/notification-prefs', { method: 'PUT', body: { event: c, email: e.target.checked, push: !row || row.dataset.push !== '0' } }).then(function (r) {
+        if (r.__status !== 200) { e.target.checked = !e.target.checked; bsNotice('Not saved', r.message || 'Try again in a moment.'); }
+      });
+    });
+  })();
 
   /* production guard: the review screen only opens on a real row */
   (function () {
@@ -2048,6 +2310,13 @@
       });
 
       patchCredits(); patchLog(); loadEdnaScreens();
+      /* warm every tab's reads once the member is known, so even the first visit to the log
+         or the rooms paints at once instead of showing "Loading…" (25 Nov) */
+      setTimeout(function () {
+        ['/log?view=mine', '/log?view=room', '/rooms', '/needs-you', '/log/summary', '/credits', '/notification-prefs', '/devices', '/purchases'].forEach(function (pth) {
+          if (!READS[pth]) api(pth, { fresh: false }).then(function () { /* stored by api() */ });
+        });
+      }, 400);
     });
   }
     /* The question screen's "+ Attach document" shipped as preview chrome with no
@@ -2099,8 +2368,8 @@
   (function () {
     /* 25 Nov (Munawar): the dashboard's first tab is this app's Home screen (1), exactly as
        the approved design draws it, so Home is a screen the dashboard can show like the others */
-    var SCR = { 1: 'home', 5: 'make', 2: 'make', 3: 'log', 12: 'log', 4: 'rooms', 7: 'reports', 8: 'workbooks', 6: 'edna', 14: 'scaling' };
-    var NUM = { home: 1, make: 5, log: 3, rooms: 4, reports: 7, workbooks: 8, edna: 6, scaling: 14 };
+    var SCR = { 1: 'home', 9: 'settings', 5: 'make', 2: 'make', 3: 'log', 12: 'log', 4: 'rooms', 7: 'reports', 8: 'workbooks', 6: 'edna', 14: 'scaling' };
+    var NUM = { home: 1, settings: 9, make: 5, log: 3, rooms: 4, reports: 7, workbooks: 8, edna: 6, scaling: 14 };
     var cur = window.BS_SCREEN;
     var READY = false; /* the page's own last line shows Home; the embed's first screen comes after it */
     try {
@@ -2119,7 +2388,7 @@
     /* screens that belong to a tab: the full Frame (2) is part of Make a decision, the review (12)
        of the log. Without this the dashboard's echo of 'make' sent the full Frame and a reopened
        decision back to an empty Make a decision page (24 Nov) */
-    var BELONGS = { home: [1], make: [5, 2], log: [3, 12], rooms: [4], reports: [7], workbooks: [8], edna: [6], scaling: [14] };
+    var BELONGS = { home: [1], settings: [9], make: [5, 2], log: [3, 12], rooms: [4], reports: [7], workbooks: [8], edna: [6], scaling: [14] };
     window.addEventListener('message', function (e) {
       if (e.origin !== location.origin || !e.data || !e.data.bsShow) return;
       var n = NUM[e.data.bsShow];
