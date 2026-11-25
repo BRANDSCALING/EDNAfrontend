@@ -44,7 +44,10 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
   const [navOpen, setNavOpen] = useState(false);
   const go = (v: MemberView) => { setNavOpen(false); onOpenMemberView(v); };
   const [diOpen, setDiOpen] = useState(true);
-  const isDi = (DI_VIEWS as string[]).includes(view);
+  /* Home (25 Nov, Munawar): the dashboard's first tab is the approved app design's Home
+     screen, drawn by the same embedded app as the DI tabs, so it shares their iframe */
+  const isDi = (DI_VIEWS as string[]).includes(view) || view === 'overview';
+  const screenOf = (v: string) => (v === 'overview' ? 'home' : v.slice(3));
   /* the E-DNA reports open from DI · My reports (the old "My E-DNA profile" tab is hidden,
      Munawar 24 Nov), so the report view counts as part of My reports */
   const isReport = view === 'profile' || view === 'plan';
@@ -61,7 +64,7 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
   if (isDi && !diSrc.current) {
     let room: string | null = null;
     try { room = sessionStorage.getItem('bs_di_room'); } catch { /* storage blocked */ }
-    diSrc.current = '/app/index.html?embed=1&screen=' + view.slice(3) + (room ? '&room=' + encodeURIComponent(room) : '');
+    diSrc.current = '/app/index.html?embed=1&screen=' + screenOf(view) + (room ? '&room=' + encodeURIComponent(room) : '');
     diLoaded.current = false;
   }
   if (!isDi) diSrc.current = null;
@@ -69,7 +72,7 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
     if (!isDi) return;
     try { sessionStorage.removeItem('bs_di_room'); } catch { /* storage blocked */ }
     if (diLoaded.current && diRef.current?.contentWindow) {
-      diRef.current.contentWindow.postMessage({ bsShow: view.slice(3) }, window.location.origin);
+      diRef.current.contentWindow.postMessage({ bsShow: screenOf(view) }, window.location.origin);
     }
   }, [view, isDi]);
   useEffect(() => {
@@ -83,6 +86,7 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
         onOpenMemberView('profile');
         return;
       }
+      if (e.data.bsScreen === 'home') { if (viewRef.current !== 'overview') onOpenMemberView('overview'); return; }
       const next = e.data.bsScreen ? ('di-' + e.data.bsScreen) as DiView : null;
       if (next && (DI_VIEWS as string[]).includes(next) && next !== viewRef.current) onOpenMemberView(next);
     };
@@ -96,19 +100,7 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
     return () => { alive = false; };
   }, []);
 
-  const initials = userName.split(/\s+/).map((w) => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || 'M';
   const openAssessment = () => { window.location.href = '/edna/index.html'; };
-  const assessedOn = edna?.assessedAt
-    ? new Date(edna.assessedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-    : null;
-  /* The primary mentor follows the Dominant loop OR the leaning (02-report.js part 1):
-     Alchemist or Alchemist-leaning → AI Alchemist; pure Mixed has no primary — both mentors. */
-  const mentorSide =
-    edna?.core === 'alchemist' || edna?.core === 'architect' ? edna.core
-    : edna?.lean === 'alchemist' || edna?.lean === 'architect' ? edna.lean
-    : null;
-  const primaryMentor = mentorSide === 'alchemist' ? 'AI Alchemist' : 'AI Architect';
-  const complementaryMentor = mentorSide === 'alchemist' ? 'AI Architect' : 'AI Alchemist';
 
   return (
     <div className="bs-dash">
@@ -126,7 +118,10 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
           </button>
         </div>
         <nav className="bs-side-menu">
-          <button className={view === 'overview' ? 'on' : ''} onClick={() => go('overview')}>▦ Overview</button>
+          <button className={'bs-home' + (view === 'overview' ? ' on' : '')} onClick={() => go('overview')}>
+            <svg className="bs-home-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5" /><path d="M5 9.5V21h14V9.5" /><path d="M10 21v-6h4v6" /></svg>
+            <span>Home</span>
+          </button>
           <button
             className={'bs-group' + (isDi && !diOpen ? ' on' : '')}
             aria-expanded={diOpen}
@@ -187,7 +182,7 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
             onLoad={() => {
               diLoaded.current = true;
               /* a tab clicked while the app was still loading */
-              diRef.current?.contentWindow?.postMessage({ bsShow: viewRef.current.slice(3) }, window.location.origin);
+              diRef.current?.contentWindow?.postMessage({ bsShow: screenOf(viewRef.current) }, window.location.origin);
             }}
           />
         </main>
@@ -234,119 +229,6 @@ export function BrandDashboard({ userName, view = 'overview', onOpenMemberView, 
         </main>
       )}
 
-      {view === 'overview' && (
-      <main className="bs-main">
-        <header className="bs-dash-head">
-          <div>
-            <h1>Welcome back, {userName}</h1>
-            <p>Before you can work on any business, you need to understand yourself and how you and others make decisions.</p>
-          </div>
-          <span className="bs-avatar" aria-hidden="true">{initials}</span>
-        </header>
-
-        <div className="bs-cards">
-          <section className="bs-card">
-            <div className="bs-card-head">
-              <h2>Your E-DNA profile</h2>
-              {assessedOn && <span className="bs-when">Assessed {assessedOn}</span>}
-            </div>
-
-            {edna === null && <p className="bs-empty-copy">Checking your assessment…</p>}
-
-            {edna !== null && !edna.taken && (
-              <>
-                <p className="bs-empty-copy">
-                  You haven't taken the E-DNA assessment yet. It's free, takes about 30 minutes, and
-                  shows you how you naturally make decisions.
-                </p>
-                <button className="bs-btn bs-btn-energy" onClick={openAssessment}>
-                  Take the free E-DNA assessment
-                </button>
-              </>
-            )}
-
-            {edna !== null && edna.taken && (
-              <>
-                <div className="bs-core-row">
-                  <span className="bs-core-badge" aria-hidden="true">◍</span>
-                  <div>
-                    <p className="bs-core-kicker">Core type</p>
-                    <p className="bs-core-name">{edna.coreName}</p>
-                  </div>
-                </div>
-                {edna.dominantLoop && (
-                  <div className="bs-loop bs-loop-main">
-                    <small>Dominant Decision Loop</small>
-                    {edna.dominantLoop}
-                  </div>
-                )}
-                {edna.alternateLoop && (
-                  <div className="bs-loop bs-loop-alt">
-                    <small>Alternate Decision Loop (under stress)</small>
-                    {edna.alternateLoop}
-                  </div>
-                )}
-                <button className="bs-btn bs-btn-action" onClick={() => { setReportKind(''); onOpenMemberView('profile'); }} style={{ marginTop: 6 }}>
-                  View your E-DNA report
-                </button>
-              </>
-            )}
-          </section>
-
-          <section className="bs-card">
-            <div className="bs-card-head">
-              <h2>Your AI mentors</h2>
-              {edna?.taken && (
-                <span className="bs-when">
-                  {mentorSide ? 'Primary mentor matches your Dominant Decision Loop'
-                    : 'AI mentors: AI Architect and AI Alchemist'}
-                </span>
-              )}
-            </div>
-            {edna?.taken && !mentorSide ? (
-              /* pure Mixed: no Dominant loop yet, so no Primary — both mentors, as the report says */
-              <>
-                <div className="bs-loop bs-loop-alt">AI Architect</div>
-                <div className="bs-loop bs-loop-alt">AI Alchemist</div>
-              </>
-            ) : edna?.taken ? (
-              <>
-                <div className="bs-loop bs-loop-main">
-                  <small>Primary</small>
-                  {primaryMentor}
-                </div>
-                <div className="bs-loop bs-loop-alt">
-                  <small>Complementary</small>
-                  {complementaryMentor}
-                </div>
-              </>
-            ) : (
-              <p className="bs-empty-copy">
-                Two mentors, two minds: the AI Architect thinks in logic and systems, the AI
-                Alchemist in feeling and story. Your primary mentor is matched from your E-DNA.
-              </p>
-            )}
-            {/* the mentors chat is not open yet (Munawar, 24 Nov): Coming soon, not a dead end */}
-            <button className="bs-btn bs-btn-outline bs-btn-soon" disabled aria-disabled="true" style={{ marginTop: 6 }}>
-              Coming soon
-            </button>
-          </section>
-
-          <section className="bs-card">
-            <div className="bs-card-head"><h2>Workbooks</h2></div>
-            <p className="bs-empty-copy">
-              Your workbooks are built from your E-DNA: what to adapt, and what the app provides.
-              {!edna?.taken && ' They unlock once you have taken the assessment.'}
-            </p>
-            <button className="bs-btn bs-btn-outline" onClick={() => onOpenMemberView('di-workbooks')}>
-              Open your workbooks
-            </button>
-          </section>
-          {/* Recordings removed from the Overview (Munawar, 24 Nov; Elite-only, no Elite members
-              yet — Fariza 24 Nov). The view stays for when the tier is live. */}
-        </div>
-      </main>
-      )}
     </div>
   );
 }

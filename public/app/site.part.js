@@ -854,6 +854,7 @@
   }
   function repaintCurrent() {
     var cur = window.BS_SCREEN;
+    if (cur === 1) paintEdnaCard();
     if (cur === 6) paintScreen6();
     if (cur === 7) paintScreen7();
     if (cur === 8) paintScreen8();
@@ -1429,12 +1430,53 @@
     if (h) h.insertAdjacentElement('afterend', el); else home.insertBefore(el, home.firstChild);
   }
 
+  /* ---------- Home · "Your E-DNA profile" (Munawar, 25 Nov): the card the old dashboard
+     Overview had, carried into the approved Home screen and drawn in its own panel style:
+     core type, Dominant and Alternate loop, the assessment date, and the report ---------- */
+  var LOOPS = { arch: ['Logic → Feeling → Logic', 'Feeling → Logic → Feeling'], alch: ['Feeling → Logic → Feeling', 'Logic → Feeling → Logic'] };
+  function paintEdnaCard() {
+    var home = $('main0'); if (!home || !EDNA) return;
+    var cta = $('ctah') && $('ctah').closest('section'); if (!cta) return;
+    var el = $('bsEdnaCard');
+    if (!el) {
+      el = document.createElement('section');
+      el.id = 'bsEdnaCard'; el.className = 'glass panel'; el.setAttribute('aria-labelledby', 'bsEdnaH');
+      cta.insertAdjacentElement('afterend', el);
+    }
+    var esc = function (t) { return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+    var head = '<div class="strip" aria-hidden="true"></div><div class="lrow"><div><h2 class="t19 b" id="bsEdnaH" style="margin:0">Your E-DNA profile</h2>';
+    if (!EDNA.taken) {
+      el.innerHTML = head + '<div class="t13 sec">How you naturally make decisions</div></div></div>' +
+        '<p class="t19" style="margin:8px 0 14px">You haven\'t taken the E-DNA assessment yet. It\'s free, takes about 30 minutes, and shows you how you naturally make decisions.</p>' +
+        '<div class="btnrow" style="margin:0"><button class="btn primary" type="button" id="bsEdnaTake">Take the free E-DNA assessment</button></div>';
+      $('bsEdnaTake').addEventListener('click', function () { topGo('/edna/index.html'); });
+      return;
+    }
+    var tk = (PROFILE && PROFILE.type_key) || '';
+    var side = tk === 'architect' || tk === 'architect-leaning' ? 'arch' : tk === 'alchemist' || tk === 'alchemist-leaning' ? 'alch' : null;
+    var when = EDNA.assessments && EDNA.assessments[0] && EDNA.assessments[0].date;
+    var whenTxt = when ? new Date(when).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+    var loops = side ? LOOPS[side] : null;
+    el.innerHTML = head + '<div class="t13 sec">From your E-DNA' + (whenTxt ? ' · assessed ' + esc(whenTxt) : '') + '</div></div></div>' +
+      '<div class="ctagrid" style="margin-top:10px">' +
+        '<div><div class="t13 sec">Core type</div><div class="t28 b" style="margin:0 0 10px;color:var(--type-text)">' + esc(EDNA.name) + '</div>' +
+        (loops ? '<div class="stats" style="grid-template-columns:repeat(2,minmax(0,1fr))">' +
+          '<div class="count"><div class="t13 sec">Dominant Decision Loop</div><div class="t19 b">' + loops[0] + '</div></div>' +
+          '<div class="count"><div class="t13 sec">Alternate Decision Loop (under stress)</div><div class="t19 b">' + loops[1] + '</div></div></div>'
+          : '<div class="t13 sec">No Dominant loop yet: both loops are open to you until it is confirmed.</div>') +
+        '</div>' +
+        '<div class="btnrow" style="margin:0;flex-direction:column;align-items:stretch"><button class="btn primary" type="button" id="bsEdnaReport">View your E-DNA report</button><button class="btn secondary small" type="button" id="bsEdnaMine">See my E-DNA</button></div>' +
+      '</div>';
+    $('bsEdnaReport').addEventListener('click', function () { openReport('basic'); });
+    $('bsEdnaMine').addEventListener('click', function () { window.showScreen(6); });
+  }
+
   /* re-patch after the preview's own openLaunch paints its example data */
   var origOpenLaunch = window.openLaunch;
   window.openLaunch = function (key) {
     if (origOpenLaunch) origOpenLaunch(key);
     clearHomeExamples();
-    patchCredits(); patchLog(); patchHowYouDecide(); patchWbTile(); paintGuestBan();
+    patchCredits(); patchLog(); patchHowYouDecide(); patchWbTile(); paintGuestBan(); paintEdnaCard();
     if (PROFILE && PROFILE.first_name) {
       ['name', 'name0'].forEach(function (id) { if ($(id)) $(id).textContent = PROFILE.first_name; });
     }
@@ -2055,14 +2097,10 @@
     document.querySelectorAll('.who .chip.type, [id^="typeChip"]').forEach(function (c) { c.textContent = 'E-DNA not yet taken'; });
   }
   (function () {
-    var SCR = { 5: 'make', 2: 'make', 3: 'log', 12: 'log', 4: 'rooms', 7: 'reports', 8: 'workbooks', 6: 'edna', 14: 'scaling' };
-    var NUM = { make: 5, log: 3, rooms: 4, reports: 7, workbooks: 8, edna: 6, scaling: 14 };
-    /* "Back to Home" buttons (data-go="1") mean the dashboard's Overview when embedded */
-    if (EMBED) document.addEventListener('click', function (e) {
-      var b = e.target.closest && e.target.closest('[data-go="1"]'); if (!b) return;
-      e.preventDefault(); e.stopImmediatePropagation();
-      try { parent.postMessage({ bsGo: 'overview' }, location.origin); } catch (x) { /* parent gone */ }
-    }, true);
+    /* 25 Nov (Munawar): the dashboard's first tab is this app's Home screen (1), exactly as
+       the approved design draws it, so Home is a screen the dashboard can show like the others */
+    var SCR = { 1: 'home', 5: 'make', 2: 'make', 3: 'log', 12: 'log', 4: 'rooms', 7: 'reports', 8: 'workbooks', 6: 'edna', 14: 'scaling' };
+    var NUM = { home: 1, make: 5, log: 3, rooms: 4, reports: 7, workbooks: 8, edna: 6, scaling: 14 };
     var cur = window.BS_SCREEN;
     var READY = false; /* the page's own last line shows Home; the embed's first screen comes after it */
     try {
@@ -2073,9 +2111,6 @@
           cur = v;
           setTimeout(notTakenChips, 0);
           if (!EMBED || !READY) return;
-          /* the app's Home is the dashboard's Overview; the preview's "start a decision" and
-             Back-to-start calls land on Make a decision instead */
-          if (v === 1) { setTimeout(function () { window.showScreen(5); }, 0); return; }
           try { if (SCR[v]) parent.postMessage({ bsScreen: SCR[v] }, location.origin); } catch (e) { /* parent gone */ }
         },
       });
@@ -2084,7 +2119,7 @@
     /* screens that belong to a tab: the full Frame (2) is part of Make a decision, the review (12)
        of the log. Without this the dashboard's echo of 'make' sent the full Frame and a reopened
        decision back to an empty Make a decision page (24 Nov) */
-    var BELONGS = { make: [5, 2], log: [3, 12], rooms: [4], reports: [7], workbooks: [8], edna: [6], scaling: [14] };
+    var BELONGS = { home: [1], make: [5, 2], log: [3, 12], rooms: [4], reports: [7], workbooks: [8], edna: [6], scaling: [14] };
     window.addEventListener('message', function (e) {
       if (e.origin !== location.origin || !e.data || !e.data.bsShow) return;
       var n = NUM[e.data.bsShow];

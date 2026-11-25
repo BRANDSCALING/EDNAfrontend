@@ -198,6 +198,8 @@
 /* Infinite Scaling: icon, name and a grey "Soon" pill on one row (Fariza's app design) */
 .bs-side button.bs-soon { flex-wrap: nowrap; }
 .bs-soon-ico { width: 18px; height: 18px; flex: none; }
+/* Home: the house icon and name, as in the approved app design (25 Nov) */
+.bs-home-ico { width: 18px; height: 18px; flex: none; }
 .bs-side button.bs-soon-off { cursor: default; }
 .bs-side button.bs-soon-off:hover { background: none; }
 .bs-btn.bs-btn-soon, .bs-btn.bs-btn-soon:hover { opacity: .6; cursor: default; background: transparent; }
