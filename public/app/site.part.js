@@ -168,6 +168,14 @@
     'html.s9-hc{--grey-l1:#0B0B0B;--grey-l2:#0B0B0B;--grey-p1:#0B0B0B;--grey-p2:#0B0B0B;--grey-p3:#0B0B0B;--pearl:#FFFFFF;--white-l1:#FFFFFF}' +
     'html.s9-hc *{box-shadow:none!important;text-shadow:none!important}html.s9-hc .frame::before{display:none}' +
     '.srow9 .s9note{flex-basis:100%;margin-top:-2px}' +
+    /* phones (25 Nov sweep at 375px): a segmented control keeps one row and its buttons share
+       the width, so a long label wraps inside its button instead of breaking the box; the
+       email field takes the full width with Change under it, so the address is not cut off */
+    '@media (max-width:480px){#s9screen .sset{flex-wrap:nowrap;width:100%}#s9screen .sset button{flex:1 1 0;white-space:normal;padding:8px 6px}' +
+    '#main9 .inpwrap{flex-wrap:wrap}#main9 .inpwrap .inp{flex:1 1 100%;min-width:0}}' +
+    /* the 44px tap target (BS-WEB-010 §3): Safari's native select ignores a height, so it is
+       drawn like the text fields with its own chevron */
+    '#main9 select.inp{-webkit-appearance:none;appearance:none;min-height:44px;padding-right:36px;background:var(--white,#fff) url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%23454545%27 stroke-width=%272.5%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27M6 9l6 6 6-6%27/%3E%3C/svg%3E") no-repeat right 12px center/14px}' +
     /* iPhone Safari zooms the whole page in when a field under 16px is tapped, and stays
        zoomed (Mashab, 25 Nov: mobile first, iPhone first). The Frame boxes, replies and room
        questions were 15px; on touch screens every field is at least 16px. */

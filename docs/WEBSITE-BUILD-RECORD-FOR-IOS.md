@@ -191,7 +191,9 @@ billing address and "Update card" (GHL's webhooks do not carry them — asked of
   Simulator.
 - Rules learned: no desktop rule after a phone media query; form fields at least 16px on touch
   screens (iPhone zooms otherwise); icons as SVG, not text symbols (☀ broke on iPhone); wide
-  tables scroll inside their box.
+  tables scroll inside their box; segmented buttons keep one row and share the width; a field
+  with a button beside it stacks under 480px; Safari ignores a native select's height, so
+  selects are drawn like fields to keep the 44px tap target (Settings sweep, 25 Nov).
 
 ### 3.15 Dark mode
 - Website pages: the moon/sun toggle (`localStorage['bs-theme']`). E-DNA pages: Screen
@@ -268,7 +270,19 @@ the secret-gated runners in `diMigrateRoutes.js` because the database is only re
   old address (N15) and update the GHL contact's email. **iOS:** same calls (the iOS app uses
   the same pool), same endpoint.
 - `terms_acceptance` is never written; the report gate and checkout should record acceptance.
-- Room emails (N1–N14) need GHL workflows before they can be added to `GHL_SENDABLE_EVENTS`.
+- **Room invitation email (N1), 25 Nov.** Fiza Ashraf built the GHL trigger for invitations
+  (`GHL_ROOMS_WEBHOOK_URL`, default in `notificationService.js`). `room.invited` is now
+  sendable and goes there with: `email`, `bs_user_id` (members), `first_name`, `site`,
+  `edna_status`, `inviter_name`, `decision`, `deep_link` = `invitation_url` =
+  `https://www.brandscaling.co.uk/?invite=TOKEN`, `role` (`can_contribute` · `read_only`),
+  `expires_at`, `is_guest`, `invitee_type` (`member` · `guest`), `membership` (free · di ·
+  entry…; `none` for a guest), `subscription_status` (active · payment_failed · cancelled ·
+  none). Rows queued earlier with a relative link are skipped. Two sample payloads were sent
+  to the trigger on 25 Nov for mapping. Backend change written; **push pending Munawar's OK**.
+  A "Create invite link" (no email) sends nothing: the owner shares that link themselves.
+- The other room emails (N2 `room.input_needed`, N3 `room.new_input`, N4 `room.confirm`,
+  `guest.day5`, `guest.day7`) still need their GHL workflows before they join
+  `GHL_SENDABLE_EVENTS`.
 - The apex domain `brandscaling.co.uk/<path>` 404s; needs forwarding fixed at the registrar.
 
 ## 8 · iOS port checklist
