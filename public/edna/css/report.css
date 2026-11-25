@@ -298,3 +298,10 @@
   .rp-narrow .rp-loop .uline, .rp-narrow .rp-loop .cap { flex: 1 1 100%; }
 }
 /* REPORT-CSS-END */
+
+/* Phones (25 Nov): three subtype tiles share a ~300px row, and one long word
+   ("Perfectionist") spilled past its tile. Smaller type and hyphenation keep it inside. */
+@media (max-width: 480px) {
+  .rp-tile { font-size: 12px; padding: 8px 3px; min-width: 0; overflow-wrap: break-word; -webkit-hyphens: auto; hyphens: auto; }
+  .rp-tile.on { font-size: 15px; }
+}
