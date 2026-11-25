@@ -38,7 +38,9 @@ The design source for the app screens is Fariza's approved preview (the
 - **One dashboard.** `/` signed in shows the React dashboard (`BrandDashboard.tsx`). Its
   sidebar: **Home** · **Decision Intelligence** (Make a decision, Decision log, Decision rooms,
   My reports, My workbooks, My E-DNA) · **Infinite Scaling** (Soon) · **AI mentors** (Soon) ·
-  **Settings** · Log out. *(Fariza's 24 Nov huddle; Home and Settings 25 Nov.)*
+  Log out · and **Settings at the foot of the sidebar**, above the strapline (BS-AI-003 §2.3;
+  on phones it sits before Log out in the slide-down menu). *(Fariza's 24 Nov huddle; Home and
+  Settings 25 Nov.)*
 - **Home and every DI tab are the approved app design**, drawn by `/app/index.html?embed=1&screen=…`
   in one iframe that stays loaded. Screens: `home, make, log, rooms, reports, workbooks, edna,
   scaling, settings`.
@@ -133,19 +135,21 @@ Munawar's request.
 ### 3.9 Settings (25 Nov — the approved design's nine panels, real data only)
 | Panel | Shows | Source |
 |---|---|---|
-| Profile | photo (upload/remove), first and last name, email (read-only; change through support), phone, country, time zone, business | `/profile`, `PUT /profile`, `PUT /profile/photo` |
+| Profile | photo (upload/remove), first and last name, email (Change → password → 6-digit code, §7), phone, country, time zone, business | `/profile`, `PUT /profile`, `PUT /profile/photo`, `POST /account/email-sync` |
 | Membership and credits | tier, decisions left of total, grants, credits used, Top up, See memberships | `/profile.membership`, `/credits` |
-| Subscription | Active / No subscription, plan, renews | `/profile.membership` |
-| Payment details | statement that cards stay with the payment provider; receipts (date, item) | `/purchases` (GHL `order.completed`), falling back to purchase grants |
-| Notifications | email switch per event (N1–N7, N10, N13, N14); security and legal always on | `/notification-prefs` |
+| Subscription | the design's four states — **Active · Payment failed · Cancelled · No subscription** — with the plan; Payment failed shows the date and the day-3/day-7 retries (and the next retry when GHL sends it); Cancelled shows the end date | `/profile.membership` + `/profile.subscription` {state, since, ends_at, next_retry}, kept from GHL `membership.paid` / `payment_failed` / `cancelled` (backend migration 0007) |
+| Payment details | "No card on file" (one-off buyers) or "Card held by the payment provider" (members); receipts (date, item) | `/purchases` (GHL `order.completed`), falling back to purchase grants |
+| Notifications | every row of the design (N1–N11, N13 only while finding the type, N14, N15) with its note; "—" where the design sends no email (N5, N8, N9); N11 and N15 always on; quiet hours and grouping shown off and locked until push exists | `/notification-prefs` |
 | Consent and sharing | Part 5 consent; rooms with role, Leave room | `/edna`, `/rooms`, `POST /rooms/:id/leave` |
-| Screen | font, text size, spacing, motion, theme, transparency — applies to the E-DNA pages in this browser | `localStorage['edna-settings']` |
-| Security | Change password, signed-in devices, Sign out everywhere | Cognito `ChangePassword`, `GlobalSignOut`; `/devices` |
-| Account | Terms links, sign out, Delete my account (→ `/delete-account/`), Export CSV, reports PDF, Download my data (one JSON file) | — |
+| Screen | font, text size, spacing, motion, theme, transparency — applied at once to the dashboard (and the sidebar), the E-DNA assessment and the reports, in this browser. Dark applies to the E-DNA and reports only: the dashboard has no dark design yet (flagged to Fariza) | `localStorage['edna-settings']`, the E-DNA's own key and values (`spacing: extra`) |
+| Security | Change password (renews the sign-in first; errors in red), signed-in devices, Sign out everywhere | Cognito `ChangePassword`, `GlobalSignOut`; `/devices` |
+| Account | Terms of Use → `/home/legal/terms-of-use.html`, Privacy Policy → `/home/legal/privacy-policy.html` (Munawar, 25 Nov), sign out, Delete my account (→ `/delete-account/`, an emailed request; there is no self-service deletion yet), Export CSV, reports PDF, Download my data (one JSON file) | — |
 
-**Hidden on purpose (no real data behind them):** card on file and billing address, two-step
-verification (Cognito MFA is off), push quiet hours and grouping (push is iOS-only), "terms
-accepted on" dates (`terms_acceptance` has never been written), proposed upgrade prices.
+**Hidden on purpose (no real data behind them):** the card's last four digits and expiry, the
+billing address and "Update card" (GHL's webhooks do not carry them — asked of Fiza Ashraf,
+25 Nov), two-step verification (Cognito MFA is off), "terms accepted on" dates
+(`terms_acceptance` has never been written), proposed upgrade prices. The design's
+"Preview · state (paid tiers)" switch is the designer's preview control, not app UI.
 **iOS:** push switches and quiet hours belong in the iOS Settings; the same
 `/notification-prefs` rows carry a `push` flag.
 
@@ -214,7 +218,8 @@ accepted on" dates (`terms_acceptance` has never been written), proposed upgrade
 ## 5 · Database changes (backend `src/migrations/`)
 `0002` Decision Intelligence tables · `0003` notifications, attachments, GHL outbox/inbound ·
 `0004` credit grant source `assessment` · `0005` `edna_progress` · **`0006` users.phone, country,
-time_zone, business_name; auth_device index (25 Nov, applied)**. Migrations are applied through
+time_zone, business_name; auth_device index (25 Nov, applied)** · **`0007` users.subscription_state,
+_state_at, _ends_at, _next_retry (25 Nov; written, not yet pushed or applied)**. Migrations are applied through
 the secret-gated runners in `diMigrateRoutes.js` because the database is only reachable from AWS.
 
 ## 6 · Rulings that shape behaviour (dated)

@@ -134,13 +134,17 @@ export const authHelpers = {
     return new Promise((resolve) => {
       const u = pool.getCurrentUser();
       if (!u) return resolve(null);
-      u.getSession((err: Error | null, s: CognitoUserSession | null) => {
-        if (err || !s) return resolve(null);
-        u.refreshSession(s.getRefreshToken(), (e: Error | null, ns: CognitoUserSession | null) => {
-          if (e || !ns) return resolve(null);
-          resolve(ns.getIdToken().getJwtToken());
+      try {
+        u.getSession((err: Error | null, s: CognitoUserSession | null) => {
+          if (err || !s) return resolve(null);
+          try {
+            u.refreshSession(s.getRefreshToken(), (e: Error | null, ns: CognitoUserSession | null) => {
+              if (e || !ns) return resolve(null);
+              resolve(ns.getIdToken().getJwtToken());
+            });
+          } catch (e) { resolve(null); } /* a damaged stored token throws instead of calling back */
         });
-      });
+      } catch (e) { resolve(null); }
     });
   },
 

@@ -217,6 +217,16 @@
   margin-top: auto; padding: 14px 10px 4px; border-top: 1px solid var(--bs-line);
   font: 500 12px/1.5 'Inter', sans-serif; color: var(--bs-text-secondary);
 }
+/* Settings sits at the foot of the sidebar, above the strapline, with the line above it
+   (approved app design, BS-AI-003 §2.3; Munawar 25 Nov). Desktop only: on phones it stays
+   in the slide-down menu. */
+@media (min-width: 761px) {
+  .bs-side button.bs-settings { margin-top: auto; position: relative; }
+  .bs-side button.bs-settings::before {
+    content: ""; position: absolute; left: 0; right: 0; top: -9px; border-top: 1px solid var(--bs-line);
+  }
+  .bs-side-foot { margin-top: 6px; border-top: 0; }
+}
 .bs-main { flex: 1; min-width: 0; padding: 26px 30px 48px; }
 .bs-dash-head {
   background: #fff; border-radius: var(--bs-radius-card);
@@ -468,6 +478,8 @@
   .bs-side button { width: 100%; text-align: left; padding: 12px 12px; font-size: 15px; }
   .bs-side .bs-nav-burger { width: auto; }
   .bs-side-foot { display: none; }
+  /* phones: Settings sits before Log out in the slide-down menu */
+  .bs-side button.bs-logout { order: 1; }
   .bs-main { padding: 14px 10px 40px; }
   .bs-edna-frame { height: calc(100vh - 76px); border-radius: 10px; }
   .bs-dash-head { padding: 16px 18px; }

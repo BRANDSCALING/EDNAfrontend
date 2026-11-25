@@ -156,6 +156,18 @@
     '#main9 .logtable th,#main9 .logtable td{display:table-cell!important;grid-column:auto!important;vertical-align:top;padding:8px 6px}' +
     /* the email change box spans the form, not one narrow column (the design drew it in the grid) */
     '#s9emailBox{grid-column:1/-1}' +
+    /* Settings · Screen (25 Nov): the same six settings the E-DNA uses, applied to the
+       dashboard too. Classes sit on <html>; size uses zoom because the app sizes text in px. */
+    'html.s9-verdana body,html.s9-verdana body *{font-family:Verdana,Arial,sans-serif!important}' +
+    'html.s9-arial body,html.s9-arial body *{font-family:Arial,Helvetica,sans-serif!important}' +
+    'html.s9-spacing body *{letter-spacing:.04em!important;word-spacing:.08em}' +
+    'html.s9-spacing p,html.s9-spacing li,html.s9-spacing td,html.s9-spacing .t13,html.s9-spacing .t15,html.s9-spacing .t19,html.s9-spacing textarea{line-height:1.8!important}' +
+    'html.s9-nomotion *,html.s9-nomotion *::before,html.s9-nomotion *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}' +
+    'html.s9-notransparency *{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}' +
+    'html.s9-notransparency .glass,html.s9-notransparency .panel{background:var(--white)!important}html.s9-notransparency .frame::before{display:none}' +
+    'html.s9-hc{--grey-l1:#0B0B0B;--grey-l2:#0B0B0B;--grey-p1:#0B0B0B;--grey-p2:#0B0B0B;--grey-p3:#0B0B0B;--pearl:#FFFFFF;--white-l1:#FFFFFF}' +
+    'html.s9-hc *{box-shadow:none!important;text-shadow:none!important}html.s9-hc .frame::before{display:none}' +
+    '.srow9 .s9note{flex-basis:100%;margin-top:-2px}' +
     /* iPhone Safari zooms the whole page in when a field under 16px is tapped, and stays
        zoomed (Mashab, 25 Nov: mobile first, iPhone first). The Frame boxes, replies and room
        questions were 15px; on touch screens every field is at least 16px. */
@@ -1644,7 +1656,7 @@
      /credits (grants, ledger), /purchases (orders from GHL), /notification-prefs, /edna
      (Part 5 consent), /rooms, /devices; password and sign-out-everywhere go to Cognito. */
   var SET9 = (function () { var g = document.querySelector('#main9 .setgrid'); return g ? g.innerHTML : ''; })();
-  var SUPPORT = '<a href="/privacy-policy/#s19" target="_top">Brandscaling support</a>';
+  var SUPPORT = '<a href="/home/legal/contact.html" target="_top">Brandscaling support</a>'; /* Munawar, 25 Nov: legal links go to /home/legal/ */
   /* Change email (25 Nov). ON only once the Cognito pool keeps the original email active while
      a change is pending (UserAttributeUpdateSettings: email). Without that setting Cognito
      swaps the sign-in email at once, before the new address is confirmed, and a typo locks
@@ -1652,21 +1664,68 @@
      25 Nov: the pool setting was switched on in the console (AttributesRequireVerificationBeforeUpdate
      = ["email"]; nothing else in the pool or app client changed), so the flow is now on. */
   var EMAIL_CHANGE = true;
-  var NEV = {
-    N1: 'Invited to a room', N2: 'Your input is needed', N3: 'Waiting on you (owner)', N4: 'Confirm your decision or the rule',
-    N5: 'Room decision written to your log', N6: 'Review due', N7: 'Review reminder', N10: 'Credits used up',
-    N13: 'Ready to retake', N14: 'Removed from a room, or room closed',
-  };
+  /* Notification rows exactly as the approved design lists them (settings.part.js ROWS,
+     BS-AI-009 §3): [event, label, email (true = switch, null = not sent by email), locked, note].
+     Switches save to /notification-prefs; N11 and N15 are always on; N13 shows only for a
+     person still finding their type, as in the design. */
+  var NROWS = [
+    ['N1', 'Someone invites you to a Decision Room', true, false, ''],
+    ['N2', 'A decision needs your input', true, false, ''],
+    ['N3', 'Your room has new input', true, false, 'Once per round, not per entry'],
+    ['N4', 'A decision is waiting for you to confirm', true, false, 'Resolve a clash only'],
+    ['N5', 'A room decision is written to your log', null, false, 'The log is in the app'],
+    ['N6', 'A review is due', true, false, 'Three questions with your mentor'],
+    ['N7', 'A review is still waiting', true, false, 'One reminder, 7 days later, then no more'],
+    ['N8', 'A saved decision is waiting', null, false, 'Shown on Home only, after 7 days; never sent'],
+    ['N9', 'Credits running low', null, false, 'Shown in the app only, below 20%'],
+    ['N10', 'Your decisions for the period are used up', true, false, ''],
+    ['N11', 'Top-up receipt', true, true, 'Always, with your payment'],
+    ['N13', 'You are ready to retake Parts 1 to 3', true, false, 'When your log meets the retake rule'],
+    ['N14', 'You are removed from a room, or a room is closed', true, false, ''],
+    ['N15', 'Security and legal notices', true, true, 'New device sign-in, email changed, terms changed. Cannot be switched off'],
+  ];
   var TIERNAME = { free: 'Free', di: '£99 · Decision Intelligence', entry: 'Entry', expert: 'Expert', elite: 'Elite', enterprise: 'Enterprise' };
   var SCREEN9 = [
     ['Font', 'font', [['inter', 'Inter'], ['verdana', 'Verdana'], ['arial', 'Arial']]],
     ['Text size', 'size', [[100, '100%'], [125, '125%'], [150, '150%'], [200, '200%']]],
-    ['Spacing', 'spacing', [['standard', 'Standard'], ['wide', 'Extra line and letter spacing']]],
+    ['Spacing', 'spacing', [['standard', 'Standard'], ['extra', 'Extra line and letter spacing']]], /* 'extra' is the E-DNA's own value */
     ['Motion', 'motion', [['standard', 'Standard'], ['reduced', 'Reduced']]],
     ['Theme', 'theme', [['light', 'Light'], ['dark', 'Dark'], ['contrast', 'High contrast']]],
     ['Transparency', 'transparency', [['standard', 'Standard'], ['reduced', 'Reduced']]],
   ];
   function ednaSettings() { try { return JSON.parse(localStorage.getItem('edna-settings') || '{}') || {}; } catch (e) { return {}; } }
+  /* applies the Screen settings to this page and to the dashboard around it (the sidebar).
+     Text size stays inside this page: zooming the dashboard too would zoom this page twice.
+     Dark is the E-DNA's and the reports' own theme; the dashboard has no dark design yet. */
+  function applyScreen() {
+    var s = ednaSettings();
+    var docs = [document.documentElement];
+    try { if (EMBED && window.top.document) docs.push(window.top.document.documentElement); } catch (e) { /* other origin */ }
+    docs.forEach(function (r, i) {
+      r.classList.toggle('s9-verdana', s.font === 'verdana');
+      r.classList.toggle('s9-arial', s.font === 'arial');
+      r.classList.toggle('s9-spacing', s.spacing === 'extra');
+      r.classList.toggle('s9-nomotion', s.motion === 'reduced');
+      r.classList.toggle('s9-notransparency', s.transparency === 'reduced');
+      r.classList.toggle('s9-hc', s.theme === 'contrast');
+      if (i === 0) r.style.zoom = s.size && Number(s.size) !== 100 ? (Number(s.size) / 100) : '';
+    });
+    try {
+      var td = EMBED && window.top.document;
+      if (td && !td.getElementById('s9top')) {
+        var st = td.createElement('style'); st.id = 's9top';
+        st.textContent = 'html.s9-verdana body,html.s9-verdana body *{font-family:Verdana,Arial,sans-serif!important}' +
+          'html.s9-arial body,html.s9-arial body *{font-family:Arial,Helvetica,sans-serif!important}' +
+          'html.s9-spacing body *{letter-spacing:.04em!important}' +
+          'html.s9-nomotion *,html.s9-nomotion *::before,html.s9-nomotion *::after{animation:none!important;transition:none!important}' +
+          'html.s9-notransparency *{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}' +
+          'html.s9-hc .bs-side,html.s9-hc .bs-side *{color:#0B0B0B!important;box-shadow:none!important}';
+        td.head.appendChild(st);
+      }
+    } catch (e) { /* other origin */ }
+  }
+  applyScreen();
+  window.addEventListener('storage', function (e) { if (e.key === 'edna-settings') applyScreen(); });
   function cognitoTokens() {
     try {
       var pfx = 'CognitoIdentityServiceProvider.' + CLIENT_ID, u = localStorage.getItem(pfx + '.LastAuthUser');
@@ -1679,6 +1738,17 @@
       headers: { 'Content-Type': 'application/x-amz-json-1.1', 'X-Amz-Target': 'AWSCognitoIdentityProviderService.' + target },
       body: JSON.stringify(body),
     }).then(function (r) { return r.json().then(function (j) { j.__ok = r.ok; return j; }, function () { return { __ok: r.ok }; }); });
+  }
+  /* a fresh access token: the stored one lasts an hour and the dashboard only renews it now
+     and then, so a password change on an old page was refused as if the password were wrong
+     (Munawar, 25 Nov: "it didn't change my password"). Renewing writes the new token back. */
+  function freshAccess() {
+    var auth = null; try { auth = window.top && window.top.bsAuth; } catch (e) { /* other origin */ }
+    var done = function () { return cognitoTokens().access; };
+    var renew = Promise.resolve(null);
+    try { if (auth && auth.refreshIdToken) renew = auth.refreshIdToken(); } catch (e) { /* fall back to the stored token */ }
+    /* never wait on the renewal for more than 6 seconds: the stored token is tried instead */
+    return Promise.race([renew, new Promise(function (r) { setTimeout(r, 6000); })]).then(done, done);
   }
   function signOutHere() {
     try { Object.keys(localStorage).forEach(function (k) { if (k.indexOf('CognitoIdentityServiceProvider.') === 0) localStorage.removeItem(k); }); } catch (e) { /* storage blocked */ }
@@ -1754,20 +1824,35 @@
       ? '<div class="crow"><div><div class="t13 b">Memberships</div><div class="t13 sec">Entry, Expert and Elite: decision rooms, a monthly allowance and the Infinite Scaling layers</div></div><button class="btn secondary small" type="button" data-buy="entry">See memberships</button></div>'
       : '<div class="t13 sec">You are on ' + escT(TIERNAME[tier] || tier) + '. To change your membership, contact ' + SUPPORT + '.</div>';
 
-    /* Subscription */
+    /* Subscription: the four states of the design (BS-AI-003 §9.10), from what GHL last
+       reported (membership.paid · payment_failed · cancelled, kept by the backend since
+       25 Nov). The design's "Preview · state" switch is the designer's preview, not the app. */
     var member = ['free', 'di'].indexOf(tier) < 0;
-    $('s9substate').textContent = member ? 'Active' : 'No subscription';
-    $('s9substate').className = 'chip ' + (member ? 'type' : 'grey');
-    $('s9subrows').innerHTML = (member
-      ? [['Plan', TIERNAME[tier] || tier], ['Billing', 'Taken by our checkout; each payment’s receipt is emailed to you']]
-      : [['Plan', tier === 'di' ? 'E-DNA Advanced Report · one-off payment' : 'Free · the E-DNA assessment and your basic report'], ['Renews', 'Never · nothing is charged again']])
-      .map(function (r) { return '<div class="crow"><div><div class="t13 b">' + r[0] + '</div><div class="t13 sec">' + escT(r[1]) + '</div></div></div>'; }).join('');
+    var SB = P.subscription || null;
+    var st = !member ? 'none' : SB && SB.state === 'payment_failed' ? 'failed' : SB && SB.state === 'cancelled' ? 'cancelled' : 'active';
+    var STATE = { none: ['No subscription', 'grey'], active: ['Active', 'type'], failed: ['Payment failed', 'type'], cancelled: ['Cancelled', 'grey'] }[st];
+    $('s9substate').textContent = STATE[0];
+    $('s9substate').className = 'chip ' + STATE[1];
+    var subRows = !member
+      ? [['Plan', tier === 'di' ? 'E-DNA Advanced Report · one-off payment' : 'Free · the E-DNA assessment and your basic report'], ['Renews', 'Never · nothing is charged again']]
+      : [['Plan', TIERNAME[tier] || tier]].concat(
+        st === 'failed' ? [['Payment failed', fmt(SB.since, true) + ' · the card was declined'], ['What happens next', 'We try the card again on day 3 and day 7' + (SB.next_retry ? ' (next try ' + fmt(SB.next_retry, true) + ')' : '') + '. Your log, reports and workbooks stay open either way.']]
+        : st === 'cancelled' ? [['Ends', SB.ends_at ? fmt(SB.ends_at, true) + ' · everything stays open until then' : 'At the end of the paid month · everything stays open until then'], ['After that', 'Your log, reports and workbooks stay in your account.']]
+        : [['Billing', 'Taken by our checkout; each payment’s receipt is emailed to you']]);
+    $('s9subrows').innerHTML = subRows.map(function (r) { return '<div class="crow"><div><div class="t13 b">' + r[0] + '</div><div class="t13 sec">' + escT(r[1]) + '</div></div></div>'; }).join('');
     $('s9subbtns').innerHTML = member ? '' : '<button class="btn primary small" type="button" data-buy="entry">See memberships</button>';
 
-    /* Payment details: no card is stored by Brandscaling, so no card row */
+    /* Payment details: Brandscaling holds no card. The design's card line (last four and
+       expiry) needs GHL to send them; until it does, say plainly that no card is on file. */
     var pay = sec('s9pay');
-    say(pay.querySelector('h2 + .t13.sec'), 'Payments are taken by our checkout. Brandscaling never holds your card details; your card stays with the payment provider.');
-    pay.querySelectorAll('.crow').forEach(function (r) { r.classList.add('hide'); });
+    say(pay.querySelector('h2 + .t13.sec'), 'Your card is held by our payment provider, never by Brandscaling.');
+    var prow = pay.querySelectorAll('.crow');
+    if (prow[0]) {
+      say($('s9cardline'), member ? 'Card held by the payment provider' : 'No card on file');
+      say(prow[0].querySelector('.t13.sec'), member ? 'Used for renewals and top-ups. To change it, contact Brandscaling support.' : 'Your Advanced Report was a one-off payment; nothing renews.');
+      var ub = prow[0].querySelector('button'); if (ub) ub.classList.add('hide');
+    }
+    for (var pi = 1; pi < prow.length; pi++) prow[pi].classList.add('hide'); /* billing address: not collected */
     var rth = pay.querySelector('table thead tr'); if (rth) rth.innerHTML = '<th>Date</th><th>Item</th>';
     $('s9receipts').innerHTML = '<tr><td class="t13 sec" colspan="2">…</td></tr>';
 
@@ -1775,8 +1860,11 @@
     $('s9chan').textContent = 'In the app · Email (push messages come with the iOS app)';
     $('s9rows').innerHTML = '<div class="t13 sec">…</div>';
     var nopts = sec('s9n').querySelector('.nopts');
-    nopts.querySelectorAll('label.sw').forEach(function (l) { l.classList.add('hide'); });
-    nopts.querySelector('.t13.sec').innerHTML = 'Email goes to your account email, <b>' + escT(P.email || '') + '</b>. Security and legal notices are always on.';
+    /* quiet hours and grouping are in the design, but nothing holds or groups messages yet
+       (BS-AI-009 §2 is not built; push arrives with the iOS app): shown off and locked,
+       with the reason, rather than as switches that do nothing */
+    nopts.querySelectorAll('label.sw input').forEach(function (i) { i.checked = false; i.disabled = true; });
+    nopts.querySelector('.t13.sec').innerHTML = 'Quiet hours and grouping start with push messages in the iOS app; until then they are off. Email goes to your account email, <b>' + escT(P.email || '') + '</b>. Security and legal notices are always on.';
 
     /* Consent and sharing */
     var given = EDNA && EDNA.taken && EDNA.p5 && EDNA.p5.consent;
@@ -1785,13 +1873,13 @@
     $('s9rooms').innerHTML = '<div class="t13 sec">…</div>';
 
     /* Screen: the same settings the E-DNA assessment and reports use (this browser) */
-    say(sec('s9s').querySelector('h2 + .t13.sec'), 'These change how your E-DNA assessment and reports look in this browser, never your questions, answers or results.');
+    say(sec('s9s').querySelector('h2 + .t13.sec'), 'These change how the app, your E-DNA assessment and your reports look in this browser, never your questions, answers or results.');
     var es = ednaSettings();
-    var cur9 = { font: es.font || 'inter', size: es.size || 100, spacing: es.spacing || 'standard', motion: es.motion || 'standard', theme: es.theme || 'light', transparency: es.transparency || 'standard' };
+    var cur9 = { font: es.font || 'inter', size: es.size || 100, spacing: es.spacing === 'wide' ? 'extra' : (es.spacing || 'standard'), motion: es.motion || 'standard', theme: es.theme || 'light', transparency: es.transparency || 'standard' };
     $('s9screen').innerHTML = SCREEN9.map(function (s, i) {
       return '<div class="srow9"><span class="t13 b" id="ss' + i + '">' + s[0] + '</span><div class="sset" role="radiogroup" aria-labelledby="ss' + i + '">' +
         s[2].map(function (o) { var on = String(cur9[s[1]]) === String(o[0]); return '<button type="button" data-set9="' + s[1] + '" data-v="' + o[0] + '" class="' + (on ? 'on' : '') + '" aria-pressed="' + on + '">' + o[1] + '</button>'; }).join('') +
-        '</div></div>';
+        '</div>' + (s[1] === 'theme' ? '<span class="t13 sec s9note">Dark changes your E-DNA assessment and reports. The dashboard has no dark design yet, so it stays light.</span>' : '') + '</div>';
     }).join('');
 
     /* Security */
@@ -1806,7 +1894,7 @@
     /* Account */
     var acct = sec('s9a');
     var terms = acct.querySelector('.crow');
-    if (terms) terms.innerHTML = '<div><div class="t13 b">Terms</div><div class="t13 sec">Your account is held under the <a href="/terms-of-service/" target="_top">Terms of Use</a> and the <a href="/privacy-policy/" target="_top">Privacy Policy</a>.</div></div>';
+    if (terms) terms.innerHTML = '<div><div class="t13 b">Terms</div><div class="t13 sec">Your account is held under the <a href="/home/legal/terms-of-use.html" target="_top">Terms of Use</a> and the <a href="/home/legal/privacy-policy.html" target="_top">Privacy Policy</a>.</div></div>';
     var acctLine = $('s9acctEmail').parentElement;
     acctLine.innerHTML = 'Signed in as <b>' + escT(P.email || '') + '</b>. Signing out keeps everything saved.';
     var copies = acct.querySelectorAll('.crow');
@@ -1814,7 +1902,7 @@
     if (copies[2]) { copies[2].querySelector('button').id = 's9pdf'; say(copies[2].querySelector('button'), 'Open · PDF'); say(copies[2].querySelector('.t13.sec'), 'Your basic and Advanced Reports; each has a PDF button'); }
     if (copies[3]) copies[3].querySelector('button').id = 's9all';
     var last = acct.querySelector(':scope > .t13.sec:last-child');
-    if (last) last.innerHTML = 'To delete your account and its data, use <a href="/delete-account/" target="_top">Delete my account</a>; we confirm by email before anything is removed. <a href="/privacy-policy/" target="_top">Privacy Policy</a> · <a href="/terms-of-service/" target="_top">Terms of Use</a>';
+    if (last) last.innerHTML = 'To delete your account and its data, use <a href="/delete-account/" target="_top">Delete my account</a>; we confirm by email before anything is removed. <a href="/home/legal/privacy-policy.html" target="_top">Privacy Policy</a> · <a href="/home/legal/terms-of-use.html" target="_top">Terms of Use</a>';
 
     /* live tables */
     api('/credits').then(function (d) {
@@ -1855,11 +1943,14 @@
       var sw = function (ev, on, locked, label) {
         return '<label class="sw"><input type="checkbox" role="switch" ' + (on ? 'checked ' : '') + (locked ? 'disabled ' : '') + 'aria-label="' + escT(label) + '" data-nev="' + ev + '"><span class="knob" aria-hidden="true"></span></label>';
       };
+      var saved = {}; (d.prefs || []).forEach(function (p) { saved[p.event] = p; });
+      var finding = false; try { finding = window.BS_T[KEYMAP[PROFILE.type_key] || 'mixed'].mode === 'find'; } catch (e) { /* no type yet */ }
       $('s9rows').innerHTML = '<div class="nrow head"><span class="t13 sec b">Event</span><span class="t13 sec b">Email</span></div>' +
-        (d.prefs || []).filter(function (p) { return NEV[p.event]; }).map(function (p) {
-          return '<div class="nrow" data-push="' + (p.push ? 1 : 0) + '"><span><span class="t13">' + NEV[p.event] + '</span></span><span>' + sw(p.event, p.email, false, 'Email: ' + NEV[p.event]) + '</span></div>';
-        }).join('') +
-        '<div class="nrow"><span><span class="t13">Security and legal notices</span><span class="t13 sec note">Sign-in from a new device, email changed, terms changed. Cannot be switched off</span></span><span>' + sw('N15', true, true, 'Email: Security and legal notices') + '</span></div>';
+        NROWS.filter(function (r) { return r[0] !== 'N13' || finding; }).map(function (r) {
+          var cell = r[2] === null ? '<span class="t13 sec nouse" aria-label="Not sent by email">—</span>'
+            : sw(r[0], r[3] ? true : (saved[r[0]] ? saved[r[0]].email : true), r[3], 'Email: ' + r[1]);
+          return '<div class="nrow" data-push="' + (saved[r[0]] && !saved[r[0]].push ? 0 : 1) + '"><span><span class="t13">' + r[1] + '</span>' + (r[4] ? '<span class="t13 sec note">' + r[4] + '</span>' : '') + '</span><span>' + cell + '</span></div>';
+        }).join('');
       $('s9rows').querySelectorAll('.nrow').forEach(function (r) { r.style.gridTemplateColumns = '1fr 64px'; });
     });
     api('/rooms').then(function (d) {
@@ -2026,24 +2117,35 @@
         es[k] = k === 'size' ? Number(v) : v;
         try { localStorage.setItem('edna-settings', JSON.stringify(es)); } catch (x) { /* storage blocked */ }
         t.parentElement.querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b === t); b.setAttribute('aria-pressed', String(b === t)); });
+        applyScreen();
         return;
       }
       if (id === 's9pw') {
         bsModal('<h2>Change your password</h2><p>At least 8 characters, with a number, a capital letter and a lower-case letter.</p>' +
           '<label class="t13 sec" for="bsPwOld">Current password</label><input class="inp" id="bsPwOld" type="password" autocomplete="current-password" style="width:100%;margin:4px 0 10px">' +
           '<label class="t13 sec" for="bsPwNew">New password</label><input class="inp" id="bsPwNew" type="password" autocomplete="new-password" style="width:100%;margin:4px 0 10px">' +
-          '<p class="t13" id="bsPwMsg" style="min-height:18px;margin:0 0 8px"></p>' +
+          '<p class="t13" id="bsPwMsg" role="alert" style="min-height:18px;margin:0 0 8px;color:#B8202E;font-weight:600"></p>' +
           '<div class="btns"><button type="button" class="bs" data-no>Cancel</button><button type="button" class="bp" data-ok>Change password</button></div>',
           function (ov, close) {
             ov.querySelector('[data-no]').addEventListener('click', close);
             ov.querySelector('[data-ok]').addEventListener('click', function () {
-              var tok = cognitoTokens().access; var msg = ov.querySelector('#bsPwMsg');
-              if (!tok) { msg.textContent = 'Sign in again, then change it.'; return; }
-              msg.textContent = 'Changing…';
-              cognitoCall('ChangePassword', { AccessToken: tok, PreviousPassword: ov.querySelector('#bsPwOld').value, ProposedPassword: ov.querySelector('#bsPwNew').value }).then(function (r) {
-                if (r.__ok) { close(); bsNotice('Password changed', 'Use the new password next time you sign in, on the website and in the iOS app.'); return; }
-                msg.textContent = /NotAuthorized/.test(r.__type || '') ? 'Your current password is not right.' : /InvalidPassword/.test(r.__type || '') ? (r.message || 'That new password does not meet the rules.') : /LimitExceeded/.test(r.__type || '') ? 'Too many tries. Wait a few minutes.' : (r.message || 'Not changed. Try again.');
-              }, function () { msg.textContent = 'Could not reach the sign-in service. Try again.'; });
+              var msg = ov.querySelector('#bsPwMsg');
+              var oldPw = ov.querySelector('#bsPwOld').value, newPw = ov.querySelector('#bsPwNew').value;
+              if (!oldPw || !newPw) { msg.textContent = 'Fill in both passwords.'; return; }
+              if (oldPw === newPw) { msg.textContent = 'The new password is the same as the current one.'; return; }
+              msg.textContent = 'Changing…'; msg.style.color = '#454545';
+              var bad = function (t) { msg.textContent = t; msg.style.color = '#B8202E'; };
+              freshAccess().then(function (tok) {
+                if (!tok) { bad('Your sign-in has expired. Sign in again, then change it.'); return; }
+                cognitoCall('ChangePassword', { AccessToken: tok, PreviousPassword: oldPw, ProposedPassword: newPw }).then(function (r) {
+                  if (r.__ok) { close(); bsNotice('Password changed', 'Use the new password next time you sign in, on the website and in the iOS app.'); return; }
+                  var ty = r.__type || '', m = r.message || '';
+                  bad(/NotAuthorized/.test(ty) && /expired|revoked|invalid access token/i.test(m) ? 'Your sign-in has expired. Sign in again, then change it.'
+                    : /NotAuthorized/.test(ty) ? 'Your current password is not right.'
+                    : /InvalidPassword|InvalidParameter/.test(ty) ? 'The new password needs at least 8 characters, with a number, a capital letter and a lower-case letter.'
+                    : /LimitExceeded|TooManyRequests/.test(ty) ? 'Too many tries. Wait a few minutes.' : (m || 'Not changed. Try again.'));
+                }, function () { bad('Could not reach the sign-in service. Try again.'); });
+              });
             });
           });
         return;
@@ -2053,8 +2155,9 @@
           function (ov, close) {
             ov.querySelector('[data-no]').addEventListener('click', close);
             ov.querySelector('[data-ok]').addEventListener('click', function () {
-              var tok = cognitoTokens().access;
-              (tok ? cognitoCall('GlobalSignOut', { AccessToken: tok }) : Promise.resolve({})).then(signOutHere, signOutHere);
+              freshAccess().then(function (tok) {
+                (tok ? cognitoCall('GlobalSignOut', { AccessToken: tok }) : Promise.resolve({})).then(signOutHere, signOutHere);
+              });
             });
           });
         return;
