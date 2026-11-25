@@ -219,7 +219,7 @@ billing address and "Update card" (GHL's webhooks do not carry them — asked of
 `0002` Decision Intelligence tables · `0003` notifications, attachments, GHL outbox/inbound ·
 `0004` credit grant source `assessment` · `0005` `edna_progress` · **`0006` users.phone, country,
 time_zone, business_name; auth_device index (25 Nov, applied)** · **`0007` users.subscription_state,
-_state_at, _ends_at, _next_retry (25 Nov; written, not yet pushed or applied)**. Migrations are applied through
+_state_at, _ends_at, _next_retry (25 Nov, backend cef96c0, applied)**. Migrations are applied through
 the secret-gated runners in `diMigrateRoutes.js` because the database is only reachable from AWS.
 
 ## 6 · Rulings that shape behaviour (dated)
