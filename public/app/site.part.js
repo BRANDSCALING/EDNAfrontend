@@ -1648,8 +1648,10 @@
   /* Change email (25 Nov). ON only once the Cognito pool keeps the original email active while
      a change is pending (UserAttributeUpdateSettings: email). Without that setting Cognito
      swaps the sign-in email at once, before the new address is confirmed, and a typo locks
-     the member out — so until then the button explains the support route instead. */
-  var EMAIL_CHANGE = false;
+     the member out — so until then the button explains the support route instead.
+     25 Nov: the pool setting was switched on in the console (AttributesRequireVerificationBeforeUpdate
+     = ["email"]; nothing else in the pool or app client changed), so the flow is now on. */
+  var EMAIL_CHANGE = true;
   var NEV = {
     N1: 'Invited to a room', N2: 'Your input is needed', N3: 'Waiting on you (owner)', N4: 'Confirm your decision or the rule',
     N5: 'Room decision written to your log', N6: 'Review due', N7: 'Review reminder', N10: 'Credits used up',
@@ -1733,7 +1735,9 @@
       if (en) en.textContent = 'We send a 6-digit code to the new address. Your email changes only when you enter it here, within 24 hours. Your account stays exactly as it is: your E-DNA, decisions, rooms and credits do not move or change. Only the address you sign in with changes, on the website and in the iOS app.';
       $('s9emailSent').classList.add('hide');
     }
-    var psave = sec('s9p').querySelector('.btnrow .btn.primary');
+    /* the Save profile button, not the email box's Send button, which sits earlier in the
+       same panel (25 Nov: matching the first one renamed Send to s9save and left Save dead) */
+    var psave = sec('s9p').querySelector('.btnrow .btn.primary:not(#s9emailSend)');
     psave.id = 's9save';
     psave.insertAdjacentHTML('afterend', '<span class="t13 sec" id="s9msg" style="margin-left:8px"></span>');
 

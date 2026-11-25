@@ -244,14 +244,22 @@ the secret-gated runners in `diMigrateRoutes.js` because the database is only re
 - Account deletion on the website goes to `/delete-account/` (request by email). The iOS
   `DELETE /me` removes quiz data and the user row but not the DI tables (decisions, log, rooms,
   credits) — fix before relying on it.
-- **Change email (built 25 Nov, switched off).** Settings · Profile follows the design: new
+- **Change email (built 25 Nov, switched ON 25 Nov).** Settings · Profile follows the design: new
   address + current password (checked through the dashboard's Cognito library) → Cognito
   `UpdateUserAttributes` emails a 6-digit code to the new address → `VerifyUserAttribute` →
   a refreshed ID token carries the verified address → `POST /account/email-sync` copies it to
   `users.email` (verified Cognito ID token only). The account id never changes, so all data
   stays. Switched on by `EMAIL_CHANGE` in `site.part.js` **only after** the user pool's
   "keep original attribute value active when an update is pending" is set for email;
-  without it Cognito changes the sign-in email before it is confirmed. Still to do: tell the
+  without it Cognito changes the sign-in email before it is confirmed. **That setting was
+  switched on in the AWS console on 25 Nov** (`UserAttributeUpdateSettings.
+  AttributesRequireVerificationBeforeUpdate = ["email"]`); a before/after `describe-user-pool`
+  and `describe-user-pool-client` comparison showed no other change. It is pool-wide, so it
+  already covers the iOS app: until a member enters the code, they keep signing in and getting
+  emails at the old address. Nothing in the iOS app, Android app or backend changed emails
+  before this (the backend only lists users), so nothing else is affected. Same day: the
+  Profile "Save" button had lost its id to the email box's Send button (both matched
+  `.btnrow .btn.primary`); fixed, Save works again. Still to do: tell the
   old address (N15) and update the GHL contact's email. **iOS:** same calls (the iOS app uses
   the same pool), same endpoint.
 - `terms_acceptance` is never written; the report gate and checkout should record acceptance.
